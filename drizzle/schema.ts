@@ -23,16 +23,24 @@ export const emails = mysqlTable("emails", {
 	id: varchar("id", { length: 191 }).primaryKey().notNull(),
 	emailAddress: varchar("email_address", { length: 320 }),
 	verification: varchar("verification", { length: 25 }),
+	userId: varchar("user_id", { length: 191 }).notNull(),
 },
 (table) => {
 	return {
 		emailAddress: index("email_address").on(table.emailAddress),
+		userId: index("user_id").on(table.userId),
 	}
 });
 
 export const externalAccounts = mysqlTable("external_accounts", {
 	json: json("json"),
 	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+	userId: varchar("user_id", { length: 191 }).notNull(),
+},
+(table) => {
+	return {
+		userId: index("user_id").on(table.userId),
+	}
 });
 
 export const users = mysqlTable("users", {
@@ -46,4 +54,9 @@ export const users = mysqlTable("users", {
 	publicMetadata: json("public_metadata"),
 	primaryEmailAddressId: varchar("primary_email_address_id", { length: 191 }),
 	imageUrl: text("image_url"),
+});
+
+export const usersArchive = mysqlTable("users_archive", {
+	id: serial("id").primaryKey().notNull(),
+	json: json("json"),
 });

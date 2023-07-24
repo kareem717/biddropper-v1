@@ -4,7 +4,9 @@ import { IncomingHttpHeaders } from "http";
 import { env } from "@/env.mjs";
 import { type Event } from "@/types";
 import { db } from "@/db";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { emails, externalAccounts, users, usersArchive } from "drizzle/schema";
+import { json } from "stream/consumers";
 
 async function verifySvixSignature(req: Request): Promise<Event> {
 	const body = await req.json();
@@ -37,13 +39,12 @@ export async function POST(req: Request) {
 		console.error("Webhook validation error:", err);
 		return new Response("Invalid webhook.", { status: 401 });
 	}
-
+	const userId = event.data.id as string;
 	if (event.type === "user.created" || event.type === "user.updated") {
 		const user = JSON.stringify(event.data);
 		const emails = event.data.email_addresses as JSON[];
 		const externalAccounts = event.data.external_accounts as JSON[];
-    console.log(externalAccounts);
-    
+		console.log(externalAccounts);
 
 		try {
 			const transaction: boolean = await db.transaction(async (tx) => {
@@ -53,18 +54,22 @@ export async function POST(req: Request) {
 
 				emails.map(async (email: JSON) => {
 					await tx.execute(
-						sql`INSERT INTO emails (json) VALUES (${JSON.stringify(
+						sql`INSERT INTO emails (json, user_id) VALUES (${JSON.stringify(
 							email
-						)}) ON DUPLICATE KEY UPDATE json = ${JSON.stringify(emails)}`
+						)}, ${userId}) ON DUPLICATE KEY UPDATE json = ${JSON.stringify(
+							emails
+						)}`
 					);
 				});
 
 				externalAccounts.map(async (external: JSON) => {
-          console.log(external);
+					console.log(external);
 					await tx.execute(
-						sql`INSERT INTO external_accounts (json) VALUES (${JSON.stringify(
+						sql`INSERT INTO external_accounts (json, user_id) VALUES (${JSON.stringify(
 							external
-						)}) ON DUPLICATE KEY UPDATE json = ${JSON.stringify(external)}`
+						)}, ${userId}) ON DUPLICATE KEY UPDATE json = ${JSON.stringify(
+							external
+						)}`
 					);
 				});
 
@@ -89,8 +94,24 @@ export async function POST(req: Request) {
 			});
 		}
 	} else if (event.type === "user.deleted") {
-    
-  }
+		const transaction = db.transaction(async (tx) => {
+			const userData = await tx
+				.select({ json: users.json })
+				.from(users)
+				.where(eq(users.id, userId))
+				.limit(1);
+			await tx.insert(usersArchive).values(userData);
+			await tx.delete(users).where(eq(users.id, userId));
+			await tx
+				.delete(externalAccounts)
+				.where(eq(externalAccounts.userId, userId));
+			await tx.delete(emails).where(eq(emails.userId, userId));
+		});
+
+		return new Response("User and related data have been archived.", {
+			status: 200,
+		});
+	}
 
 	return new Response("Unhandled webhook type.", { status: 501 });
 }
