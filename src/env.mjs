@@ -1,0 +1,33 @@
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+export const env = createEnv({
+	server: {
+		NODE_ENV: z.enum(["development", "test", "production"]),
+		PLANETSCALE_HOST_NAME: z.string().min(1),
+		PLANETSCALE_USERNAME: z.string().min(1),
+		PLANETSCALE_PASSWORD: z.string().min(1),
+		PLANETSCALE_DATABASE_NAME: z.string().min(1),
+		PLANETSCALE_DATABASE_URL: z.string().url(),
+		CLERK_SECRET_KEY: z.string().min(1),
+		CLERK_WEBHOOK_SECRET: z.string().min(1),
+	},
+
+	client: {
+		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+	},
+
+	runtimeEnv: {
+		NODE_ENV: process.env.NODE_ENV,
+		PLANETSCALE_HOST_NAME: process.env.PLANETSCALE_HOST_NAME,
+		PLANETSCALE_USERNAME: process.env.PLANETSCALE_USERNAME,
+		PLANETSCALE_PASSWORD: process.env.PLANETSCALE_PASSWORD,
+		PLANETSCALE_DATABASE_URL: process.env.PLANETSCALE_DATABASE_URL,
+		PLANETSCALE_DATABASE_NAME: process.env.PLANETSCALE_DATABASE_NAME,
+		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+		CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
+		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+	},
+
+	skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+});
