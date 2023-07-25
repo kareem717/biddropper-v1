@@ -22,19 +22,20 @@ import { newContractSchema } from "@/lib/validations/contracts";
 const formSchema = newContractSchema.omit({ userId: true });
 
 const CreateContractForm = () => {
+	const { toast } = useToast();
+	const { user } = useUser();
+	
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			title: "",
 			price: undefined,
 			description: "",
-			features: [{ name: "Sprinkler heads needed", value: "45" }],
+			features: [],
 		},
 		mode: "all",
 	});
-	const { toast } = useToast();
 	const { register } = form;
-	const { user } = useUser();
 
 	const { fields, append } = useFieldArray({
 		name: "features",
@@ -138,10 +139,10 @@ const CreateContractForm = () => {
 									</FormDescription>
 									<div className="flex flex-row gap-2">
 										<FormControl>
-											<Input {...field} />
+											<Input {...field} placeholder="Name"/>
 										</FormControl>
 										<FormControl>
-											<Input {...register(`features.${index}.value`)} />
+											<Input {...register(`features.${index}.value`)} placeholder="Value" />
 										</FormControl>
 									</div>
 									<FormMessage />

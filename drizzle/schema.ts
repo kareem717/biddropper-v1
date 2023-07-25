@@ -1,13 +1,14 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, serial, varchar, decimal, json, timestamp, bigint, text } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, serial, tinyint, varchar, decimal, json, timestamp, bigint, text } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 
 export const contracts = mysqlTable("contracts", {
 	id: serial("id").primaryKey().notNull(),
+	isDeleted: tinyint("is_deleted").default(0).notNull(),
 	userId: varchar("user_id", { length: 191 }).default('').notNull(),
 	title: varchar("title", { length: 191 }).default('').notNull(),
 	price: decimal("price", { precision: 9, scale: 2 }).notNull(),
-	description: varchar("description", { length: 750 }).default(sql`''`),
+	description: varchar("description", { length: 750 }).default(''),
 	features: json("features"),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow().notNull(),
@@ -21,13 +22,12 @@ export const contracts = mysqlTable("contracts", {
 export const emails = mysqlTable("emails", {
 	json: json("json"),
 	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+	userId: varchar("user_id", { length: 191 }).notNull(),
 	emailAddress: varchar("email_address", { length: 320 }),
 	verification: varchar("verification", { length: 25 }),
-	userId: varchar("user_id", { length: 191 }).notNull(),
 },
 (table) => {
 	return {
-		emailAddress: index("email_address").on(table.emailAddress),
 		userId: index("user_id").on(table.userId),
 	}
 });
@@ -59,4 +59,5 @@ export const users = mysqlTable("users", {
 export const usersArchive = mysqlTable("users_archive", {
 	id: serial("id").primaryKey().notNull(),
 	json: json("json"),
+	deletedAt: timestamp("deleted_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

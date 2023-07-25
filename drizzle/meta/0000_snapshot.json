@@ -14,6 +14,14 @@
           "primaryKey": true,
           "notNull": true
         },
+        "is_deleted": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "is_deleted",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true
+        },
         "user_id": {
           "default": "''",
           "autoincrement": false,
@@ -100,6 +108,13 @@
           "primaryKey": true,
           "notNull": true
         },
+        "user_id": {
+          "autoincrement": false,
+          "name": "user_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "email_address": {
           "autoincrement": false,
           "name": "email_address",
@@ -117,10 +132,10 @@
       },
       "compositePrimaryKeys": {},
       "indexes": {
-        "email_address": {
-          "name": "email_address",
+        "user_id": {
+          "name": "user_id",
           "columns": [
-            "email_address"
+            "user_id"
           ],
           "isUnique": false
         }
@@ -144,10 +159,25 @@
           "type": "varchar(191)",
           "primaryKey": true,
           "notNull": true
+        },
+        "user_id": {
+          "autoincrement": false,
+          "name": "user_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "compositePrimaryKeys": {},
-      "indexes": {},
+      "indexes": {
+        "user_id": {
+          "name": "user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "uniqueConstraints": {}
     },
@@ -223,6 +253,37 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "users_archive": {
+      "name": "users_archive",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "json": {
+          "autoincrement": false,
+          "name": "json",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deleted_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "compositePrimaryKeys": {},

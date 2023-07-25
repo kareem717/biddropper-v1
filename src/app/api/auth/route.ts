@@ -4,8 +4,14 @@ import { IncomingHttpHeaders } from "http";
 import { env } from "@/env.mjs";
 import { type Event } from "@/types";
 import { db } from "@/db";
-import { eq, sql } from "drizzle-orm";
-import { emails, externalAccounts, users, usersArchive } from "drizzle/schema";
+import { eq, not, sql } from "drizzle-orm";
+import {
+	contracts,
+	emails,
+	externalAccounts,
+	users,
+	usersArchive,
+} from "drizzle/schema";
 import { json } from "stream/consumers";
 
 async function verifySvixSignature(req: Request): Promise<Event> {
@@ -39,12 +45,14 @@ export async function POST(req: Request) {
 		console.error("Webhook validation error:", err);
 		return new Response("Invalid webhook.", { status: 401 });
 	}
+
 	const userId = event.data.id as string;
+
 	if (event.type === "user.created" || event.type === "user.updated") {
 		const user = JSON.stringify(event.data);
 		const emails = event.data.email_addresses as JSON[];
 		const externalAccounts = event.data.external_accounts as JSON[];
-		console.log(externalAccounts);
+		console.log(userId);
 
 		try {
 			const transaction: boolean = await db.transaction(async (tx) => {
@@ -94,19 +102,45 @@ export async function POST(req: Request) {
 			});
 		}
 	} else if (event.type === "user.deleted") {
-		const transaction = db.transaction(async (tx) => {
-			const userData = await tx
-				.select({ json: users.json })
-				.from(users)
-				.where(eq(users.id, userId))
-				.limit(1);
-			await tx.insert(usersArchive).values(userData);
-			await tx.delete(users).where(eq(users.id, userId));
-			await tx
-				.delete(externalAccounts)
-				.where(eq(externalAccounts.userId, userId));
-			await tx.delete(emails).where(eq(emails.userId, userId));
-		});
+		try {
+			await db.transaction(async (tx) => {
+				const userData = await tx
+					.select({ json: users.json })
+					.from(users)
+					.where(eq(users.id, userId))
+					.limit(1);
+
+				if (!userData[0]) {
+					throw new ReferenceError("User not found.");
+				}
+
+				await tx.insert(usersArchive).values(userData);
+				await tx.delete(users).where(eq(users.id, userId));
+
+				await tx
+					.delete(externalAccounts)
+					.where(eq(externalAccounts.userId, userId));
+
+				await tx.delete(emails).where(eq(emails.userId, userId));
+
+				const userContracts = await tx
+					.update(contracts)
+					.set({ isDeleted: 1 })
+					.where(eq(contracts.userId, userId));
+
+				console.log(userContracts);
+			});
+		} catch (err) {
+			console.log(err);
+
+			if (err instanceof ReferenceError) {
+				return new Response(err.message, { status: 404 });
+			}
+
+			return new Response("Error archiving user in database.", {
+				status: 500,
+			});
+		}
 
 		return new Response("User and related data have been archived.", {
 			status: 200,

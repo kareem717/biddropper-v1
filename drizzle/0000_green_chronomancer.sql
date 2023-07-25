@@ -3,6 +3,7 @@
 /*
 CREATE TABLE `contracts` (
 	`id` serial AUTO_INCREMENT PRIMARY KEY NOT NULL,
+	`is_deleted` tinyint NOT NULL DEFAULT 0,
 	`user_id` varchar(191) NOT NULL DEFAULT '',
 	`title` varchar(191) NOT NULL DEFAULT '',
 	`price` decimal(9,2) NOT NULL,
@@ -15,13 +16,15 @@ CREATE TABLE `contracts` (
 CREATE TABLE `emails` (
 	`json` json,
 	`id` varchar(191) PRIMARY KEY NOT NULL,
+	`user_id` varchar(191) NOT NULL,
 	`email_address` varchar(320),
 	`verification` varchar(25)
 );
 --> statement-breakpoint
 CREATE TABLE `external_accounts` (
 	`json` json,
-	`id` varchar(191) PRIMARY KEY NOT NULL
+	`id` varchar(191) PRIMARY KEY NOT NULL,
+	`user_id` varchar(191) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `users` (
@@ -37,6 +40,13 @@ CREATE TABLE `users` (
 	`image_url` text
 );
 --> statement-breakpoint
+CREATE TABLE `users_archive` (
+	`id` serial AUTO_INCREMENT PRIMARY KEY NOT NULL,
+	`json` json,
+	`deleted_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+--> statement-breakpoint
 CREATE INDEX `user_id` ON `contracts` (`user_id`);--> statement-breakpoint
-CREATE INDEX `email_address` ON `emails` (`email_address`);
+CREATE INDEX `user_id` ON `emails` (`user_id`);--> statement-breakpoint
+CREATE INDEX `user_id` ON `external_accounts` (`user_id`);
 */
