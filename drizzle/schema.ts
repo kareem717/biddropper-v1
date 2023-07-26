@@ -1,6 +1,36 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, serial, tinyint, varchar, decimal, json, timestamp, bigint, mysqlEnum, text } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, json, varchar, text, serial, tinyint, decimal, timestamp, bigint, mysqlEnum } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
+
+export const communicationEmails = mysqlTable("communication_emails", {
+	json: json("json").notNull(),
+	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+	body: text("body"),
+	bodyPlain: text("body_plain"),
+	userId: varchar("user_id", { length: 191 }),
+	emailAddressId: varchar("email_address_id", { length: 191 }),
+	toEmailAddress: varchar("to_email_address", { length: 320 }),
+},
+(table) => {
+	return {
+		userId: index("user_id").on(table.userId),
+	}
+});
+
+export const communicationSms = mysqlTable("communication_sms", {
+	json: json("json").notNull(),
+	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+	fromPhoneNumber: varchar("from_phone_number", { length: 30 }),
+	userId: varchar("user_id", { length: 191 }),
+	phoneNumberId: varchar("phone_number_id", { length: 191 }),
+	toPhoneNumber: varchar("to_phone_number", { length: 320 }),
+	message: text("message"),
+},
+(table) => {
+	return {
+		userId: index("user_id").on(table.userId),
+	}
+});
 
 export const contracts = mysqlTable("contracts", {
 	id: serial("id").primaryKey().notNull(),
@@ -55,8 +85,8 @@ export const organizationMemberships = mysqlTable("organization_memberships", {
 },
 (table) => {
 	return {
-		userId: index("user_id").on(table.userId),
 		organizationId: index("organization_id").on(table.organizationId),
+		userId: index("user_id").on(table.userId),
 	}
 });
 
@@ -87,6 +117,24 @@ export const organizationsArchive = mysqlTable("organizations_archive", {
 	id: serial("id").notNull(),
 	json: json("json").notNull(),
 	deletedAt: timestamp("deleted_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const sessions = mysqlTable("sessions", {
+	json: json("json").notNull(),
+	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+	clientId: varchar("client_id", { length: 191 }),
+	userId: varchar("user_id", { length: 191 }),
+	abandonAt: bigint("abandon_at", { mode: "number" }),
+	createdAt: bigint("created_at", { mode: "number" }),
+	updatedAt: bigint("updated_at", { mode: "number" }),
+	lastActiveAt: bigint("last_active_at", { mode: "number" }),
+	expireAt: bigint("expire_at", { mode: "number" }),
+	status: mysqlEnum("status", ['active','removed','ended','revoked']),
+},
+(table) => {
+	return {
+		userId: index("user_id").on(table.userId),
+	}
 });
 
 export const users = mysqlTable("users", {

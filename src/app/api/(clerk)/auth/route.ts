@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 	let event: ClerkWebhookEvent;
 
 	try {
-		event = await verifySvixSignature(req, env["CLERK_USER_WEBHOOK_SECRET"]);
+		event = await verifySvixSignature(req, env["CLERK_AUTH_WEBHOOK_SECRET"]);
 	} catch (err) {
 		console.error("Webhook validation error:", err);
 		return new Response("Invalid webhook.", { status: 401 });
