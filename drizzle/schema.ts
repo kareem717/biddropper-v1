@@ -21,26 +21,39 @@ export const contracts = mysqlTable("contracts", {
 
 export const emails = mysqlTable("emails", {
 	json: json("json"),
-	id: varchar("id", { length: 191 }).primaryKey().notNull(),
 	userId: varchar("user_id", { length: 191 }).notNull(),
+	id: varchar("id", { length: 191 }).primaryKey().notNull(),
 	emailAddress: varchar("email_address", { length: 320 }),
 	verification: varchar("verification", { length: 25 }),
-},
-(table) => {
-	return {
-		userId: index("user_id").on(table.userId),
-	}
 });
 
 export const externalAccounts = mysqlTable("external_accounts", {
 	json: json("json"),
-	id: varchar("id", { length: 191 }).primaryKey().notNull(),
 	userId: varchar("user_id", { length: 191 }).notNull(),
+	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+});
+
+export const organizations = mysqlTable("organizations", {
+	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+	json: json("json").notNull(),
+	createdAt: bigint("created_at", { mode: "number" }),
+	createdBy: varchar("created_by", { length: 191 }),
+	imageUrl: text("image_url"),
+	name: varchar("name", { length: 255 }),
+	slug: varchar("slug", { length: 365 }),
+	publicMetadata: json("public_metadata"),
+	updatedAt: bigint("updated_at", { mode: "number" }),
 },
 (table) => {
 	return {
-		userId: index("user_id").on(table.userId),
+		createdBy: index("created_by").on(table.createdBy),
 	}
+});
+
+export const organizationsArchive = mysqlTable("organizations_archive", {
+	id: serial("id").notNull(),
+	json: json("json").notNull(),
+	deletedAt: timestamp("deleted_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
 export const users = mysqlTable("users", {

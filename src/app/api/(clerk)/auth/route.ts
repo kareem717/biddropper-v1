@@ -1,10 +1,6 @@
-import { headers } from "next/headers";
-import { Webhook, WebhookRequiredHeaders } from "svix";
-import { IncomingHttpHeaders } from "http";
-import { env } from "@/env.mjs";
-import { type Event } from "@/types";
+import { type ClerkWebhookEvent } from "@/types";
 import { db } from "@/db";
-import { eq, not, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
 	contracts,
 	emails,
@@ -12,35 +8,14 @@ import {
 	users,
 	usersArchive,
 } from "drizzle/schema";
-import { json } from "stream/consumers";
-
-async function verifySvixSignature(req: Request): Promise<Event> {
-	const body = await req.json();
-	const headerList = headers();
-	const wh = new Webhook(env["CLERK_WEBHOOK_SECRET"]);
-	const verificationHeaders = {
-		"svix-id": headerList.get("svix-id"),
-		"svix-signature": headerList.get("svix-signature"),
-		"svix-timestamp": headerList.get("svix-timestamp"),
-	};
-
-	try {
-		const event = wh.verify(
-			JSON.stringify(body),
-			verificationHeaders as IncomingHttpHeaders & WebhookRequiredHeaders
-		) as Event;
-		return event;
-	} catch (err) {
-		console.error((err as Error).message);
-		throw new Error("Invalid webhook.");
-	}
-}
+import { verifySvixSignature } from "@/lib/server-helpers";
+import { env } from "@/env.mjs";
 
 export async function POST(req: Request) {
-	let event: Event;
+	let event: ClerkWebhookEvent;
 
 	try {
-		event = await verifySvixSignature(req);
+		event = await verifySvixSignature(req, env["CLERK_USER_WEBHOOK_SECRET"]);
 	} catch (err) {
 		console.error("Webhook validation error:", err);
 		return new Response("Invalid webhook.", { status: 401 });
@@ -52,10 +27,9 @@ export async function POST(req: Request) {
 		const user = JSON.stringify(event.data);
 		const emails = event.data.email_addresses as JSON[];
 		const externalAccounts = event.data.external_accounts as JSON[];
-		console.log(userId);
 
 		try {
-			const transaction: boolean = await db.transaction(async (tx) => {
+			await db.transaction(async (tx) => {
 				await tx.execute(
 					sql`INSERT INTO users (json) VALUES (${user}) ON DUPLICATE KEY UPDATE json = ${user}`
 				);
@@ -71,7 +45,6 @@ export async function POST(req: Request) {
 				});
 
 				externalAccounts.map(async (external: JSON) => {
-					console.log(external);
 					await tx.execute(
 						sql`INSERT INTO external_accounts (json, user_id) VALUES (${JSON.stringify(
 							external
@@ -80,15 +53,7 @@ export async function POST(req: Request) {
 						)}`
 					);
 				});
-
-				return true;
 			});
-
-			if (transaction !== true) {
-				return new Response("Error inserting user into database.", {
-					status: 500,
-				});
-			}
 
 			return new Response(
 				"User and related data have been inserted or updated in the database.",
@@ -127,8 +92,6 @@ export async function POST(req: Request) {
 					.update(contracts)
 					.set({ isDeleted: 1 })
 					.where(eq(contracts.userId, userId));
-
-				console.log(userContracts);
 			});
 		} catch (err) {
 			console.log(err);

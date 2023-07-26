@@ -1,14 +1,12 @@
 import { InferModel } from "drizzle-orm";
 import { contracts } from "drizzle/schema";
 
-export type EventType = "user.created" | "user.updated" | "user.deleted";
-
-export type Event = {
+export type ClerkWebhookEvent = {
 	data: Record<string, unknown>;
 	object: "event";
-	type: EventType;
+	type: string;
 };
 
 // Drizzle ORM
 export type Contract = InferModel<typeof contracts>;
-export type NewContract = Omit<Contract, 'id' | 'createdAt' | 'updatedAt'>;
+export type NewContract = Omit<Contract, "id" | "createdAt" | "updatedAt">;

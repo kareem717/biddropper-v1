@@ -2,6 +2,7 @@ import * as z from "zod";
 import { newContractSchema } from "@/lib/validations/contracts";
 import { db } from "@/db";
 import { contracts } from "drizzle/schema";
+
 export async function POST(req: Request) {
 	const input = newContractSchema.parse(await req.json());
 
