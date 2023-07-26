@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, serial, tinyint, varchar, decimal, json, timestamp, bigint, text } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, serial, tinyint, varchar, decimal, json, timestamp, bigint, mysqlEnum, text } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 
@@ -33,6 +33,39 @@ export const externalAccounts = mysqlTable("external_accounts", {
 	id: varchar("id", { length: 191 }).primaryKey().notNull(),
 });
 
+export const organizationInvitations = mysqlTable("organization_invitations", {
+	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+	json: json("json").notNull(),
+	createdAt: bigint("created_at", { mode: "number" }),
+	status: mysqlEnum("status", ['revoked','accepted','pending']),
+	updatedAt: bigint("updated_at", { mode: "number" }),
+	organizationId: varchar("organization_id", { length: 191 }),
+	emailAddress: varchar("email_address", { length: 320 }),
+	role: varchar("role", { length: 25 }),
+});
+
+export const organizationMemberships = mysqlTable("organization_memberships", {
+	json: json("json").notNull(),
+	id: varchar("id", { length: 191 }).primaryKey().notNull(),
+	createdAt: bigint("created_at", { mode: "number" }),
+	updatedAt: bigint("updated_at", { mode: "number" }),
+	userId: varchar("user_id", { length: 191 }),
+	role: varchar("role", { length: 25 }),
+	organizationId: varchar("organization_id", { length: 191 }),
+},
+(table) => {
+	return {
+		userId: index("user_id").on(table.userId),
+		organizationId: index("organization_id").on(table.organizationId),
+	}
+});
+
+export const organizationMembershipsArchive = mysqlTable("organization_memberships_archive", {
+	id: serial("id").primaryKey().notNull(),
+	json: json("json").notNull(),
+	deletedAt: timestamp("deleted_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 export const organizations = mysqlTable("organizations", {
 	id: varchar("id", { length: 191 }).primaryKey().notNull(),
 	json: json("json").notNull(),
@@ -40,9 +73,9 @@ export const organizations = mysqlTable("organizations", {
 	createdBy: varchar("created_by", { length: 191 }),
 	imageUrl: text("image_url"),
 	name: varchar("name", { length: 255 }),
-	slug: varchar("slug", { length: 365 }),
 	publicMetadata: json("public_metadata"),
 	updatedAt: bigint("updated_at", { mode: "number" }),
+	slug: varchar("slug", { length: 365 }),
 },
 (table) => {
 	return {
