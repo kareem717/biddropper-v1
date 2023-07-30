@@ -15,66 +15,104 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+// import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@clerk/nextjs";
 import { newContractSchema } from "@/lib/validations/contracts";
+import { CrossCircledIcon } from "@radix-ui/react-icons";
+import SelectTrade from "../select-trade";
 
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import SelectAdd from "../select-add";
 const formSchema = newContractSchema.omit({ userId: true });
-
+const groups = [
+	{
+		label: "Industry",
+		items: [
+			{
+				label: "Lighting",
+				value: "lighting",
+			},
+			{
+				label: "Electrical",
+				value: "electrical",
+			},
+			{
+				label: "Irrigation",
+				value: "irrigation",
+			},
+			{
+				label: "HVAC",
+				value: "hvac",
+			},
+			{
+				label: "Plumbing",
+				value: "plumbing",
+			},
+		],
+	},
+];
 const CreateContractForm = () => {
-	const { toast } = useToast();
+	// const { toast } = useToast();
 	const { user } = useUser();
-	
+
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			title: "",
-			price: undefined,
 			description: "",
-			features: [],
+			jobs: [{ type: "", description: "" }],
 		},
-		mode: "all",
+		mode: "onChange",
 	});
-	const { register } = form;
 
-	const { fields, append } = useFieldArray({
-		name: "features",
+	const { fields, append, remove } = useFieldArray({
+		name: "jobs",
 		control: form.control,
 	});
 
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		if (!user || !user.id) {
-			toast({
-				variant: "destructive",
-				title: "Stranger danger!.",
-				description: "You must be signed in to create a contract.",
-			});
+			// toast({
+			// 	variant: "destructive",
+			// 	title: "Stranger danger!.",
+			// 	description: "You must be signed in to create a contract.",
+			// });
 
 			return;
 		}
-		
-		const response = await fetch("/api/contracts", {
-			method: "POST",
-			body: JSON.stringify({
-				userId: user.id,
-				...values,
-			}),
-		});
-		console.log(response);
-		if (response.ok) {
-			toast({
-				title: "Success!",
-				description: "Your contract has been created.",
-			});
-		} else {
-			toast({
-				variant: "destructive",
-				title: "Uh oh! Something went wrong.",
-				description: "There was a problem creating your contract.",
-			});
-		}
-	};
 
+		console.log(values);
+
+		// const response = await fetch("/api/contracts", {
+		// 	method: "POST",
+		// 	body: JSON.stringify({
+		// 		userId: user.id,
+		// 		...values,
+		// 	}),
+		// });
+		// console.log(response);
+		// if (response.ok) {
+		// 	toast({
+		// 		title: "Success!",
+		// 		description: "Your contract has been created.",
+		// 	});
+		// } else {
+		// 	toast({
+		// 		variant: "destructive",
+		// 		title: "Uh oh! Something went wrong.",
+		// 		description: "There was a problem creating your contract.",
+		// 	});
+		// }
+	};
+	let a = "";
 	return (
 		<Form {...form}>
 			<form onSubmit={form.handleSubmit(onSubmit)} className="w-2/5">
@@ -94,24 +132,10 @@ const CreateContractForm = () => {
 
 				<FormField
 					control={form.control}
-					name="price"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Price (CAD)</FormLabel>
-							<FormControl>
-								<Input placeholder="$6000" {...field} />
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-
-				<FormField
-					control={form.control}
 					name="description"
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Description</FormLabel>
+							<FormLabel>Contract Description</FormLabel>
 							<FormControl>
 								<Textarea
 									{...field}
@@ -128,7 +152,7 @@ const CreateContractForm = () => {
 						<FormField
 							control={form.control}
 							key={field.id}
-							name={`features.${index}.name`}
+							name={`jobs.${index}.type`}
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel className={cn(index !== 0 && "sr-only")}>
@@ -138,12 +162,29 @@ const CreateContractForm = () => {
 										Add features to your contract that describe the job.
 									</FormDescription>
 									<div className="flex flex-row gap-2">
-										<FormControl>
-											<Input {...field} placeholder="Name"/>
+										<FormControl onChange={() => {
+											a = field.value;
+											console.log(a);
+										}}>
+											<SelectAdd {...form.register(`jobs.${index}.type`)} />
 										</FormControl>
-										<FormControl>
-											<Input {...register(`features.${index}.value`)} placeholder="Value" />
+										<FormControl onChange={() => {
+											a = field.value;
+											console.log(a);
+										}}>
+											<Input
+												{...form.register(`jobs.${index}.description`)}
+												placeholder="Value"
+											/>
 										</FormControl>
+										<Button
+											variant={"ghost"}
+											type="button"
+											size="sm"
+											onClick={() => remove(index)}
+										>
+											<CrossCircledIcon className="h-5 w-5" />
+										</Button>
 									</div>
 									<FormMessage />
 								</FormItem>
@@ -156,7 +197,7 @@ const CreateContractForm = () => {
 						variant="outline"
 						size="sm"
 						className="mt-2"
-						onClick={() => append({ name: "", value: "" })}
+						onClick={() => append({ type: "", description: "" })}
 					>
 						Add Feature
 					</Button>
