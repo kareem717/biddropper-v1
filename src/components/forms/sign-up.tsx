@@ -44,12 +44,12 @@ export function SignUpForm() {
 
 	function onSubmit(data: Inputs) {
 		if (!isLoaded) return;
-
+		console.log(data);
 		startTransition(async () => {
 			try {
 				await signUp.create({
-					firstName: "DatafirstName",
-					lastName: "DatalastName",
+					firstName: data.firstName,
+					lastName: data.lastName,
 					emailAddress: data.email,
 					password: data.password,
 				});
