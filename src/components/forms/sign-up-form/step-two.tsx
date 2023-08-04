@@ -2,7 +2,8 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
+import * as z from "zod";
+
 import { userSchema } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,18 +17,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/password-input";
 import { useMultistepFormContext } from "@/hooks/use-multistep-form";
-import { useTransition } from "react";
 import { Icons } from "@/components/icons";
 import { catchClerkError } from "@/lib/utils";
 
 const formSchema = userSchema.pick({ email: true, password: true });
+
 type Inputs = z.infer<typeof formSchema>;
 
 export function StepTwoForm() {
 	const { setFormValues, data, step, setStep, addProgress, clerkSignUp } =
 		useMultistepFormContext();
-	const [isPending, startTransition] = useTransition();
-	const {isLoaded, signUp} = clerkSignUp;
+	const { isLoaded, signUp } = clerkSignUp;
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(formSchema),
@@ -37,24 +37,25 @@ export function StepTwoForm() {
 		},
 		mode: "onBlur",
 	});
+	const formIsSubmitting = form.formState.isSubmitting;
 
-	function onSubmit(formDetails: Inputs) {
+	async function onSubmit(formDetails: Inputs) {
+		if (form.formState.submitCount > 0) return;
+
 		if (!isLoaded) return;
 
-		startTransition(async () => {
-			try {
-				await signUp.update({
-					emailAddress: formDetails.email,
-					password: formDetails.password,
-				});
+		try {
+			await signUp.update({
+				emailAddress: formDetails.email,
+				password: formDetails.password,
+			});
 
-				setFormValues(formDetails);
-				addProgress(25);
-				setStep(step + 1);
-			} catch (err) {
-				catchClerkError(err);
-			}
-		});
+			setFormValues(formDetails);
+			addProgress(25);
+			setStep(step + 1);
+		} catch (err) {
+			catchClerkError(err);
+		}
 	}
 
 	function prevStep() {
@@ -62,8 +63,6 @@ export function StepTwoForm() {
 		setStep(step - 1);
 		addProgress(-25);
 	}
-
-	console.log(data);
 
 	return (
 		<Form {...form}>
@@ -76,7 +75,7 @@ export function StepTwoForm() {
 					name="email"
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>First Name</FormLabel>
+							<FormLabel>Email</FormLabel>
 							<FormControl>
 								<Input placeholder="best-email@example.com" {...field} />
 							</FormControl>
@@ -89,7 +88,7 @@ export function StepTwoForm() {
 					name="password"
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Last Name</FormLabel>
+							<FormLabel>Password</FormLabel>
 							<FormControl>
 								<PasswordInput placeholder="*********" {...field} />
 							</FormControl>
@@ -98,8 +97,8 @@ export function StepTwoForm() {
 					)}
 				/>
 
-				{isPending ? (
-					<Button disabled={isPending}>
+				{formIsSubmitting ? (
+					<Button disabled={true} type={"button"}>
 						<Icons.spinner
 							className="mr-2 h-4 w-4 animate-spin"
 							aria-hidden="true"

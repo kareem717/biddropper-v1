@@ -55,20 +55,6 @@ export const userSchema = z.object({
 	gender: z.enum(["male", "female", "other"]),
 });
 
-export const signInSchema = userSchema.pick({
-	email: true,
-	password: true,
-});
-
-export const signUpSchema = userSchema
-	.extend({
-		confirmPassword: userSchema.shape.password,
-	})
-	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords do not match",
-		path: ["confirmPassword"],
-	});
-
 export const verfifyEmailSchema = z.object({
 	code: z
 		.string()

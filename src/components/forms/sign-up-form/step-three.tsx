@@ -22,7 +22,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useMultistepFormContext } from "@/hooks/use-multistep-form";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { catchClerkError, cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,7 +32,6 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Icons } from "@/components/icons";
-import { useTransition } from "react";
 import { toast } from "sonner";
 
 const formSchema = userSchema.pick({ birthDate: true, gender: true });
@@ -41,7 +40,6 @@ type Inputs = z.infer<typeof formSchema>;
 export function StepThreeForm() {
 	const { setFormValues, data, step, setStep, addProgress, clerkSignUp } =
 		useMultistepFormContext();
-	const [isPending, startTransition] = useTransition();
 	const { isLoaded, signUp } = clerkSignUp;
 
 	const eighteenYearsAgo = new Date(
@@ -56,32 +54,30 @@ export function StepThreeForm() {
 		},
 		mode: "onBlur",
 	});
+	const formIsSubmitting = form.formState.isSubmitting;
 
-	function onSubmit(formDetails: Inputs) {
+	async function onSubmit(formDetails: Inputs) {
+		if (form.formState.submitCount > 0) return;
 		if (!isLoaded) return;
+		try {
+			await signUp.update({
+				unsafeMetadata: {
+					birthDate: formDetails.birthDate,
+					gender: formDetails.gender,
+				},
+			});
 
-		startTransition(async () => {
-			try {
-				await signUp.update({
-					unsafeMetadata: {
-						birthDate: formDetails.birthDate,
-						gender: formDetails.gender,
-					},
-				});
+			await signUp.prepareEmailAddressVerification();
 
-				await signUp.prepareEmailAddressVerification();
-				
-				setFormValues(formDetails);
-				addProgress(25);
-				setStep(step + 1);
+			addProgress(25);
+			setStep(step + 1);
 
-				toast.message("Check your email", {
-          description: "We sent you a 6-digit verification code.",
-        })
-			} catch (err) {
-				catchClerkError(err);
-			}
-		});
+			toast.message("Check your email", {
+				description: "We sent you a 6-digit verification code.",
+			});
+		} catch (err) {
+			catchClerkError(err);
+		}
 	}
 
 	function prevStep() {
@@ -90,6 +86,7 @@ export function StepThreeForm() {
 		addProgress(-25);
 	}
 
+	console.log(data);
 
 	return (
 		<Form {...form}>
@@ -168,8 +165,8 @@ export function StepThreeForm() {
 						</FormItem>
 					)}
 				/>
-				{isPending ? (
-					<Button disabled={isPending}>
+				{formIsSubmitting ? (
+					<Button disabled={true} type={"button"}>
 						<Icons.spinner
 							className="mr-2 h-4 w-4 animate-spin"
 							aria-hidden="true"

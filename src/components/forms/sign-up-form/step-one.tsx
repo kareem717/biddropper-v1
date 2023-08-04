@@ -16,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useMultistepFormContext } from "@/hooks/use-multistep-form";
 import { catchClerkError } from "@/lib/utils";
-import { useTransition } from "react";
 import { Icons } from "@/components/icons";
 
 const formSchema = userSchema.pick({ firstName: true, lastName: true });
@@ -25,9 +24,7 @@ type Inputs = z.infer<typeof formSchema>;
 export function StepOneForm() {
 	const { setFormValues, data, step, setStep, addProgress, clerkSignUp } =
 		useMultistepFormContext();
-		const {isLoaded, signUp} = clerkSignUp;
-	const [isPending, startTransition] = useTransition();
-
+	const { isLoaded, signUp } = clerkSignUp;
 	const form = useForm<Inputs>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -36,24 +33,36 @@ export function StepOneForm() {
 		},
 		mode: "onBlur",
 	});
+	const formIsSubmitting = form.formState.isSubmitting;
 
-	function onSubmit(formDetails: Inputs) {
+	async function onSubmit(formDetails: Inputs) {
+		if (form.formState.submitCount > 0) return;
+
 		if (!isLoaded) return;
 
-		startTransition(async () => {
-			try {
+		try {
+			if (!signUp.firstName && !signUp.lastName) {
 				await signUp.create({
 					firstName: formDetails.firstName,
 					lastName: formDetails.lastName,
 				});
+			} else {
+				console.log("update");
 
-				setFormValues(formDetails);
-				addProgress(25);
-				setStep(step + 1);
-			} catch (err) {
-				catchClerkError(err);
+				await signUp.update({
+					firstName: formDetails.firstName,
+					lastName: formDetails.lastName,
+				});
 			}
-		});
+
+			setFormValues(formDetails);
+			addProgress(25);
+			setStep(step + 1);
+		} catch (err) {
+			console.log(err);
+
+			catchClerkError(err);
+		}
 	}
 
 	return (
@@ -89,8 +98,8 @@ export function StepOneForm() {
 					)}
 				/>
 
-				<Button disabled={isPending}>
-					{isPending ? (
+				<Button disabled={formIsSubmitting}>
+					{formIsSubmitting ? (
 						<Icons.spinner
 							className="mr-2 h-4 w-4 animate-spin"
 							aria-hidden="true"
