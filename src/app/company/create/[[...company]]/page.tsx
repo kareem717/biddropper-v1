@@ -14,8 +14,7 @@ import {
 } from "@/components/ui/card";
 import { OAuthSignIn } from "@/components/auth/oauth-signin";
 import { SignInForm } from "@/components/forms/sign-in";
-import { Shell } from "@/components/shells
-";
+import { Shell } from "@/components/shells";
 import { CreateCompanyForm } from "@/components/forms/create-company";
 
 export const metadata: Metadata = {
