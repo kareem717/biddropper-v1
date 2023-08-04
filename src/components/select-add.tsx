@@ -43,7 +43,7 @@ import { useImperativeHandle, forwardRef, useState, Ref } from "react";
 interface SelectAddProps {
 	dialogProps?: Partial<React.ComponentProps<typeof Dialog>>;
 	popoverProps?: Partial<React.ComponentProps<typeof Popover>>;
-	commandProps?: Partial<React.ComponentProps<typeof Command>>;
+	commandProps?: Partial<React.ComponentProps<typeof Command>>
 }
 
 const groups = [
