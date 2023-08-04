@@ -1,13 +1,8 @@
 "use client";
-
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { useSignIn } from "@clerk/nextjs";
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-
-import { catchClerkError } from "@/lib/utils";
 import { userSchema } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,47 +14,56 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Icons } from "@/components/icons";
 import { PasswordInput } from "@/components/password-input";
+import { useMultistepFormContext } from "@/hooks/use-multistep-form";
+import { useTransition } from "react";
+import { Icons } from "@/components/icons";
+import { catchClerkError } from "@/lib/utils";
 
 const formSchema = userSchema.pick({ email: true, password: true });
 type Inputs = z.infer<typeof formSchema>;
 
-export function SignInForm() {
-	const router = useRouter();
-	const { isLoaded, signIn, setActive } = useSignIn();
+export function StepTwoForm() {
+	const { setFormValues, data, step, setStep, addProgress, clerkSignUp } =
+		useMultistepFormContext();
 	const [isPending, startTransition] = useTransition();
+	const {isLoaded, signUp} = clerkSignUp;
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			email: "",
-			password: "",
+			email: data.email,
+			password: data.password,
 		},
+		mode: "onBlur",
 	});
 
-	function onSubmit(data: Inputs) {
+	function onSubmit(formDetails: Inputs) {
 		if (!isLoaded) return;
 
 		startTransition(async () => {
 			try {
-				const result = await signIn.create({
-					identifier: data.email,
-					password: data.password,
+				await signUp.update({
+					emailAddress: formDetails.email,
+					password: formDetails.password,
 				});
 
-				if (result.status === "complete") {
-					await setActive({ session: result.createdSessionId });
-
-					router.push(`${window.location.origin}/`);
-				} else {
-					console.log(result);
-				}
+				setFormValues(formDetails);
+				addProgress(25);
+				setStep(step + 1);
 			} catch (err) {
 				catchClerkError(err);
 			}
 		});
 	}
+
+	function prevStep() {
+		setFormValues(form.getValues());
+		setStep(step - 1);
+		addProgress(-25);
+	}
+
+	console.log(data);
 
 	return (
 		<Form {...form}>
@@ -72,9 +76,9 @@ export function SignInForm() {
 					name="email"
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Email</FormLabel>
+							<FormLabel>First Name</FormLabel>
 							<FormControl>
-								<Input placeholder="rodneymullen180@gmail.com" {...field} />
+								<Input placeholder="best-email@example.com" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -85,24 +89,35 @@ export function SignInForm() {
 					name="password"
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Password</FormLabel>
+							<FormLabel>Last Name</FormLabel>
 							<FormControl>
-								<PasswordInput placeholder="**********" {...field} />
+								<PasswordInput placeholder="*********" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
 					)}
 				/>
-				<Button disabled={isPending}>
-					{isPending && (
+
+				{isPending ? (
+					<Button disabled={isPending}>
 						<Icons.spinner
 							className="mr-2 h-4 w-4 animate-spin"
 							aria-hidden="true"
 						/>
-					)}
-					Sign in
-					<span className="sr-only">Sign in</span>
-				</Button>
+						<span className="sr-only">Loading</span>
+					</Button>
+				) : (
+					<div className="grid grid-cols-2 gap-4">
+						<Button type="button" onClick={prevStep} variant={"outline"}>
+							Back
+							<span className="sr-only">Go back</span>
+						</Button>
+						<Button type="submit">
+							Next
+							<span className="sr-only">Continue to next page</span>
+						</Button>
+					</div>
+				)}
 			</form>
 		</Form>
 	);

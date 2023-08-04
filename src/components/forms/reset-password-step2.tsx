@@ -30,7 +30,6 @@ export function ResetPasswordStep2Form() {
   const { isLoaded, signIn, setActive } = useSignIn()
   const [isPending, startTransition] = React.useTransition()
 
-  // react-hook-form
   const form = useForm<Inputs>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
