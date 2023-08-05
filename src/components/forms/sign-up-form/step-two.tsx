@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/password-input";
-import { useMultistepFormContext } from "@/hooks/use-multistep-form";
+import { useMultistepFormContext } from "@/components/multistep-form-context";
 import { Icons } from "@/components/icons";
 import { catchClerkError } from "@/lib/utils";
 

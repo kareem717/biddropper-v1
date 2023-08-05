@@ -14,7 +14,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useMultistepFormContext } from "@/hooks/use-multistep-form";
+import { useMultistepFormContext } from "@/components/multistep-form-context";
 import { catchClerkError } from "@/lib/utils";
 import { Icons } from "@/components/icons";
 

@@ -21,7 +21,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useMultistepFormContext } from "@/hooks/use-multistep-form";
+import { useMultistepFormContext } from "@/components/multistep-form-context";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { catchClerkError, cn } from "@/lib/utils";
@@ -34,7 +34,11 @@ import {
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
 
-const formSchema = userSchema.pick({ birthDate: true, gender: true });
+const formSchema = userSchema.pick({
+	birthDate: true,
+	gender: true,
+	profileImage: true,
+});
 type Inputs = z.infer<typeof formSchema>;
 
 export function StepThreeForm() {
@@ -58,6 +62,7 @@ export function StepThreeForm() {
 
 	async function onSubmit(formDetails: Inputs) {
 		if (form.formState.submitCount > 0) return;
+
 		if (!isLoaded) return;
 		try {
 			await signUp.update({

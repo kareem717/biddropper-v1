@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Icons } from "@/components/icons";
-import { useMultistepFormContext } from "@/hooks/use-multistep-form";
+import { useMultistepFormContext } from "@/components/multistep-form-context";
 
 type Inputs = z.infer<typeof verfifyEmailSchema>;
 
@@ -53,7 +53,6 @@ export function StepFourForm() {
 				});
 			}
 			if (completeSignUp.status === "complete") {
-				setFormValues(formDetails);
 				addProgress(25);
 
 				await setActive({ session: completeSignUp.createdSessionId });

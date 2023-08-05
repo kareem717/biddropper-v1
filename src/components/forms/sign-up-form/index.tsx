@@ -2,8 +2,8 @@
 import { StepOneForm } from "./step-one";
 import { StepThreeForm } from "./step-three";
 import { StepTwoForm } from "./step-two";
-import {StepFourForm} from "./step-four";
-import { MultistepFormContext } from "@/hooks/use-multistep-form";
+import { StepFourForm } from "./step-four";
+import { MultistepFormContext } from "@/components/multistep-form-context";
 import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { useSignUp } from "@clerk/nextjs";

@@ -2,7 +2,10 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { ModeToggle } from "@/components/ui/mode-toggle";
+
 const roboto = Roboto({ weight: "400", subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -19,8 +22,13 @@ export default function RootLayout({
 		<ClerkProvider>
 			<html lang="en">
 				<body className={roboto.className}>
-					{children}
-				<Toaster />
+					<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+						<nav>
+							<ModeToggle />
+						</nav>
+						{children}
+						<Toaster />
+					</ThemeProvider>
 				</body>
 			</html>
 		</ClerkProvider>

@@ -15,6 +15,7 @@ function Calendar({
 	showOutsideDays = true,
 	...props
 }: CalendarProps) {
+	
 	function CustomCaption(props: CaptionProps) {
 		const { previousMonth, nextMonth, goToMonth, currentMonth } =
 			useNavigation();

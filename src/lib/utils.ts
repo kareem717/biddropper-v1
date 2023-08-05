@@ -4,6 +4,7 @@ import { env } from "@/env.mjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs";
 import { toast } from "sonner";
 import * as z from "zod";
+import { Clerk } from "@clerk/backend";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -23,3 +24,9 @@ export function catchClerkError(err: unknown) {
 		return toast.error(unknownErr);
 	}
 }
+
+// export function clerkBackend() {
+// 	const clerk = Clerk({apiKey: env["CLERK_SECRET_KEY"]})
+
+// 	return clerk;
+// }
