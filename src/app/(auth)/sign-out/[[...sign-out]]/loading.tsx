@@ -1,11 +1,8 @@
-import { LogOutButtons } from "@/components/auth/logout-buttons"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Header } from "@/components/header"
 import { Shell } from "@/components/shells"
 
-// Running out of edge function execution units on vercel free plan
-// export const runtime = "edge"
-
-export default function SignOutPage() {
+export default function SignOutLoading() {
   return (
     <Shell className="max-w-xs">
       <Header
@@ -14,7 +11,10 @@ export default function SignOutPage() {
         size="sm"
         className="text-center"
       />
-      <LogOutButtons />
+      <div className="flex w-full items-center space-x-2">
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-8 w-20" />
+      </div>
     </Shell>
   )
 }

@@ -11,6 +11,9 @@ export const userSchema = z.object({
 		})
 		.max(50, {
 			message: "First name must be at most 50 characters long",
+		})
+		.refine((data) => /^[a-zA-Z()]+$/.test(data), {
+			message: "First name must only contain letters",
 		}),
 	lastName: z
 		.string()
@@ -19,6 +22,9 @@ export const userSchema = z.object({
 		})
 		.max(50, {
 			message: "Last name must be at most 50 characters long",
+		})
+		.refine((data) => /^[a-zA-Z()]+$/.test(data), {
+			message: "Last name must only contain letters",
 		}),
 	email: z.string().email({
 		message: "Please enter a valid email address",
