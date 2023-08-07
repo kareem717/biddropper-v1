@@ -27,7 +27,7 @@ export default async function SignInPage() {
 	if (user) redirect("/");
 
 	return (
-		<Shell className="max-w-lg">
+		<Shell className="max-w-lg bg-black bg-cover">
 			<Card>
 				<CardHeader className="space-y-1">
 					<CardTitle className="text-2xl">Sign in</CardTitle>

@@ -1,8 +1,5 @@
 import * as z from "zod";
-const MB_BYTES = 1000000; // Number of bytes in a megabyte.
 
-// This is the list of mime types you will accept with the schema
-const ACCEPTED_MIME_TYPES = ["image/gif", "image/jpeg", "image/png"];
 export const userSchema = z.object({
 	firstName: z
 		.string()
