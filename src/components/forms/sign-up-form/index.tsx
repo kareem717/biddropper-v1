@@ -3,6 +3,7 @@ import { StepOneForm } from "./step-one";
 import { StepThreeForm } from "./step-three";
 import { StepTwoForm } from "./step-two";
 import { StepFourForm } from "./step-four";
+//TODO: get rid of MultiStepFormContext for zustand
 import { MultistepFormContext } from "@/components/multistep-form-context";
 import { useState } from "react";
 import { Progress } from "@/components/ui/progress";

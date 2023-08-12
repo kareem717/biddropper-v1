@@ -12,21 +12,22 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Shell } from "@/components/shells";
-import { CreateCompanyForm } from "@/components/forms/create-company";
+import  CreateContractForm from "@/components/forms/create-contract-form";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const metadata: Metadata = {
 	metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
-	title: "Create a Company",
-	description: "Register your company on our platform",
+	title: "Create a Contract",
+	description: "Find the right people to work with",
 };
 
-export default async function CreateCompanyPage() {
+export default async function CreateContractPage() {
 	const user = await currentUser();
 	if (!user) redirect("/");
 
 	return (
-		<Shell className="max-w-lg">
-			<Card>
+		<Shell className="max-w-lg" variant={"centered"}>
+			<Card className="w-[75vw] lg:w-[min(85vw,950px)]">
 				<CardHeader className="space-y-1">
 					<CardTitle className="text-2xl">Create your company</CardTitle>
 					<CardDescription>
@@ -34,7 +35,7 @@ export default async function CreateCompanyPage() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="grid gap-4">
-					<CreateCompanyForm />
+					<CreateContractForm />
 				</CardContent>
 				<CardFooter className="flex flex-wrap items-center justify-between gap-2"></CardFooter>
 			</Card>

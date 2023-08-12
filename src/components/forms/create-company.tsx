@@ -264,7 +264,7 @@ export function CreateCompanyForm() {
 						type="button"
 						variant="outline"
 						size="sm"
-						className="mt-2"
+						className="mt-2 w-full"
 						onClick={() => {
 							if (fields.length >= 2) {
 								form.setError(`invitees.1.email`, {

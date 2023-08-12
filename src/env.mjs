@@ -16,6 +16,7 @@ export const env = createEnv({
 		CLERK_SESSION_WEBHOOK_SECRET: z.string().min(1),
 		UPLOADTHING_SECRET: z.string().min(1),
 		UPLOADTHING_APP_ID: z.string().min(1),
+		GOOGLE_MAPS_JAVASCRIPT_API_KEY: z.string().min(1),
 	},
 
 	client: {
@@ -51,6 +52,7 @@ export const env = createEnv({
 		NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
 		NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
 		UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
+		GOOGLE_MAPS_JAVASCRIPT_API_KEY: process.env.GOOGLE_MAPS_JAVASCRIPT_API_KEY,
 		UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
 	},
 
