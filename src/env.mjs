@@ -17,6 +17,11 @@ export const env = createEnv({
 		UPLOADTHING_SECRET: z.string().min(1),
 		UPLOADTHING_APP_ID: z.string().min(1),
 		GOOGLE_MAPS_JAVASCRIPT_API_KEY: z.string().min(1),
+		NEXTAUTH_SECRET: z.string().min(1),
+		GITHUB_CLIENT_ID: z.string().min(1),
+		GITHUB_CLIENT_SECRET: z.string().min(1),
+		GOOGLE_CLIENT_ID: z.string().min(1),
+		GOOGLE_CLIENT_SECRET: z.string().min(1),
 	},
 
 	client: {
@@ -54,6 +59,11 @@ export const env = createEnv({
 		UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
 		GOOGLE_MAPS_JAVASCRIPT_API_KEY: process.env.GOOGLE_MAPS_JAVASCRIPT_API_KEY,
 		UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
+		NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+		GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+		GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+		GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+		GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 	},
 
 	skipValidation: !!process.env.SKIP_ENV_VALIDATION,

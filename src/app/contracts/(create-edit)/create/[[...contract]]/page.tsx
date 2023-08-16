@@ -12,7 +12,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Shell } from "@/components/shells";
-import  CreateContractForm from "@/components/forms/create-contract-form";
+import  CreateContractForm from "@/components/forms/create-bundle";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const metadata: Metadata = {
@@ -27,18 +27,18 @@ export default async function CreateContractPage() {
 
 	return (
 		<Shell className="max-w-lg" variant={"centered"}>
-			<Card className="w-[75vw] lg:w-[min(85vw,950px)]">
+			{/* <Card className="w-[75vw] lg:w-[min(85vw,950px)]">
 				<CardHeader className="space-y-1">
 					<CardTitle className="text-2xl">Create your company</CardTitle>
 					<CardDescription>
 						Register your company to find future leads
 					</CardDescription>
-				</CardHeader>
-				<CardContent className="grid gap-4">
+				</CardHeader> */}
+				{/* <CardContent className="grid gap-4"> */}
 					<CreateContractForm />
-				</CardContent>
+				{/* </CardContent>
 				<CardFooter className="flex flex-wrap items-center justify-between gap-2"></CardFooter>
-			</Card>
+			</Card> */}
 		</Shell>
 	);
 }

@@ -40,15 +40,18 @@
     "@uploadthing/react": "^5.2.0",
     "autoprefixer": "10.4.14",
     "aws-sdk": "^2.1425.0",
+    "bcrypt": "^5.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "cmdk": "^0.2.0",
     "date-fns": "^2.30.0",
     "dotenv": "^16.3.1",
     "drizzle-orm": "^0.27.2",
+    "drizzle-zod": "^0.5.0",
     "eslint": "8.45.0",
     "eslint-config-next": "13.4.12",
     "lucide-react": "^0.263.1",
+    "nanoid": "^4.0.2",
     "next": "13.4.12",
     "next-auth": "^4.23.0",
     "next-themes": "^0.2.1",
@@ -71,6 +74,7 @@
     "zustand": "^4.3.9"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/google.maps": "^3.53.6",
     "drizzle-kit": "^0.19.12"
   }

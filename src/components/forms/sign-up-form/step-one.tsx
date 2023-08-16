@@ -28,8 +28,8 @@ export function StepOneForm() {
 	const form = useForm<Inputs>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			firstName: data.firstName,
-			lastName: data.lastName,
+			firstName: "data.firstName",
+			lastName: "data.lastName",
 		},
 		mode: "onBlur",
 	});

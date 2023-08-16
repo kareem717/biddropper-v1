@@ -43,7 +43,7 @@ import { useImperativeHandle, forwardRef, useState, Ref } from "react";
 interface SelectAddProps {
 	dialogProps?: Partial<React.ComponentProps<typeof Dialog>>;
 	popoverProps?: Partial<React.ComponentProps<typeof Popover>>;
-	commandProps?: Partial<React.ComponentProps<typeof Command>>
+	commandProps?: Partial<React.ComponentProps<typeof Command>>;
 }
 
 const groups = [
@@ -71,7 +71,7 @@ const formSchema = z.object({
 });
 
 const SelectAdd = (
-	{ dialogProps, popoverProps, commandProps}: SelectAddProps,
+	{ dialogProps, popoverProps, commandProps }: SelectAddProps,
 	ref: Ref<{ getTrade: () => string }>
 ) => {
 	const [popoverOpen, setPopoverOpen] = useState(false);

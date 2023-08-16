@@ -25,8 +25,3 @@ export function catchClerkError(err: unknown) {
 	}
 }
 
-// export function clerkBackend() {
-// 	const clerk = Clerk({apiKey: env["CLERK_SECRET_KEY"]})
-
-// 	return clerk;
-// }

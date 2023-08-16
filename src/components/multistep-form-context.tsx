@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react"; 
 
 type MultistepFormContextType = {
-	data: any;
+	data: object;
 	step: number;
 	setFormValues: (values: any) => void;
 	setStep: (step: number) => void;
