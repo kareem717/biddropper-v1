@@ -58,7 +58,7 @@ export const bundles = mysqlTable(
 	{
 		id: serial("id").notNull(),
 		isActive: tinyint("is_active").default(1).notNull(),
-		userId: varchar("user_id", { length: 191 }).default("").notNull(),
+		userId: varchar("user_id", { length: 50 }).default("").notNull(),
 		title: varchar("title", { length: 100 }).default("").notNull(),
 		description: varchar("description", { length: 750 }).default(""),
 		createdAt: timestamp("created_at", { mode: "string" })
@@ -95,7 +95,7 @@ export const jobs = mysqlTable(
 		industry: varchar("industry", { length: 255 }).notNull(),
 		title: varchar("title", { length: 50 }).notNull(),
 		summary: varchar("summary", { length: 400 }).notNull(),
-		budget: int("budget"),
+		budget: decimal("budget", { precision: 9, scale: 2 }).notNull(),
 		currencyType: mysqlEnum("currency_type", ["usd", "cad", "eur"]),
 		createdAt: timestamp("created_at", { mode: "string" })
 			.default(sql`CURRENT_TIMESTAMP`)
@@ -115,4 +115,3 @@ export const jobs = mysqlTable(
 		};
 	}
 );
-

@@ -24,9 +24,9 @@ export default function RootLayout({
 				<body className={roboto.className}>
 					<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
 						{/* <div className="relative"> */}
-							{/* <nav className="fixed h-[40px] md:h-[60px] w-full bg-white bg-cover">
+							<nav className="fixed h-[40px] md:h-[60px] w-full bg-white bg-cover">
 								<ModeToggle />
-							</nav> */}
+							</nav>
 							{children}
 							<Toaster />
 						{/* </div> */}

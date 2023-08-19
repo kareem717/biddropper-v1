@@ -1,8 +1,8 @@
-import { contractJobSchema } from "@/types/contract";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { DateRange } from "react-day-picker";
 import { Input } from "@/components/ui/input";
 import {
 	Dialog,
@@ -41,52 +41,102 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
-import { catchClerkError, cn } from "@/lib/utils";
-// import { useAddJobDialog } from "@/hooks/use-create-bundle";
-import { toast } from "sonner";
-import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-type Inputs = z.infer<typeof contractJobSchema>;
+import { insertJobSchema } from "@/lib/validations/posts";
+import CurrencyInput from "@/components/currency-input";
+import { useMultistepForm } from "@/hooks/use-multistep-form";
+import { toast } from "sonner";
 
+const formSchema = insertJobSchema
+	.extend({
+		dateRange: z.object({
+			dateFrom: insertJobSchema.shape.dateFrom,
+			dateTo: insertJobSchema.shape.dateTo,
+		}),
+	})
+	.omit({
+		id: true,
+		userId: true,
+		isActive: true,
+		bundleId: true,
+		createdAt: true,
+		updatedAt: true,
+		dateFrom: true,
+		dateTo: true,
+	});
+
+type Inputs = z.infer<typeof formSchema>;
+// TODO: ZOD PARSE FAIL
 const AddJobDialog = () => {
+	const [value, setValue] = React.useState<Inputs["budget"] | undefined>(1);
+	const { addFormData, formData } = useMultistepForm();
+	const [currency, setCurrency] = React.useState<"usd" | "cad" | "eur">("usd");
+
+	console.log(value);
 	const today = new Date();
-	const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+	const tomorrow = new Date(today);
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	console.log(tomorrow);
 	const [open, setOpen] = React.useState(false);
-	// const { formData, addFormData } = useAddJobDialog();
+	const [date, setDate] = React.useState<DateRange | undefined>({
+		from: tomorrow,
+		to: undefined,
+	});
 
 	const form = useForm<Inputs>({
-		resolver: zodResolver(contractJobSchema),
+		resolver: zodResolver(formSchema),
 		defaultValues: {
-			serviceCategory: "",
+			industry: undefined,
 			summary: "",
 			budget: undefined,
 			dateRange: {
-				from: tomorrow,
-				to: undefined,
+				dateFrom: tomorrow,
+				dateTo: undefined,
 			},
+			currencyType: "usd",
 			propertyType: "residential",
 		},
+		mode: "onBlur",
 	});
+
 	const formIsSubmitting = form.formState.isSubmitting;
+	// const handleValueChange = (newValue: number) => {
+	// 	form.setValue("budget", newValue);
+	// 	setValue(newValue);
+	// };
 
+	console.log(form.getValues());
 	const onSubmit = async (data: Inputs) => {
-		setOpen(false);
-		// if (form.formState.submitCount > 0) {
-		// 	toast.error("Stop clicking so fast!", {
-		// 		description: "Job has alredy been added.",
-		// 	});
-		// 	return;
-		// }
+		data.currencyType = currency;
 
-		try {
-			// addFormData(form.getValues());
-			form.reset();
-		} catch (err) {
-			catchClerkError(err);
-			console.log(err);
+		const jobs = formData.jobs || [];
+
+		if (jobs.some((job) => job.title === data.title)) {
+			toast.error("You already have a job with that title");
+			return;
 		}
+
+		if (jobs.length === 0) {
+			addFormData({ jobs: [data] });
+		} else {
+			addFormData({ jobs: [...jobs, data] });
+		}
+
+		setOpen(false);
+		setDate({ from: tomorrow, to: undefined });
+		setCurrency("usd");
+		setValue(1);
+		form.reset();
 	};
-	console.log(23);
+
+	console.log(formData);
+
+	const currencyTypes = [
+		{ currency: "USD", icon: Icons.dollarSign },
+		{ currency: "EUR", icon: Icons.euro },
+		{ currency: "CAD", icon: Icons.dollarSign },
+	];
 
 	return (
 		<Dialog
@@ -97,7 +147,7 @@ const AddJobDialog = () => {
 			}}
 		>
 			<DialogTrigger asChild>
-				<Button variant="outline">Add a job</Button>
+				<Button variant="outline" className="w-full mt-6">Add Job</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
@@ -107,12 +157,13 @@ const AddJobDialog = () => {
 						plan.
 					</DialogDescription>
 				</DialogHeader>
-				<ScrollArea className="h-[40vh] lg:h-[55vh]">
+				<div className="h-[40vh] lg:h-[55vh] overflow-auto">
 					<Form {...form}>
 						<form
 							className="felx flex-col space-y-8 mx-1"
 							onSubmit={(...args) => void form.handleSubmit(onSubmit)(...args)}
 						>
+							{/* Title */}
 							<FormField
 								control={form.control}
 								name={`title`}
@@ -127,6 +178,7 @@ const AddJobDialog = () => {
 									</FormItem>
 								)}
 							/>
+							{/* Summary */}
 							<FormField
 								control={form.control}
 								name={`summary`}
@@ -144,9 +196,10 @@ const AddJobDialog = () => {
 									</FormItem>
 								)}
 							/>
+							{/* Industry Select */}
 							<FormField
 								control={form.control}
-								name={`serviceCategory`}
+								name={"industry"}
 								render={({ field }) => (
 									<FormItem className="flex flex-col space-y-2">
 										<FormLabel>Industry</FormLabel>
@@ -187,10 +240,7 @@ const AddJobDialog = () => {
 																		value={category.label}
 																		key={category.value}
 																		onSelect={() => {
-																			form.setValue(
-																				"serviceCategory",
-																				category.value
-																			);
+																			form.setValue("industry", category.value);
 																		}}
 																		className="truncate w-full"
 																	>
@@ -219,7 +269,7 @@ const AddJobDialog = () => {
 									</FormItem>
 								)}
 							/>
-
+							{/* Budget */}
 							<FormField
 								control={form.control}
 								name={`budget`}
@@ -228,23 +278,38 @@ const AddJobDialog = () => {
 										<FormLabel>Budget</FormLabel>
 										<FormControl>
 											<div className="relative">
-												<Input {...field} placeholder="" inputMode="numeric" />
-												<Icons.dollarSign className="ml-2 h-4 w-4 shrink-0 opacity-50 absolute right-0 top-0  px-3 py-2 hover:bg-transparent" />
+												<CurrencyInput
+													value={field.value}
+													onChange={(budget) => {
+														field.onChange(`${budget}`);
+													}}
+													onCurrencyChange={(currency) => {
+														if (
+															currency === "usd" ||
+															currency === "cad" ||
+															currency === "eur"
+														) {
+															console.log(currency);
+															setCurrency(currency);
+															form.setValue("currencyType", currency);
+														}
+													}}
+													max={2500000}
+													currencies={currencyTypes}
+													currencyValue="USD"
+													required
+												/>
 											</div>
-											{/* <>
-												<Icons.dollarSign className="ml-2 h-4 w-4 shrink-0 opacity-50 " />
-												<Input {...field} placeholder="" inputMode="numeric" />
-											</> */}
-											{/* </Input> */}
 										</FormControl>
 										<FormDescription>
 											How much are you willing to pay for this job?
 										</FormDescription>
+
 										<FormMessage />
 									</FormItem>
 								)}
 							/>
-
+							{/* Date Picker */}
 							<FormField
 								control={form.control}
 								name={`dateRange`}
@@ -259,35 +324,39 @@ const AddJobDialog = () => {
 															variant={"outline"}
 															className={cn(
 																"w-full pl-3 text-left font-normal",
-																!field.value?.from && "text-muted-foreground"
+																!date && "text-muted-foreground"
 															)}
 														>
 															<Icons.calendar className="mr-2 h-4 w-4" />
-															<span className="truncate">
-																{field.value?.from ? (
-																	field.value.to ? (
-																		<>
-																			{format(field.value.from, "LLL do, y")} -{" "}
-																			{format(field.value.to, "LLL do, y")}
-																		</>
-																	) : (
-																		format(field.value.from, "LLL dd, y")
-																	)
+															{date?.from ? (
+																date.to ? (
+																	<>
+																		{format(date.from, "LLL dd, y")} -{" "}
+																		{format(date.to, "LLL dd, y")}
+																	</>
 																) : (
-																	<span>Pick a date</span>
-																)}
-															</span>
+																	format(date.from, "LLL dd, y")
+																)
+															) : (
+																<span>Pick a date</span>
+															)}
 														</Button>
 													</FormControl>
 												</PopoverTrigger>
 												<PopoverContent className="w-auto p-0" align="start">
 													<Calendar
-														mode="range"
-														defaultMonth={new Date()}
-														selected={field.value}
-														onSelect={field.onChange}
-														disabled={(date) => date < new Date()}
 														initialFocus
+														mode="range"
+														defaultMonth={date?.from}
+														selected={date}
+														onSelect={(date) => {
+															if (date && date.from !== undefined) {
+																setDate(date);
+																form.setValue("dateRange.dateFrom", date.from);
+																form.setValue("dateRange.dateTo", date?.to);
+															}
+														}}
+														disabled={(date) => date && date < new Date()}
 													/>
 												</PopoverContent>
 											</Popover>
@@ -299,7 +368,7 @@ const AddJobDialog = () => {
 									</FormItem>
 								)}
 							/>
-
+							{/* Property Type */}
 							<FormField
 								control={form.control}
 								name={`propertyType`}
@@ -335,13 +404,15 @@ const AddJobDialog = () => {
 							/>
 						</form>
 					</Form>
-				</ScrollArea>
+				</div>
 
 				<DialogFooter>
 					<Button
 						disabled={formIsSubmitting}
 						type="button"
 						onClick={() => {
+							console.log(form.getValues());
+							// formSchema.parse(form.getValues());
 							form.handleSubmit(onSubmit)();
 						}}
 					>

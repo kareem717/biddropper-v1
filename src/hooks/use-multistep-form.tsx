@@ -1,7 +1,22 @@
 import { create, useStore } from "zustand";
 
+type Job = {
+	industry: string;
+	title: string;
+	summary: string;
+	budget: number;
+	currencyType: string;
+	propertyType: string;
+	dateRange: {
+		dateFrom: Date;
+		dateTo: Date | undefined;
+	};
+};
+
 interface MultistepFormState {
-	formData: {};
+	formData: {
+		jobs?: Job[];
+	};
 	step: number;
 	nextStep: () => void;
 	prevStep: () => void;

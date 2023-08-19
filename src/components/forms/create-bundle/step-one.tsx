@@ -14,21 +14,22 @@ import { useMultistepForm } from "@/hooks/use-multistep-form";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertBundleSchema } from "@/lib/validations/posts";
 import { z } from "zod";
+import { insertBundleSchema } from "@/lib/validations/posts";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Icons } from "@/components/icons";
 
+const formSchema = insertBundleSchema.pick({
+	title: true,
+	description: true,
+	posterType: true,
+	bundleType: true,
+});
+
+type Inputs = z.infer<typeof formSchema>;
+
 function StepOne() {
 	const { nextStep, addFormData } = useMultistepForm();
-	const formSchema = insertBundleSchema.pick({
-		title: true,
-		description: true,
-		posterType: true,
-		bundleType: true,
-	});
-
-	type Inputs = z.infer<typeof formSchema>;
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(formSchema),

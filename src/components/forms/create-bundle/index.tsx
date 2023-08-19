@@ -17,29 +17,22 @@ import { redirect } from "next/navigation";
 import StepOne from "./step-one";
 import StepTwo from "./step-two";
 import { useMultistepForm } from "@/hooks/use-multistep-form";
-
-const formSchema = createContractSchema.omit({
-	jobs: true,
-});
-type Inputs = z.infer<typeof formSchema>;
+import StepThree from "./step-three";
+import StepFour from "./step-four";
 
 export default function CreateContractForm() {
 	const { step } = useMultistepForm();
 	const { userId } = useAuth();
+	const { formData } = useMultistepForm();
+	const forms = [
+		<StepOne key="step-one" />,
+		<StepTwo key="step-two" />,
+		<StepThree key="step-three" />,
+		<StepFour key="step-four" />,
+	];
 
 	if (!userId) redirect("/sign-in");
-
-	const form = useForm<Inputs>({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			userId,
-			title: "",
-			description: "",
-		},
-	});
-
-	const formIsSubmitting = form.formState.isSubmitting;
-
+	console.log(formData);
 	return (
 		<Card className="w-[75vw] lg:w-[min(85vw,950px)]">
 			<CardHeader>
@@ -48,7 +41,7 @@ export default function CreateContractForm() {
 					Wrap up some jobs together to post as a bundle
 				</CardDescription>
 			</CardHeader>
-			<CardContent>{step === 1 ? <StepOne /> : <StepTwo />}</CardContent>
+			<CardContent>{forms[step]}</CardContent>
 		</Card>
 	);
 }

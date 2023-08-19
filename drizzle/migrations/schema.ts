@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, primaryKey, varchar, int, text, index, decimal, mysqlEnum, timestamp, serial, tinyint } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, primaryKey, varchar, int, text, timestamp, index, decimal, mysqlEnum, serial, tinyint } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 
@@ -30,6 +30,8 @@ export const addresses = mysqlTable("addresses", {
 	region: varchar("region", { length: 50 }).notNull(),
 	postalCode: varchar("postal_code", { length: 10 }).notNull(),
 	country: varchar("country", { length: 60 }).notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 },
 (table) => {
 	return {
@@ -69,7 +71,7 @@ export const bundleMedia = mysqlTable("bundle_media", {
 export const bundles = mysqlTable("bundles", {
 	id: serial("id").notNull(),
 	isActive: tinyint("is_active").default(1).notNull(),
-	userId: varchar("user_id", { length: 191 }).default('').notNull(),
+	userId: varchar("user_id", { length: 50 }).default('').notNull(),
 	title: varchar("title", { length: 100 }).default('').notNull(),
 	description: varchar("description", { length: 750 }).default(''),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
@@ -94,7 +96,7 @@ export const jobs = mysqlTable("jobs", {
 	industry: varchar("industry", { length: 255 }).notNull(),
 	title: varchar("title", { length: 50 }).notNull(),
 	summary: varchar("summary", { length: 400 }).notNull(),
-	budget: int("budget"),
+	budget: decimal("budget", { precision: 9, scale: 2 }).notNull(),
 	currencyType: mysqlEnum("currency_type", ['usd','cad','eur']),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
