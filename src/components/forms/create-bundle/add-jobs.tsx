@@ -11,7 +11,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import AddJobDialog from "./add-job-dialog";
-import { serviceCategories } from "@/config/services";
+import { industries } from "@/config/industries";
 import { format } from "date-fns";
 
 function AddJobsForm() {
@@ -38,7 +38,7 @@ function AddJobsForm() {
 				</TableHeader>
 				<TableBody>
 					{formData.jobs?.map((job) => {
-						const serviceCategory = serviceCategories.find(
+						const serviceCategory = industries.find(
 							(category) => category.value === job.industry
 						);
 						return (

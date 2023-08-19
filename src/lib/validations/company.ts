@@ -1,7 +1,7 @@
 import * as z from "zod";
-import { serviceCategories } from "@/config/services";
+import { industries } from "@/config/industries";
 
-const serviceValues = serviceCategories.map((category) => category.value) as [
+const serviceValues = industries.map((category) => category.value) as [
 	string,
 	...string[]
 ];

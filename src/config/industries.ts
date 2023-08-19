@@ -1,4 +1,4 @@
-export const serviceCategories = [
+export const industries = [
 	{ label: "Concrete Contractors", value: "concrete-contractors" },
 	{ label: "Piano Moving & Tuning", value: "piano-moving-tuning" },
 	{ label: "Closet & Storage Solutions", value: "closet-storage-solutions" },
@@ -200,4 +200,4 @@ export const serviceCategories = [
 	{ label: "Furniture Rental", value: "furniture-rental" },
 ];
 
-export const industryValues = serviceCategories.map((category) => category.value);
+export const industryValues = industries.map((category) => category.value);

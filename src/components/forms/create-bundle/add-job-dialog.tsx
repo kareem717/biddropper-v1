@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import React from "react";
 import { Icons } from "@/components/icons";
 import { Textarea } from "@/components/ui/textarea";
-import { serviceCategories } from "@/config/services";
+import { industries } from "@/config/industries";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -68,19 +68,26 @@ const formSchema = insertJobSchema
 
 type Inputs = z.infer<typeof formSchema>;
 
+// TODO: Need to shorten this component somehow
 const AddJobDialog = () => {
-	const { addFormData, formData } = useMultistepForm();
-	const [currency, setCurrency] = React.useState<"usd" | "cad" | "eur">("usd");
-
 	const today = new Date();
 	const tomorrow = new Date(today);
 	tomorrow.setDate(tomorrow.getDate() + 1);
 
+	const currencyTypes = [
+		{ currency: "USD", icon: Icons.dollarSign },
+		{ currency: "EUR", icon: Icons.euro },
+		{ currency: "CAD", icon: Icons.dollarSign },
+	];
+
+	const [currency, setCurrency] = React.useState<"usd" | "cad" | "eur">("usd");
 	const [open, setOpen] = React.useState(false);
 	const [date, setDate] = React.useState<DateRange | undefined>({
 		from: tomorrow,
 		to: undefined,
 	});
+
+	const { addFormData, formData } = useMultistepForm();
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(formSchema),
@@ -100,7 +107,6 @@ const AddJobDialog = () => {
 
 	const formIsSubmitting = form.formState.isSubmitting;
 
-	console.log(form.getValues());
 	const onSubmit = async (data: Inputs) => {
 		data.currencyType = currency;
 
@@ -122,14 +128,6 @@ const AddJobDialog = () => {
 		setCurrency("usd");
 		form.reset();
 	};
-
-	console.log(formData);
-
-	const currencyTypes = [
-		{ currency: "USD", icon: Icons.dollarSign },
-		{ currency: "EUR", icon: Icons.euro },
-		{ currency: "CAD", icon: Icons.dollarSign },
-	];
 
 	return (
 		<Dialog
@@ -212,13 +210,12 @@ const AddJobDialog = () => {
 														>
 															<span className="truncate">
 																{field.value
-																	? serviceCategories.find(
+																	? industries.find(
 																			(category) =>
 																				category.value === field.value
 																	  )?.label
 																	: "Select industry"}
 															</span>
-
 															<Icons.chevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 														</Button>
 													</FormControl>
@@ -229,7 +226,7 @@ const AddJobDialog = () => {
 														<CommandEmpty>No industry found.</CommandEmpty>
 														<ScrollArea className="h-[max(80px,20vh)]">
 															<CommandGroup>
-																{serviceCategories.map((category) => (
+																{industries.map((category) => (
 																	<CommandItem
 																		{...field}
 																		value={category.label}
@@ -275,7 +272,6 @@ const AddJobDialog = () => {
 											<div className="relative">
 												<CurrencyInput
 													onChange={(budget) => {
-														console.log(budget)
 														field.onChange(`${budget}`);
 													}}
 													onCurrencyChange={(currency) => {
@@ -284,7 +280,6 @@ const AddJobDialog = () => {
 															currency === "cad" ||
 															currency === "eur"
 														) {
-															console.log(currency);
 															setCurrency(currency);
 															form.setValue("currencyType", currency);
 														}
@@ -300,7 +295,6 @@ const AddJobDialog = () => {
 										<FormDescription>
 											How much are you willing to pay for this job?
 										</FormDescription>
-
 										<FormMessage />
 									</FormItem>
 								)}
@@ -407,8 +401,6 @@ const AddJobDialog = () => {
 						disabled={formIsSubmitting}
 						type="button"
 						onClick={() => {
-							console.log(form.getValues());
-							// formSchema.parse(form.getValues());
 							form.handleSubmit(onSubmit)();
 						}}
 					>

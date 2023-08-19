@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { bundles, jobs } from "@/db/schema/posts";
 import * as z from "zod";
-import { industryValues } from "@/config/services";
+import { industryValues } from "@/config/industries";
 
 export const insertBundleSchema = z.object({
 	title: z

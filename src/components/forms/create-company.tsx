@@ -33,7 +33,7 @@ import CreateClerkOrg from "@/app/_actions/create-clerk-org";
 import { catchClerkError, cn } from "@/lib/utils";
 import { redirect, useRouter } from "next/navigation";
 import { Icons } from "../icons";
-import { serviceCategories } from "@/config/services";
+import { industries } from "@/config/industries";
 import { toast } from "sonner";
 import { Textarea } from "../ui/textarea";
 
@@ -168,7 +168,7 @@ export function CreateCompanyForm() {
 										<CommandInput placeholder="Search industry..." />
 										<CommandEmpty>No industry found.</CommandEmpty>
 										<CommandGroup>
-											{serviceCategories.map((category) => (
+											{industries.map((category) => (
 												<CommandItem
 													value={category.label}
 													key={category.value}

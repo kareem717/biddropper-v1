@@ -1,7 +1,7 @@
 import * as z from "zod";
-import { serviceCategories } from "@/config/services";
+import { industries } from "@/config/industries";
 
-const serviceValues = serviceCategories.map((category) => category.value) as [
+const serviceValues = industries.map((category) => category.value) as [
 	string,
 	...string[]
 ];
@@ -24,36 +24,37 @@ export const contractJobSchema = z.object({
 			return { message: "Please select a property type" };
 		},
 	}),
-	budget: z.preprocess(
-		(input) => {
-			const processed = z.string().transform(Number).safeParse(input);
-			return processed.success ? processed.data : input;
-		},
-		z
-			.number({
-				invalid_type_error: "Budget must be a valid number",
-			})
-			.min(1, { message: "Budget must be at least $1" })
-			.max(3000000.01, {
-				message: "Wrong place to spend more than $3,000,000 buddy",
-			})
-			.positive()
-			.multipleOf(0.01, {
-				message: "Budget must be rounded to the nearest cent",
-			})
-	).optional(),
-	dateRange: z
-		.object({
-			from: z.date().min(new Date(), {
-				message: "Start date must be in the future",
-			}),
-			to: z
-				.date()
-				.min(new Date(), {
-					message: "End date must be in the future",
+	budget: z
+		.preprocess(
+			(input) => {
+				const processed = z.string().transform(Number).safeParse(input);
+				return processed.success ? processed.data : input;
+			},
+			z
+				.number({
+					invalid_type_error: "Budget must be a valid number",
 				})
-				.optional(),
-		})
+				.min(1, { message: "Budget must be at least $1" })
+				.max(3000000.01, {
+					message: "Wrong place to spend more than $3,000,000 buddy",
+				})
+				.positive()
+				.multipleOf(0.01, {
+					message: "Budget must be rounded to the nearest cent",
+				})
+		)
+		.optional(),
+	dateRange: z.object({
+		from: z.date().min(new Date(), {
+			message: "Start date must be in the future",
+		}),
+		to: z
+			.date()
+			.min(new Date(), {
+				message: "End date must be in the future",
+			})
+			.optional(),
+	}),
 });
 
 export type ContractJob = z.infer<typeof contractJobSchema>;

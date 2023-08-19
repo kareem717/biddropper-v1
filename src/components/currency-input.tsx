@@ -47,7 +47,6 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
 	// TODO: Allows infinite zero-inputs after decimal point
 	const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const newValue = event.target.value;
-		
 		if (newValue === "") {
 			setInputValue(undefined);
 			onChange(null);
