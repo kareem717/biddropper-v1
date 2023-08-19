@@ -2,7 +2,6 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
-import { Icons } from "@/components/icons";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -20,9 +19,9 @@ interface Currency {
 }
 
 interface CurrencyInputProps {
-		value: number | undefined;
 	onChange: (value: number | null) => void;
 	max?: number;
+	min?: number;
 	required?: boolean;
 	currencies?: Currency[];
 	currencyValue: string;
@@ -30,32 +29,33 @@ interface CurrencyInputProps {
 }
 
 const CurrencyInput: React.FC<CurrencyInputProps> = ({
-	value,
 	onChange,
 	max,
+	min,
 	required,
 	currencies = [],
 	currencyValue,
 	onCurrencyChange,
 }) => {
 	const [currency, setCurrency] = useState(currencyValue);
-	const [inputValue, setInputValue] = useState(value);
+	const [inputValue, setInputValue] = useState<number | undefined>(undefined);
 
 	useEffect(() => {
 		setCurrency(currencyValue);
 	}, [currencyValue]);
 
+	// TODO: Allows infinite zero-inputs after decimal point
 	const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const newValue = event.target.value;
-		if (
-			/^\d*(\.\d{1,2})?$/gm.test(newValue) &&
-			(!max || parseFloat(newValue) <= max)
-		) {
-			setInputValue(parseFloat(newValue));
-			onChange(parseFloat(newValue));
-		} else if (newValue === "") {
+		
+		if (newValue === "") {
 			setInputValue(undefined);
 			onChange(null);
+		} else {
+			const parsedValue = Number(parseFloat(newValue).toFixed(2));
+
+			setInputValue(parsedValue);
+			onChange(parsedValue);
 		}
 	};
 
@@ -77,13 +77,12 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
 				value={inputValue}
 				onChange={handleValueChange}
 				max={max}
-				min={100}
+				min={min}
 				required={required}
 			/>
 			<Select
 				value={currency}
 				onValueChange={(event) => handleCurrencyChange(event)}
-				
 			>
 				<SelectTrigger className="w-1/3 truncate">
 					<SelectValue placeholder="Select a currency" />

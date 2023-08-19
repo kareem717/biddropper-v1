@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 
-function StepTwo() {
+function AddImagesForm() {
 	const { nextStep, addFormData } = useMultistepForm();
 
 	const onClientUploadComplete = (
@@ -44,4 +44,4 @@ function StepTwo() {
 	);
 }
 
-export default StepTwo;
+export default AddImagesForm;

@@ -3,7 +3,6 @@ import * as z from "zod";
 import React from "react";
 import { useMultistepForm } from "@/hooks/use-multistep-form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +28,7 @@ const formSchema = insertAddressSchema
 	});
 type Inputs = z.infer<typeof formSchema>;
 
-function StepFour() {
+function AddAddressForm() {
 	const { addFormData, formData } = useMultistepForm();
 
 	const form = useForm<Inputs>({
@@ -194,4 +193,4 @@ function StepFour() {
 	);
 }
 
-export default StepFour;
+export default AddAddressForm;

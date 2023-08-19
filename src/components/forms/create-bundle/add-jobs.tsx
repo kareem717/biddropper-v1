@@ -1,6 +1,5 @@
 import React from "react";
 import { useMultistepForm } from "@/hooks/use-multistep-form";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Table,
@@ -11,16 +10,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import AddJobDialog from "./add-job-dialog";
 import { serviceCategories } from "@/config/services";
 import { format } from "date-fns";
 
-function StepThree() {
+function AddJobsForm() {
 	const { nextStep, formData } = useMultistepForm();
 	function toTitleCase(str: string) {
 		return str.replace(/\w\S*/g, function (txt) {
@@ -86,4 +80,4 @@ function StepThree() {
 	);
 }
 
-export default StepThree;
+export default AddJobsForm;

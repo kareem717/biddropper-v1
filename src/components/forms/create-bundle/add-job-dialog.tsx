@@ -4,6 +4,19 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 import { Input } from "@/components/ui/input";
+import React from "react";
+import { Icons } from "@/components/icons";
+import { Textarea } from "@/components/ui/textarea";
+import { serviceCategories } from "@/config/services";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { insertJobSchema } from "@/lib/validations/posts";
+import CurrencyInput from "@/components/currency-input";
+import { useMultistepForm } from "@/hooks/use-multistep-form";
+import { toast } from "sonner";
 import {
 	Dialog,
 	DialogContent,
@@ -27,10 +40,6 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import React from "react";
-import { Icons } from "@/components/icons";
-import { Textarea } from "@/components/ui/textarea";
-import { serviceCategories } from "@/config/services";
 import {
 	Command,
 	CommandEmpty,
@@ -38,15 +47,6 @@ import {
 	CommandInput,
 	CommandItem,
 } from "@/components/ui/command";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { insertJobSchema } from "@/lib/validations/posts";
-import CurrencyInput from "@/components/currency-input";
-import { useMultistepForm } from "@/hooks/use-multistep-form";
-import { toast } from "sonner";
 
 const formSchema = insertJobSchema
 	.extend({
@@ -67,17 +67,15 @@ const formSchema = insertJobSchema
 	});
 
 type Inputs = z.infer<typeof formSchema>;
-// TODO: ZOD PARSE FAIL
+
 const AddJobDialog = () => {
-	const [value, setValue] = React.useState<Inputs["budget"] | undefined>(1);
 	const { addFormData, formData } = useMultistepForm();
 	const [currency, setCurrency] = React.useState<"usd" | "cad" | "eur">("usd");
 
-	console.log(value);
 	const today = new Date();
 	const tomorrow = new Date(today);
 	tomorrow.setDate(tomorrow.getDate() + 1);
-	console.log(tomorrow);
+
 	const [open, setOpen] = React.useState(false);
 	const [date, setDate] = React.useState<DateRange | undefined>({
 		from: tomorrow,
@@ -101,10 +99,6 @@ const AddJobDialog = () => {
 	});
 
 	const formIsSubmitting = form.formState.isSubmitting;
-	// const handleValueChange = (newValue: number) => {
-	// 	form.setValue("budget", newValue);
-	// 	setValue(newValue);
-	// };
 
 	console.log(form.getValues());
 	const onSubmit = async (data: Inputs) => {
@@ -126,7 +120,6 @@ const AddJobDialog = () => {
 		setOpen(false);
 		setDate({ from: tomorrow, to: undefined });
 		setCurrency("usd");
-		setValue(1);
 		form.reset();
 	};
 
@@ -147,7 +140,9 @@ const AddJobDialog = () => {
 			}}
 		>
 			<DialogTrigger asChild>
-				<Button variant="outline" className="w-full mt-6">Add Job</Button>
+				<Button variant="outline" className="w-full mt-6">
+					Add Job
+				</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
@@ -279,8 +274,8 @@ const AddJobDialog = () => {
 										<FormControl>
 											<div className="relative">
 												<CurrencyInput
-													value={field.value}
 													onChange={(budget) => {
+														console.log(budget)
 														field.onChange(`${budget}`);
 													}}
 													onCurrencyChange={(currency) => {
@@ -294,6 +289,7 @@ const AddJobDialog = () => {
 															form.setValue("currencyType", currency);
 														}
 													}}
+													min={20}
 													max={2500000}
 													currencies={currencyTypes}
 													currencyValue="USD"

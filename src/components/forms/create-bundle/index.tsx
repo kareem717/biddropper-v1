@@ -8,27 +8,23 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { createContractSchema } from "@/types/contract";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useAuth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
-import StepOne from "./step-one";
-import StepTwo from "./step-two";
+import BasicDetailsForm from "./basic-details";
+import AddImagesForm from "./add-images";
 import { useMultistepForm } from "@/hooks/use-multistep-form";
-import StepThree from "./step-three";
-import StepFour from "./step-four";
+import AddJobsForm from "./add-jobs";
+import AddAddressForm from "./add-address";
 
 export default function CreateContractForm() {
 	const { step } = useMultistepForm();
 	const { userId } = useAuth();
 	const { formData } = useMultistepForm();
 	const forms = [
-		<StepOne key="step-one" />,
-		<StepTwo key="step-two" />,
-		<StepThree key="step-three" />,
-		<StepFour key="step-four" />,
+		<BasicDetailsForm key="step-one" />,
+		<AddImagesForm key="step-two" />,
+		<AddJobsForm key="step-three" />,
+		<AddAddressForm key="step-four" />,
 	];
 
 	if (!userId) redirect("/sign-in");
@@ -41,7 +37,7 @@ export default function CreateContractForm() {
 					Wrap up some jobs together to post as a bundle
 				</CardDescription>
 			</CardHeader>
-			<CardContent>{forms[step]}</CardContent>
+			<CardContent>{forms[2]}</CardContent>
 		</Card>
 	);
 }

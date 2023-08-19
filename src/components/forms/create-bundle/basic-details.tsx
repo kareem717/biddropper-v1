@@ -28,7 +28,7 @@ const formSchema = insertBundleSchema.pick({
 
 type Inputs = z.infer<typeof formSchema>;
 
-function StepOne() {
+function BasicDetailsForm() {
 	const { nextStep, addFormData } = useMultistepForm();
 
 	const form = useForm<Inputs>({
@@ -171,4 +171,4 @@ function StepOne() {
 	);
 }
 
-export default StepOne;
+export default BasicDetailsForm;
