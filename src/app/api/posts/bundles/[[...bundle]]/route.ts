@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { addresses } from "@/db/schema/address";
-import { bundleMedia, bundles, jobs } from "@/db/schema/posts";
+// import { addresses } from "@/db/schema/address";
+// import { bundleMedia, bundles, jobs } from "@/db/schema/posts";
 import { authOptions } from "@/lib/auth/config";
 import { insertAddressSchema } from "@/lib/validations/address";
 import {
@@ -9,16 +9,16 @@ import {
 } from "@/lib/validations/posts";
 import { insertBundleSchema } from "@/lib/validations/posts";
 import { auth } from "@clerk/nextjs";
-import { eq } from "drizzle-orm";
+// import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { bids, bundleMedia, bundles, jobs } from "@/db/schema/posts";
+import { InferModel, eq } from "drizzle-orm";
+import { addresses } from "@/db/schema/address";
+
 export async function POST(req: Request) {
 	const { userId } = auth(); //TODO: switch to next auth when able
 	if (!userId) return new Response("Unauthorized", { status: 401 });
-	// [
-	// 	{
-	// 		fileKey: '6655a865-373a-431d-a4fe-348e36beb090_airbnb-icon.webp',
-	// 		fileUrl:
-	// 			'https://uploadthing.com/f/6655a865-373a-431d-a4fe-348e36beb090_airbnb-icon.webp'
-	// 	}]
+
 	const body = await req.json();
 
 	const address_id = `addr_${crypto.randomUUID()}`;
@@ -130,47 +130,95 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-		// const testing = async () => {
-		console.log('here')
-		const res = await db.select().from(bundles).leftJoin(jobs, eq(bundles.id, jobs.bundleId));
-		console.log(res)
-		// return res
-	// }
+	const headersList = headers();
+	const contractId = headersList.get("Contract-ID");
+	// todo: implement single bundle fetch
+	type Bundle = InferModel<typeof bundles>;
+	type Job = InferModel<typeof jobs>;
+	type Address = InferModel<typeof addresses>;
+	type BundleMedia = InferModel<typeof bundleMedia>;
+	type Bid = InferModel<typeof bids>;
 
-	return new Response(JSON.stringify(res), {
-		status: 200,
-	});
+	let query;
+	if (contractId) {
+		query = db
+			.select()
+			.from(bundles)
+			.where(eq(bundles.id, contractId))
+			.innerJoin(jobs, eq(jobs.bundleId, bundles.id))
+			.innerJoin(addresses, eq(bundles.addressId, addresses.id))
+			.leftJoin(bundleMedia, eq(bundles.id, bundleMedia.bundleId))
+			.leftJoin(bids, eq(jobs.id, bids.jobId))
+			.prepare();
+	} else {
+		query = db
+			.select()
+			.from(bundles)
+			.innerJoin(jobs, eq(jobs.bundleId, bundles.id))
+			.innerJoin(addresses, eq(bundles.addressId, addresses.id))
+			.leftJoin(bundleMedia, eq(bundles.id, bundleMedia.bundleId))
+			.leftJoin(bids, eq(jobs.id, bids.jobId))
+			.prepare();
+	}
+
+	try {
+		const data = await query.execute();
+
+		const result = data.reduce<
+			Record<
+				string,
+				{
+					bundles: Bundle;
+					jobs: Job[];
+					addresses: Address;
+					bundleMedia?: BundleMedia[];
+					bids?: Bid[];
+				}
+			>
+		>((acc, curr) => {
+			if (curr) {
+				const {
+					bundles,
+					jobs: job,
+					addresses,
+					bundle_media: file,
+					bids,
+				} = curr;
+
+				if (acc[bundles.id]) {
+					if (!acc[bundles.id]?.jobs.some((j) => j.id === job.id)) {
+						acc[bundles.id]?.jobs.push(job);
+					}
+					if (
+						file &&
+						!acc[bundles.id]?.bundleMedia?.some((f) => f.id === file?.id)
+					) {
+						acc[bundles.id]?.bundleMedia?.push(file);
+					}
+
+					if (bids && !acc[bundles.id]?.bids?.some((b) => b.id === bids?.id)) {
+						acc[bundles.id]?.bids?.push(bids);
+					}
+				} else {
+					acc[bundles.id] = {
+						bundles,
+						jobs: [job],
+						addresses,
+						bundleMedia: file ? [file] : [],
+						bids: bids ? [bids] : [],
+					};
+				}
+			}
+			return acc;
+		}, {});
+
+		return new Response(JSON.stringify(result), {
+			status: 200,
+		});
+	} catch (err) {
+		console.log(err);
+		return new Response("Error", {
+			status: 500,
+		});
+	}
 }
-
-/** 
- * {
-    title: 'kareeesdfsdf',
-    description: 'fsdfsdfdsf',
-    posterType: 'property-owner',
-    bundleType: 'contractor-wanted',
-    jobs: [
-      {
-        industry: 'closet-storage-solutions',
-        title: 'sdfsdf',
-        summary: 'sdfdsfsdf',
-        budget: 324234,
-        currencyType: 'usd',
-        propertyType: 'residential',
-        dateRange: {
-          dateFrom: '2023-08-20T17:57:11.279Z',
-          dateTo: '2023-08-31T04:00:00.000Z'
-        }
-      }
-    ],
-    address: {
-      addressLine1: 'wqeqweqw',
-      addressLine2: 'qweqweqwe',
-      city: 'eqweqweqweqwe',
-      region: 'qweqweqweqwe',
-      postalCode: 'qweqweqweq',
-      country: 'qweqweqweqwe'
-    },
-    showExactLocation: true
-  }
-
- */

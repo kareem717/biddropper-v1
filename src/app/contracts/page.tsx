@@ -1,23 +1,8 @@
 import * as React from "react";
-import { addDays, format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { DateRange } from "react-day-picker";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { buttonVariants } from "@/components/ui/button";
 import { db } from "@/db";
-import { bundles, jobs } from "@/db/schema/posts";
-import { eq } from "drizzle-orm";
-import { AspectRatio } from "@radix-ui/react-aspect-ratio";
-import Image from "next/image";
+import { bundles } from "@/db/schema/posts";
 
+//TODO: can thus be cone with zustand/react-query?
 export default async function ContractPage() {
 	const res = db.select().from(bundles).prepare();
 
@@ -37,35 +22,32 @@ export default async function ContractPage() {
 									<div className="flex grow flex-col space-y-4 bg-gray-50 px-4 py-4 sm:px-6 rounded-b-lg">
 										<div className="flex h-full flex-row justify-between">
 											<div className="flex flex-col justify-between gap-4">
-												<div className="flex w-48 flex-col gap-4">
+												<div className="flex flex-col gap-4">
 													{/* Content */}
 													<div>
-														<p className="pointer-events-none block truncate text-xl font-medium text-gray-900">
+														<p className="pointer-events-none block truncate text-xl font-medium capitalize text-gray-900">
 															{bundle.title}
 														</p>
-														<p className="pointer-events-n4one block text-sm font-medium text-gray-500">
-															No URL specified
+														<p className="pointer-events-none block text-sm h-[100px] overflow-hidden font-medium text-gray-500">
+															{bundle.description}
 														</p>
 													</div>
-													{/* <span className="text-lg font-medium">
-														9.99MB
-														<span className="text-sm text-gray-600">
-															{" "}
-															/ 2GB (0.5%)
-														</span>
-													</span> */}
 												</div>
-												{/* <div className="flex flex-row gap-2">
-													<span className="inline-flex items-center rounded-md bg-red-100 px-2.5 py-0.5 text-sm font-medium capitalize text-red-800">
-														free
-													</span>
-													<span className="inline-flex items-center rounded-md bg-red-100 px-2.5 py-0.5 text-sm font-medium capitalize text-red-800">
-														Shared Quota
-													</span>
-												</div> */}
+												{/* Tags */}
+												<div className="flex flex-row gap-2">
+													{bundle.isActive ? (
+														<span className="inline-flex items-center rounded-md bg-green-100 px-2.5 py-0.5 text-sm font-medium capitalize text-green-800">
+															active
+														</span>
+													) : (
+														<span className="inline-flex items-center rounded-md bg-red-100 px-2.5 py-0.5 text-sm font-medium capitalize text-red-800">
+															closed
+														</span>
+													)}
+												</div>
 											</div>
 											{/* Settings-Gear */}
-											<div className="z-10 flex flex-col gap-4">
+											{/* <div className="z-10 flex flex-col gap-4">
 												<a href="/dashboard/a3md5pq7g0/settings">
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
@@ -78,7 +60,7 @@ export default async function ContractPage() {
 														></path>
 													</svg>
 												</a>
-											</div>
+											</div> */}
 										</div>
 									</div>
 								</li>
