@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 
 function AddImagesForm() {
+	
 	const { nextStep, addFormData } = useMultistepForm();
 
 	const onClientUploadComplete = (
@@ -34,7 +35,7 @@ function AddImagesForm() {
 				onClientUploadComplete={onClientUploadComplete}
 				onUploadError={onUploadError}
 			/>
-			<Button onClick={nextStep} variant={"secondary"} className="w-full">
+			<Button onClick={nextStep} variant={"outline"} className="w-full mt-3">
 				Skip{" "}
 				<span>
 					<Icons.chevronRight />

@@ -9,6 +9,7 @@ import {
 	serial,
 	tinyint,
 	int,
+	unique,
 } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 
@@ -56,7 +57,7 @@ export const bundleMedia = mysqlTable(
 export const bundles = mysqlTable(
 	"bundles",
 	{
-		id: serial("id").notNull(),
+		id: varchar("id", { length: 50 }).notNull(),
 		isActive: tinyint("is_active").default(1).notNull(),
 		userId: varchar("user_id", { length: 50 }).default("").notNull(),
 		title: varchar("title", { length: 100 }).default("").notNull(),
@@ -81,6 +82,7 @@ export const bundles = mysqlTable(
 		return {
 			userId: index("user_id").on(table.userId),
 			bundlesId: primaryKey(table.id),
+			id: unique("id").on(table.id),
 		};
 	}
 );
@@ -90,7 +92,7 @@ export const jobs = mysqlTable(
 	{
 		id: varchar("id", { length: 50 }).notNull(),
 		userId: varchar("user_id", { length: 50 }).notNull(),
-		isActive: tinyint("is_active").default(1).notNull(),
+		isActive: tinyint("is_active").default(1),
 		bundleId: varchar("bundle_id", { length: 50 }).notNull(),
 		industry: varchar("industry", { length: 255 }).notNull(),
 		title: varchar("title", { length: 50 }).notNull(),

@@ -1,3 +1,4 @@
+//TODO: Cleanup this file
 import React, { useCallback, useState } from "react";
 import { OurFileRouter } from "@/app/api/uploadthing/core";
 import { useMultistepForm } from "@/hooks/use-multistep-form";
@@ -25,11 +26,10 @@ interface ImageUploaderProps {
 	) => void;
 	onUploadError: (error: Error) => void;
 }
-
+// TODO: hide skip button after upload is pressed as it causes bugs
 const ImageUploader: React.FC<ImageUploaderProps> = (props) => {
 	const { maxFiles, onClientUploadComplete, onUploadError } = props;
 	const { useUploadThing } = generateReactHelpers<OurFileRouter>();
-	const { nextStep, addFormData } = useMultistepForm();
 	const [files, setFiles] = useState<File[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
 	const onDrop = useCallback(
@@ -94,22 +94,15 @@ const ImageUploader: React.FC<ImageUploaderProps> = (props) => {
 							})}
 						</div>
 						<input {...getInputProps()} />
-						<Button
-							className={`w-full mt-6 ${isUploading && "hidden"}`}
-							variant={"default"}
-						>
-							Drag or Click to Select Files
-						</Button>
 					</div>
 					<div>
 						{files.length > 0 && (
 							<Button
-								className="w-full mt-3"
+								className="w-full mt-6"
 								onClick={() => {
 									setIsUploading(true);
 									startUpload(files);
 								}}
-								variant={"secondary"}
 							>
 								<Icons.upload className="mr-2" />
 								Upload

@@ -29,6 +29,8 @@ export default function CreateContractForm() {
 
 	if (!userId) redirect("/sign-in");
 	console.log(formData);
+
+	// TODO: Add back-step button, change description and title based on step
 	return (
 		<Card className="w-[75vw] lg:w-[min(85vw,950px)]">
 			<CardHeader>
@@ -37,7 +39,7 @@ export default function CreateContractForm() {
 					Wrap up some jobs together to post as a bundle
 				</CardDescription>
 			</CardHeader>
-			<CardContent>{forms[2]}</CardContent>
+			<CardContent>{forms[step]}</CardContent>
 		</Card>
 	);
 }

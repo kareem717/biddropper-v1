@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { insertAddressSchema } from "@/lib/validations/address";
-
+//TODO: need to remove photos is dosen't go thorugh, remove form data if user goes back
 const formSchema = insertAddressSchema
 	.omit({
 		id: true,
@@ -35,7 +35,7 @@ function AddAddressForm() {
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			addressLine1: "",
-			addressLine2: "",
+			addressLine2: undefined,
 			city: "",
 			region: "",
 			postalCode: "",
@@ -44,7 +44,7 @@ function AddAddressForm() {
 		},
 	});
 
-	function onSubmit(data: Inputs) {
+	async function onSubmit(data: Inputs) {
 		const address = {
 			addressLine1: data.addressLine1,
 			addressLine2: data.addressLine2,
@@ -53,12 +53,28 @@ function AddAddressForm() {
 			postalCode: data.postalCode,
 			country: data.country,
 		};
-		addFormData({
-			address,
-			showExactLocation: data.showExactLocation,
-		});
+
+		console.log(formData);
+		// try {
+			const res = await fetch("/api/posts/bundles", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					address,
+					showExactLocation: data.showExactLocation,
+					...formData,
+				}),
+			});
+
+			const responseBody = await res.json();
+			console.log(responseBody);
+		// } catch (err) {
+		// 	console.error(err);
+		// }
 	}
-  console.log(formData);
+	console.log(formData);
 	return (
 		<div className="h-[45vh] lg:h-[70vh] overflow-auto">
 			<Form {...form}>
