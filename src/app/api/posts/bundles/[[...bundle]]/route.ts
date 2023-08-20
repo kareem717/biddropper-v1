@@ -9,6 +9,7 @@ import {
 } from "@/lib/validations/posts";
 import { insertBundleSchema } from "@/lib/validations/posts";
 import { auth } from "@clerk/nextjs";
+import { eq } from "drizzle-orm";
 export async function POST(req: Request) {
 	const { userId } = auth(); //TODO: switch to next auth when able
 	if (!userId) return new Response("Unauthorized", { status: 401 });
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
 			});
 		}
 		await tx.insert(addresses).values(address.data);
-
+		console.log(11);
 		// Insert bundle
 		const bundleDetails = insertBundleSchema.safeParse({
 			userId,
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
 			addressId: address_id,
 			showExactLocation: body.showExactLocation,
 		});
+		console.log(11);
 
 		// Insert jobs
 		const insertableJobs = body.jobs.map((job) => {
@@ -93,28 +95,49 @@ export async function POST(req: Request) {
 			});
 		}
 		await tx.insert(jobs).values(insertableJobs.map((job) => job.data));
+		console.log(11);
 
 		// Insert photos
-		const insertablePhotos = body.imagegs.map((photo) => {
-			return insertBundleMediaSchema.safeParse({
-				id: `photo_${crypto.randomUUID()}`,
-				bundleId: bundle_id,
-				fileKey: photo.fileKey,
-				mediaUrl: photo.fileUrl,
+
+		if (body.images) {
+			const insertablePhotos = body.images.map((photo) => {
+				return insertBundleMediaSchema.safeParse({
+					id: `photo_${crypto.randomUUID()}`,
+					bundleId: bundle_id,
+					fileKey: photo.fileKey,
+					mediaUrl: photo.fileUrl,
+				});
 			});
-		});
-		if (!insertablePhotos.every((photo) => photo.success)) {
-			await tx.rollback();
-			return new Response("Incorrect photo details", {
-				status: 400,
-			});
+			console.log(insertablePhotos);
+			if (!insertablePhotos.every((photo) => photo.success)) {
+				console.log(11);
+
+				await tx.rollback();
+				return new Response("Incorrect photo details", {
+					status: 400,
+				});
+			}
+			await tx
+				.insert(bundleMedia)
+				.values(insertablePhotos.map((photo) => photo.data));
+			console.log(11);
 		}
-		await tx
-			.insert(bundleMedia)
-			.values(insertablePhotos.map((photo) => photo.data));
 	});
 
 	return new Response(`${body}`, {
+		status: 200,
+	});
+}
+
+export async function GET(req: Request) {
+		// const testing = async () => {
+		console.log('here')
+		const res = await db.select().from(bundles).leftJoin(jobs, eq(bundles.id, jobs.bundleId));
+		console.log(res)
+		// return res
+	// }
+
+	return new Response(JSON.stringify(res), {
 		status: 200,
 	});
 }

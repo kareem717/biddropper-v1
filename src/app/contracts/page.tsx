@@ -14,58 +14,30 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { buttonVariants } from "@/components/ui/button";
+import { db } from "@/db";
+import { bundles, jobs } from "@/db/schema/posts";
+import { eq } from "drizzle-orm";
 
 export default function ContractPage() {
-	const [date, setDate] = React.useState<DateRange | undefined>({
-		from: new Date(2022, 0, 20),
-		to: addDays(new Date(2022, 0, 20), 20),
-	});
+	async function apiCall() {
 
-	console.log(date);
+		const res = await fetch("/api/posts/bundles", {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
+	
+		console.log(await res.json())	
+	}
+
+	apiCall()
 	return (
 		<main>
 			<div className="flex flex-row gap-4 pt-[60px]">
 				<a href="/contracts/create" className={buttonVariants()}>
 					Create
 				</a>
-			</div>
-			<div className={cn("grid gap-2")}>
-				<Popover>
-					<PopoverTrigger asChild>
-						<Button
-							id="date"
-							variant={"outline"}
-							className={cn(
-								"w-[300px] justify-start text-left font-normal",
-								!date && "text-muted-foreground"
-							)}
-						>
-							<CalendarIcon className="mr-2 h-4 w-4" />
-							{date?.from ? (
-								date.to ? (
-									<>
-										{format(date.from, "LLL dd, y")} -{" "}
-										{format(date.to, "LLL dd, y")}
-									</>
-								) : (
-									format(date.from, "LLL dd, y")
-								)
-							) : (
-								<span>Pick a date</span>
-							)}
-						</Button>
-					</PopoverTrigger>
-					<PopoverContent className="w-auto p-0" align="start">
-						<Calendar
-							initialFocus
-							mode="range"
-							defaultMonth={date?.from}
-							selected={date}
-							onSelect={setDate}
-							numberOfMonths={1}
-						/>
-					</PopoverContent>
-				</Popover>
 			</div>
 		</main>
 	);

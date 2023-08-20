@@ -16,6 +16,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { insertAddressSchema } from "@/lib/validations/address";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { Icons } from "@/components/icons";
 //TODO: need to remove photos is dosen't go thorugh, remove form data if user goes back
 const formSchema = insertAddressSchema
 	.omit({
@@ -29,7 +32,10 @@ const formSchema = insertAddressSchema
 type Inputs = z.infer<typeof formSchema>;
 
 function AddAddressForm() {
+	const router = useRouter();
+
 	const { addFormData, formData } = useMultistepForm();
+	const [fetching, setIsFetching] = React.useState(false);
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(formSchema),
@@ -45,17 +51,18 @@ function AddAddressForm() {
 	});
 
 	async function onSubmit(data: Inputs) {
-		const address = {
-			addressLine1: data.addressLine1,
-			addressLine2: data.addressLine2,
-			city: data.city,
-			region: data.region,
-			postalCode: data.postalCode,
-			country: data.country,
-		};
+		try {
+			//TODO: push to create bundle page
+			// router.prefetch(`/contracts`);
 
-		console.log(formData);
-		// try {
+			const address = {
+				addressLine1: data.addressLine1,
+				addressLine2: data.addressLine2,
+				city: data.city,
+				region: data.region,
+				postalCode: data.postalCode,
+				country: data.country,
+			};
 			const res = await fetch("/api/posts/bundles", {
 				method: "POST",
 				headers: {
@@ -68,13 +75,28 @@ function AddAddressForm() {
 				}),
 			});
 
-			const responseBody = await res.json();
-			console.log(responseBody);
-		// } catch (err) {
-		// 	console.error(err);
-		// }
+			// const responseBody = await res.json();
+			console.log(res.status)
+			if (res.status === 200) {
+				toast.success("Success!", {
+					description: "Your bundle has been created",
+				});
+			
+			 router.replace(`/contracts`);
+			}
+
+
+
+
+
+		} catch (err) {
+			console.error(err);
+			toast.error("There was an error creating your bundle", {
+				description: "Please try again later",
+			});
+		}
 	}
-	console.log(formData);
+
 	return (
 		<div className="h-[45vh] lg:h-[70vh] overflow-auto">
 			<Form {...form}>
@@ -200,9 +222,19 @@ function AddAddressForm() {
 							</FormItem>
 						)}
 					/>
-					<Button type="submit" className="w-full">
-						Finish and Create
-					</Button>
+					{fetching ? (
+						<Button disabled={true} type={"button"}>
+							<Icons.spinner
+								className="mr-2 h-4 w-4 animate-spin"
+								aria-hidden="true"
+							/>
+							<span className="sr-only">Loading</span>
+						</Button>
+					) : (
+						<Button type="submit" className="w-full">
+							Finish and Create
+						</Button>
+					)}
 				</form>
 			</Form>
 		</div>
