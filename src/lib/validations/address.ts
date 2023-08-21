@@ -92,3 +92,5 @@ export const insertAddressSchema = createInsertSchema(addresses, {
 			return value.trim();
 		}),
 });
+
+export const selectAddressSchema = createSelectSchema(addresses);

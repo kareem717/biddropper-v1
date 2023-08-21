@@ -1,5 +1,5 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { bundleMedia, bundles, jobs } from "@/db/schema/posts";
+import { bundleMedia, bundles, jobs, bids } from "@/db/schema/posts";
 import * as z from "zod";
 import { industryValues } from "@/config/industries";
 
@@ -85,6 +85,7 @@ export const insertJobSchema = createInsertSchema(jobs, {
 		}, "Date must be in at least 2 days time and 15 years in the future")
 	),
 });
+export const selectJobSchema = createSelectSchema(jobs);
 
 export const insertBundleMediaSchema = createInsertSchema(bundleMedia, {
 	bundleId: z.string().max(50, {
@@ -97,4 +98,7 @@ export const insertBundleMediaSchema = createInsertSchema(bundleMedia, {
 		message: "File key must be at most 191 characters long",
 	}),
 });
+export const selectBundleMediaSchema = createSelectSchema(bundleMedia);
 
+export const insertBidsSchema = createInsertSchema(bids);
+export const selectBidsSchema = createSelectSchema(bids);

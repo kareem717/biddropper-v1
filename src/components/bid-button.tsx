@@ -1,0 +1,102 @@
+"use client";
+import React from "react";
+import { Button, buttonVariants } from "./ui/button";
+import { cn } from "@/lib/utils";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Icons } from "./icons";
+import { toast } from "sonner";
+
+interface BidButtonProps {
+	className?: string;
+	jobId: string;
+}
+
+const BidButton: React.FC<BidButtonProps> = ({ className, jobId }) => {
+	const [inputValue, setInputValue] = React.useState("");
+	const [fetching, setFetching] = React.useState(false);
+	const [open, setOpen] = React.useState(false);
+
+	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const value = event.target.value;
+		const isValid = /^\d{0,8}(\.\d{0,2})?$/.test(value);
+
+		if (isValid) {
+			setInputValue(value);
+		}
+	};
+
+	const enterBid = async () => {
+		const res = await fetch(`/api/posts/bids`, {
+			method: "POST",
+			body: JSON.stringify({ price: inputValue, jobId, companyId: "fake_id" }),
+		});
+
+		if (!res.ok) {
+			toast.error("Error entering bid");
+			setFetching(false);
+
+			return;
+		}
+
+		toast.success("Bid entered successfully");
+
+		setFetching(false);
+		setOpen(false);
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger className={cn(buttonVariants(), className)}>
+				Bid
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>How much?</DialogTitle>
+					<DialogDescription>
+						Ennter the amount you want to bid
+					</DialogDescription>
+				</DialogHeader>
+				{/* //todo: yo dosent this work exactly how i wanted currency input to? */}
+				<Input
+					type="number"
+					value={inputValue}
+					onChange={handleInputChange}
+					step="0.01"
+					min="0"
+					max="99999999.99"
+					placeholder="$0.00"
+				/>
+
+				{fetching ? (
+					<Button disabled={true} type={"button"}>
+						<Icons.spinner
+							className="mr-2 h-4 w-4 animate-spin"
+							aria-hidden="true"
+						/>
+						<span className="sr-only">Loading</span>
+					</Button>
+				) : (
+					<Button
+						type="submit"
+						onClick={() => {
+							setFetching(true);
+							enterBid();
+						}}
+					>
+						Enter Bid
+					</Button>
+				)}
+			</DialogContent>
+		</Dialog>
+	);
+};
+
+export default BidButton;
