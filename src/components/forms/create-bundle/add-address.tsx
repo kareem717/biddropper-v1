@@ -52,8 +52,6 @@ function AddAddressForm() {
 
 	async function onSubmit(data: Inputs) {
 		try {
-			//TODO: push to create bundle page
-			// router.prefetch(`/contracts`);
 
 			const address = {
 				addressLine1: data.addressLine1,
@@ -63,6 +61,7 @@ function AddAddressForm() {
 				postalCode: data.postalCode,
 				country: data.country,
 			};
+
 			const res = await fetch("/api/posts/bundles", {
 				method: "POST",
 				headers: {
@@ -75,20 +74,20 @@ function AddAddressForm() {
 				}),
 			});
 
-			// const responseBody = await res.json();
-			console.log(res.status)
-			if (res.status === 200) {
-				toast.success("Success!", {
-					description: "Your bundle has been created",
+			const body = await res.json();
+
+			if (!res.ok) {
+				toast.error("There was an error creating your bundle", {
+					description: "Please try again later",
 				});
-			
-			 router.replace(`/contracts`);
+				return;
 			}
 
+			toast.success("Success!", {
+				description: "Your bundle has been created",
+			});
 
-
-
-
+			router.replace(`/contracts/${body.contractId}`);
 		} catch (err) {
 			console.error(err);
 			toast.error("There was an error creating your bundle", {

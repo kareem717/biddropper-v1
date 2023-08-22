@@ -8,7 +8,7 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
 	return (
-		<div ="gridclassName min-h-screen grid-cols-1 overflow-hidden md:grid-cols-3 lg:grid-cols-2">
+		<div className="grid min-h-screen grid-cols-1 overflow-hidden md:grid-cols-3 lg:grid-cols-2">
 			<AspectRatio ratio={16 / 9}>
 				<Image
 					src="/images/gradient-filler-02.jpeg"
