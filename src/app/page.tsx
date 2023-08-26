@@ -1,5 +1,5 @@
 import { buttonVariants } from "@/components/ui/button";
-import { authOptions } from "@/lib/auth/config";
+import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 export default async function Home() {
 	const session = await getServerSession(authOptions);

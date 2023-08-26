@@ -15,7 +15,7 @@ import {
 import { OAuthSignIn } from "@/components/auth/oauth-login";
 import { SignInForm } from "@/components/forms/sign-in";
 import { Shell } from "@/components/shells";
-import { authOptions } from "@/lib/auth/config";
+import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 
 export const metadata: Metadata = {

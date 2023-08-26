@@ -1,7 +1,7 @@
 import { db } from "@/db";
 // import { addresses } from "/drizzle/migrations/address";
 // import { bundleMedia, bundles, jobs } from "/drizzle/migrations/posts";
-import { authOptions } from "@/lib/auth/config";
+import { authOptions } from "@/lib/auth";
 import { insertAddressSchema } from "@/lib/validations/address";
 import {
 	insertBundleMediaSchema,

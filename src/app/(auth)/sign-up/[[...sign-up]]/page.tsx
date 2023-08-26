@@ -15,7 +15,7 @@ import { OAuthSignIn } from "@/components/auth/oauth-login";
 import { Shell } from "@/components/shells";
 import RegisterForm from "@/components/forms/credential-register";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/config";
+import { authOptions } from "@/lib/auth";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {

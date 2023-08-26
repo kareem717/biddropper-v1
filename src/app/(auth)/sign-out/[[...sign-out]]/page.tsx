@@ -1,7 +1,7 @@
 import { LogOutButtons } from "@/components/auth/logout-buttons";
 import { Header } from "@/components/header";
 import { Shell } from "@/components/shells";
-import { authOptions } from "@/lib/auth/config";
+import { authOptions } from "@/lib/auth";
 import { currentUser } from "@clerk/nextjs";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
