@@ -12,7 +12,7 @@ import type {
 	AdapterSession,
 	AdapterUser,
 	VerificationToken,
-}  from "next-auth/adapters";
+} from "next-auth/adapters";
 
 export const defaultSchema = { users, accounts, sessions, verificationTokens };
 export type DefaultSchema = typeof defaultSchema;

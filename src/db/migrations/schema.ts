@@ -1,20 +1,20 @@
 import { mysqlTable, mysqlSchema, AnyMySqlColumn, primaryKey, varchar, int, text, timestamp, index, decimal, mysqlEnum, unique, tinyint } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
-
+import type { AdapterAccount } from "next-auth/adapters"
 
 export const accounts = mysqlTable("accounts", {
 	userId: varchar("userId", { length: 255 }).notNull(),
-	type: varchar("type", { length: 255 }).notNull(),
+	type: varchar("type", { length: 255 }).$type<AdapterAccount["type"]>().notNull(),
 	provider: varchar("provider", { length: 255 }).notNull(),
 	providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
-	refreshToken: varchar("refresh_token", { length: 255 }),
-	refreshTokenExpiresIn: int("refresh_token_expires_in"),
-	accessToken: varchar("access_token", { length: 255 }),
-	expiresAt: int("expires_at"),
-	tokenType: varchar("token_type", { length: 255 }),
+	refresh_token: varchar("refresh_token", { length: 255 }),
+	refresh_token_expires_in: int("refresh_token_expires_in"),
+	access_token: varchar("access_token", { length: 255 }),
+	expires_at: int("expires_at"),
+	token_type: varchar("token_type", { length: 255 }),
 	scope: varchar("scope", { length: 255 }),
-	idToken: text("id_token"),
-	sessionState: text("session_state"),
+	id_token: text("id_token"),
+	session_state: text("session_state"),
 	createdAt: timestamp("created_at", { mode: 'date' }).default(sql`CURRENT_TIMESTAMP`),
 	updatedAt: timestamp("updated_at", { mode: 'date' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 },
