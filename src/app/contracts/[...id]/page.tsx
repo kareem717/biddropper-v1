@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { selectAddressSchema } from "@/lib/validations/address";
 import ImageCarousel from "@/components/image-carousel";
 
-import { industries } from "@/config/industries";
+import { industries } from "@/db/config/industries";
 import JobCard from "@/components/job-card";
 
 //todo: idk if this is the best way to do this, but i think it is
@@ -108,9 +108,7 @@ export default async function ContractPage({
 						</div>
 					</div>
 					<Separator className="my-4" />
-					<p>
-						{bundle.bundles.description}
-					</p>
+					<p>{bundle.bundles.description}</p>
 				</div>
 			</div>
 			<div className="flex-1 h-[100vh] overflow-auto relative px-2 pb-2">

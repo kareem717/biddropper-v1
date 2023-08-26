@@ -33,7 +33,7 @@ import CreateClerkOrg from "@/app/_actions/create-clerk-org";
 import { catchClerkError, cn } from "@/lib/utils";
 import { redirect, useRouter } from "next/navigation";
 import { Icons } from "../icons";
-import { industries } from "@/config/industries";
+import { industries } from "@/db/config/industries";
 import { toast } from "sonner";
 import { Textarea } from "../ui/textarea";
 

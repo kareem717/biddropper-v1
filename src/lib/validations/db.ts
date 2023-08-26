@@ -1,9 +1,9 @@
-import { addresses } from "@/db/schema/address";
-import { bids, bundles, jobs } from "@/db/schema/posts";
+import { addresses } from "/drizzle/migrations/address";
+import { bids, bundles, jobs } from "/drizzle/migrations/posts";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
 	users,
 	accounts,
 	sessions,
 	verificationTokens,
-} from "@/db/schema/auth";
+} from "@/db/migrations/schema";

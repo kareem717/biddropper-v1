@@ -1,5 +1,5 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { addresses } from "@/db/schema/address";
+import { addresses } from "/drizzle/migrations/address";
 import * as z from "zod";
 
 export const insertAddressSchema = createInsertSchema(addresses, {

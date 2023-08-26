@@ -2,7 +2,6 @@ import { type Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { env } from "@/env.mjs";
-import { currentUser } from "@clerk/nextjs";
 
 import {
 	Card,
@@ -12,9 +11,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { OAuthSignIn } from "@/components/auth/oauth-signin";
-import { SignUpForm } from "@/components/forms/sign-up-form";
+import { OAuthSignIn } from "@/components/auth/oauth-login";
 import { Shell } from "@/components/shells";
+import RegisterForm from "@/components/forms/credential-register";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/config";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
 	metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
@@ -23,8 +25,8 @@ export const metadata: Metadata = {
 };
 
 export default async function SignUpPage() {
-	const user = await currentUser();
-	if (user) redirect("/");
+	const session = await getServerSession(authOptions);
+	if (session) redirect("/");
 
 	return (
 		<Shell className="max-w-lg">
@@ -47,7 +49,10 @@ export default async function SignUpPage() {
 							</span>
 						</div>
 					</div>
-					<SignUpForm />
+					{/* //TODO: Make a better loading state */}
+					<Suspense fallback={<div>Loading...</div>}>
+						<RegisterForm />
+					</Suspense>
 				</CardContent>
 				<CardFooter>
 					<div className="text-sm text-muted-foreground">

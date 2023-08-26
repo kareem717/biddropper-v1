@@ -1,6 +1,6 @@
 import * as React from "react";
 import { db } from "@/db";
-import { bundles } from "@/db/schema/posts";
+import { bundles } from "/drizzle/migrations/posts";
 
 //TODO: can thus be cone with zustand/react-query?
 export default async function ContractPage() {

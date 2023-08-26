@@ -21,7 +21,9 @@ export const env = createEnv({
 		GITHUB_CLIENT_ID: z.string().min(1),
 		GITHUB_CLIENT_SECRET: z.string().min(1),
 		GOOGLE_CLIENT_ID: z.string().min(1),
+		RESEND_API_KEY: z.string().min(1),
 		GOOGLE_CLIENT_SECRET: z.string().min(1),
+		NEXTAUTH_URL: z.string().url(),
 	},
 
 	client: {
@@ -34,6 +36,8 @@ export const env = createEnv({
 	},
 
 	runtimeEnv: {
+		NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+		RESEND_API_KEY: process.env.RESEND_API_KEY,
 		NODE_ENV: process.env.NODE_ENV,
 		PLANETSCALE_HOST_NAME: process.env.PLANETSCALE_HOST_NAME,
 		PLANETSCALE_USERNAME: process.env.PLANETSCALE_USERNAME,

@@ -1,5 +1,6 @@
 import { db } from "@/db";
-import { bids } from "@/db/schema/posts";
+import { bids } from "@/db/migrations/schema";
+
 import { insertBidsSchema } from "@/lib/validations/posts";
 
 export async function POST(req: Request) {
@@ -8,7 +9,7 @@ export async function POST(req: Request) {
 	const data = insertBidsSchema.parse(body);
 
 	const bidId = `bid_${crypto.randomUUID()}`;
-  console.log(bidId)
+	console.log(bidId);
 	// TODO: price should not be optional
 	const query = db.insert(bids).values({
 		id: bidId,

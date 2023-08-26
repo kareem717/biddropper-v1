@@ -1,15 +1,17 @@
 import { LogOutButtons } from "@/components/auth/logout-buttons";
 import { Header } from "@/components/header";
 import { Shell } from "@/components/shells";
+import { authOptions } from "@/lib/auth/config";
 import { currentUser } from "@clerk/nextjs";
+import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 // Running out of edge function execution units on vercel free plan
 // export const runtime = "edge"
 
 export default async function SignOutPage() {
-	const user = await currentUser();
-	if (!user) redirect("/");
+	const session = await getServerSession(authOptions);
+	if (!session) redirect("/");
 
 	return (
 		<Shell className="max-w-xs">

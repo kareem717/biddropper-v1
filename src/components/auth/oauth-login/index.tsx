@@ -1,44 +1,40 @@
 "use client";
 
-import * as React from "react";
-import { isClerkAPIResponseError, useSignIn } from "@clerk/nextjs";
-import { type OAuthStrategy } from "@clerk/types";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 
+import { signIn } from "next-auth/react";
+import { OAuthProviderType } from "next-auth/providers";
+import { redirect } from "next/navigation";
+
 const oauthProviders = [
-	{ name: "Google", strategy: "oauth_google", icon: "google" },
-  { name: "Facebook", strategy: "oauth_facebook", icon: "facebook" },
+	{ name: "Google", strategy: "google", icon: "google" },
+	{ name: "Github", strategy: "github", icon: "github" },
 ] satisfies {
 	name: string;
 	icon: keyof typeof Icons;
-	strategy: OAuthStrategy;
+	strategy: OAuthProviderType;
 }[];
 
 export function OAuthSignIn() {
-	const [isLoading, setIsLoading] = React.useState<OAuthStrategy | null>(null);
-	const { signIn, isLoaded: signInLoaded } = useSignIn();
+	const [isLoading, setIsLoading] = useState<OAuthProviderType | null>(null);
 
-	async function oauthSignIn(provider: OAuthStrategy) {
-		if (!signInLoaded) return null;
-		try {
-			setIsLoading(provider);
-			await signIn.authenticateWithRedirect({
-				strategy: provider,
-				redirectUrl: "/sso-callback",
-				redirectUrlComplete: "/",
-			});
-		} catch (error) {
-			setIsLoading(null);
+	async function oauthSignIn(provider: OAuthProviderType) {
+		setIsLoading(provider);
+		const res = await signIn(provider);
 
-			const unknownError = "Something went wrong, please try again.";
-
-			isClerkAPIResponseError(error)
-      ? toast.error(error.errors[0]?.longMessage ?? unknownError)
-      : toast.error(unknownError)
-		}
+		console.log(res);
+		// if (res?.ok) {
+		// 	toast.success("Successfully signed in");
+		// 	redirect("/");
+		// } else {
+		// 	toast.error("Something went wrong", {
+		// 		description: "Failed to sign in, please try again",
+		// 	});
+		// }
 	}
 
 	return (

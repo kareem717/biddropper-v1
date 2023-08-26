@@ -1,6 +1,8 @@
 import { buttonVariants } from "@/components/ui/button";
-
-export default function Home() {
+import { authOptions } from "@/lib/auth/config";
+import { getServerSession } from "next-auth";
+export default async function Home() {
+	const session = await getServerSession(authOptions);
 	return (
 		<main>
 			<div className="flex flex-row gap-4 pt-[60px]">
@@ -12,6 +14,7 @@ export default function Home() {
 					Company
 				</a>
 			</div>
+			<pre>{JSON.stringify(session, null, 2)}</pre>
 		</main>
 	);
 }

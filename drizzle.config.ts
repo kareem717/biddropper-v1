@@ -4,9 +4,9 @@ import type { Config } from "drizzle-kit";
 dotenv.config({ path: ".env.local" });
 
 export default {
-	schema: "./src/db/schema/*",
+	schema: "./src/db/schema.ts",
 	driver: "mysql2",
-	out: "./drizzle/migrations",
+	out: "./src/db/migrations",
 	dbCredentials: {
 		connectionString: process.env.PLANETSCALE_DATABASE_URL ?? "",
 	},

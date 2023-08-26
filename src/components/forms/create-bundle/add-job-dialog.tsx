@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import React from "react";
 import { Icons } from "@/components/icons";
 import { Textarea } from "@/components/ui/textarea";
-import { industries } from "@/config/industries";
+import { industries } from "@/db/config/industries";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";

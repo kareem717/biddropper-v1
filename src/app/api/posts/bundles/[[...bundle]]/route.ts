@@ -1,6 +1,6 @@
 import { db } from "@/db";
-// import { addresses } from "@/db/schema/address";
-// import { bundleMedia, bundles, jobs } from "@/db/schema/posts";
+// import { addresses } from "/drizzle/migrations/address";
+// import { bundleMedia, bundles, jobs } from "/drizzle/migrations/posts";
 import { authOptions } from "@/lib/auth/config";
 import { insertAddressSchema } from "@/lib/validations/address";
 import {
@@ -11,9 +11,9 @@ import { insertBundleSchema } from "@/lib/validations/posts";
 import { auth } from "@clerk/nextjs";
 // import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
-import { bids, bundleMedia, bundles, jobs } from "@/db/schema/posts";
+import { bids, bundleMedia, bundles, jobs } from "@/db/migrations/schema";
 import { InferModel, eq } from "drizzle-orm";
-import { addresses } from "@/db/schema/address";
+import { addresses } from "@/db/migrations/schema";
 
 export async function POST(req: Request) {
 	const { userId } = auth(); //TODO: switch to next auth when able

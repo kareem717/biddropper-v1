@@ -12,9 +12,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { OAuthSignIn } from "@/components/auth/oauth-signin";
+import { OAuthSignIn } from "@/components/auth/oauth-login";
 import { SignInForm } from "@/components/forms/sign-in";
 import { Shell } from "@/components/shells";
+import { authOptions } from "@/lib/auth/config";
+import { getServerSession } from "next-auth/next";
 
 export const metadata: Metadata = {
 	metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
@@ -23,8 +25,8 @@ export const metadata: Metadata = {
 };
 
 export default async function SignInPage() {
-	const user = await currentUser();
-	if (user) redirect("/");
+	const session = await getServerSession(authOptions);
+	if (session) redirect("/");
 
 	return (
 		<Shell className="max-w-lg">

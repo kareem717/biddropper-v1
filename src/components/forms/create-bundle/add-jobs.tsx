@@ -11,7 +11,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import AddJobDialog from "./add-job-dialog";
-import { industries } from "@/config/industries";
+import { industries } from "@/db/config/industries";
 import { format } from "date-fns";
 
 function AddJobsForm() {

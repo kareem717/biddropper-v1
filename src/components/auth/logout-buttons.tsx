@@ -9,6 +9,7 @@ import { useMounted } from "@/hooks/use-mounted";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Icons } from "@/components/icons";
+import { signOut } from "next-auth/react";
 
 export function LogOutButtons() {
 	const router = useRouter();
@@ -18,34 +19,25 @@ export function LogOutButtons() {
 	return (
 		<div className="flex w-full items-center space-x-2">
 			{mounted ? (
-				<SignOutButton
-					signOutCallback={() =>
-						startTransition(() => {
-							router.push(`${window.location.origin}/?redirect=false`);
-						})
-					}
+				<Button
+					aria-label="Log out"
+					size="sm"
+					className="w-full"
+					disabled={isPending}
+					onClick={() => {
+						signOut({ callbackUrl: "/" });
+					}}
 				>
-					<Button
-						aria-label="Log out"
-						size="sm"
-						className="w-full"
-						disabled={isPending}
-					>
-						{isPending && (
-							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-						)}
-						Log out
-					</Button>
-				</SignOutButton>
+					{isPending && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+					Log out
+				</Button>
 			) : (
 				<Skeleton
 					className={cn(
 						buttonVariants({ size: "sm" }),
 						"w-full bg-muted text-muted-foreground"
 					)}
-				>
-					Log out
-				</Skeleton>
+				/>
 			)}
 			<Button
 				aria-label="Go back to the previous page"
