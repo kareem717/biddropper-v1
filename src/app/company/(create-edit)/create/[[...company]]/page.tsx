@@ -15,7 +15,7 @@ import { Shell } from "@/components/shells";
 import { CreateCompanyForm } from "@/components/forms/create-company";
 
 export const metadata: Metadata = {
-	metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
+	metadataBase: new URL(env["NEXT_PUBLIC_APP_URL"]),
 	title: "Create a Company",
 	description: "Register your company on our platform",
 };

@@ -2,7 +2,6 @@ import { type Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { env } from "@/env.mjs";
-
 import {
 	Card,
 	CardContent,
@@ -19,15 +18,13 @@ import { authOptions } from "@/lib/auth";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-	metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
+	metadataBase: new URL(env["NEXT_PUBLIC_APP_URL"]),
 	title: "Sign Up",
 	description: "Sign up for an account",
 };
-
 export default async function SignUpPage() {
 	const session = await getServerSession(authOptions);
 	if (session) redirect("/");
-
 	return (
 		<Shell className="max-w-lg">
 			<Card>

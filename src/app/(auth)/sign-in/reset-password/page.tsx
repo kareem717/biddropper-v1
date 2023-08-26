@@ -12,7 +12,7 @@ import { ResetPasswordForm } from "@/components/forms/reset-password";
 import { Shell } from "@/components/shells";
 
 export const metadata: Metadata = {
-	metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
+	metadataBase: new URL(env["NEXT_PUBLIC_APP_URL"]),
 	title: "Reset Password",
 	description: "Enter your email to reset your password",
 };

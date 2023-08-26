@@ -12,11 +12,11 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Shell } from "@/components/shells";
-import  CreateContractForm from "@/components/forms/create-bundle";
+import CreateContractForm from "@/components/forms/create-bundle";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const metadata: Metadata = {
-	metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
+	metadataBase: new URL(env["NEXT_PUBLIC_APP_URL"]),
 	title: "Create a Contract",
 	description: "Find the right people to work with",
 };
@@ -34,9 +34,9 @@ export default async function CreateContractPage() {
 						Register your company to find future leads
 					</CardDescription>
 				</CardHeader> */}
-				{/* <CardContent className="grid gap-4"> */}
-					<CreateContractForm />
-				{/* </CardContent>
+			{/* <CardContent className="grid gap-4"> */}
+			<CreateContractForm />
+			{/* </CardContent>
 				<CardFooter className="flex flex-wrap items-center justify-between gap-2"></CardFooter>
 			</Card> */}
 		</Shell>
