@@ -10,10 +10,12 @@ import {
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { selectAddressSchema } from "@/lib/validations/address";
+import Image from "next/image";
 import ImageCarousel from "@/components/image-carousel";
 
 import { industries } from "@/db/config/industries";
 import JobCard from "@/components/job-card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 //todo: idk if this is the best way to do this, but i think it is
 export const revalidate = 5;
@@ -52,12 +54,15 @@ export default async function ContractPage({
 	}
 
 	const bundle = bundleParse.data;
+	console.log("Response data:", bundle);
 	const imageUrls = bundle.bundleMedia?.map((media) => media.mediaUrl) ?? [];
+	console.log("Image urls:", imageUrls);
 
 	const totalBudget = bundle.jobs.reduce(
 		(acc, job) => acc + Number(job.budget),
 		0
 	);
+	console.log("Total budget:", totalBudget);
 
 	function getPriceRange(num: number) {
 		return num < 1000
@@ -70,18 +75,19 @@ export default async function ContractPage({
 			? "100K - 1M"
 			: "1M+";
 	}
+	// Map total budget to a certain range, [<1000, 1000-10000, 10000-100000, 100000-1000000, 1000000+]
 	const budgetRange = getPriceRange(totalBudget);
 
 	return (
 		<main className="flex">
 			<div className="flex-1">
 				{/* TODO: need to let loding version stay until component is fully ready, because teh transition dosen't go into affect until u wait like 5 seconds or so */}
-				{/* TODO add a map for address and a contact button */}
-				<ImageCarousel slides={imageUrls} className="mx-2" />
+				<ImageCarousel slides={imageUrls} className="mx-2"/>
 				<div className="mx-2">
 					<div className="space-y-2">
 						<h1 className="capitalize text-sm sm:text-xl lg:text-2xl mt-2">
-							{bundle.bundles.title}
+							Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur
+							vel lacus nec nisl viverra fusce.
 						</h1>
 						<div className="space-x-2">
 							<span className="inline-flex items-center rounded-md bg-green-100 px-2.5 py-0.5 text-sm font-medium capitalize text-green-800">
@@ -108,17 +114,35 @@ export default async function ContractPage({
 						</div>
 					</div>
 					<Separator className="my-4" />
+<<<<<<< HEAD
 					<p>{bundle.bundles.description}</p>
+=======
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed est
+						purus, commodo ut nisl ut, vestibulum commodo elit. Ut non est sit
+						amet lectus congue dapibus. Pellentesque sollicitudin ipsum velit,
+						egestas tempor ligula posuere non. Donec ultricies, turpis sed
+						euismod faucibus, sem lectus rhoncus arcu, vel aliquam quam felis
+						nec ante. Phasellus mauris est, sodales volutpat arcu ut, lobortis
+						aliquet eros. Etiam a mollis purus. Vestibulum ante ipsum primis in
+						faucibus orci luctus et ultrices posuere cubilia curae; Pellentesque
+						id odio vitae eros varius dignissim. Duis hendrerit massa ac dictum
+						tincidunt. Nam in consequat enim, sed congue tellus. Cras fringilla
+						ipsum a erat blandit imperdiet. Fusce nec porta felis, non maximus
+						sapien egestas.
+					</p>
+>>>>>>> parent of 91010a5 (just made the w2 update)
 				</div>
+
+				{/* <ul>
+					{bundle.bids?.map((bid) => (
+						<li key={bid.id}>{bid.price}</li>
+					))}
+				</ul> */}
 			</div>
-			<div className="flex-1 h-[100vh] overflow-auto relative px-2 pb-2">
-				<div className="fixed bg-background h-12 bg-cover w-[50vw] flex items-center justify-center">
-					<h1 className="text-[max(4vh,30px)] font-semibold ">
-						Avaliable Jobs
-					</h1>
-				</div>
-				<div className=" mt-14">
-					<ul className="space-y-2">
+			<div className="flex-1 ">
+				{/* <ScrollArea> */}
+					<ul className="space-y-2 p-2 h-[100vh] overflow-auto">
 						{bundle.jobs.map((job) => {
 							if (job.isActive) {
 								let dateRange;
@@ -151,7 +175,7 @@ export default async function ContractPage({
 							}
 						})}
 					</ul>
-				</div>
+				{/* </ScrollArea> */}
 			</div>
 		</main>
 	);

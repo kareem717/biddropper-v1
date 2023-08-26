@@ -124,7 +124,7 @@ export async function POST(req: Request) {
 		}
 	});
 
-	return new Response(JSON.stringify({ contractId: bundle_id }), {
+	return new Response(`${body}`, {
 		status: 200,
 	});
 }
