@@ -11,7 +11,7 @@ import { db } from "@/db";
 import { PlanetScaleAdapter } from "@/lib/auth/planet-scale-adapter";
 import { Adapter } from "next-auth/adapters";
 import { env } from "@/env.mjs";
-import { users } from "@/db/schema/auth";
+// import { users } from "@/db/schema/auth";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 

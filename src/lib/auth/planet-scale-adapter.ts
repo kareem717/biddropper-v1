@@ -5,10 +5,14 @@ import {
 	accounts,
 	sessions,
 	verificationTokens,
-} from "@/db/schema/auth";
+} from "@/db/migrations/schema";
 import { DBClient } from "@/db";
 import type { Adapter } from "@auth/core/adapters";
-import { AdapterSession, AdapterUser } from "next-auth/adapters";
+import {
+	AdapterSession,
+	AdapterUser,
+	VerificationToken,
+} from "next-auth/adapters";
 
 export const defaultSchema = { users, accounts, sessions, verificationTokens };
 export type DefaultSchema = typeof defaultSchema;
@@ -19,7 +23,9 @@ export function PlanetScaleAdapter(
 ): Adapter {
 	return {
 		createUser: async (data) => {
+			console.log(data.name);
 			const id = `user_${crypto.randomUUID()}`;
+
 			await client.insert(users).values({ ...data, id });
 			const user =
 				((await client
@@ -31,20 +37,28 @@ export function PlanetScaleAdapter(
 		},
 		getUser: async (data) => {
 			const user =
-				(await client
-					.select()
+				((await client
+					.select({
+						id: users.id,
+						email: users.email,
+						emailVerified: users.emailVerified,
+					})
 					.from(users)
 					.where(eq(users.id, data))
-					.then((res) => res[0])) ?? null;
+					.then((res) => res[0])) as AdapterUser) ?? null;
 			return user;
 		},
 		getUserByEmail: async (data) => {
 			const email =
-				(await client
-					.select()
+				((await client
+					.select({
+						id: users.id,
+						email: users.email,
+						emailVerified: users.emailVerified,
+					})
 					.from(users)
 					.where(eq(users.email, data))
-					.then((res) => res[0])) ?? null;
+					.then((res) => res[0])) as AdapterUser) ?? null;
 			return email;
 		},
 		createSession: async (data) => {
@@ -70,12 +84,12 @@ export function PlanetScaleAdapter(
 					.innerJoin(users, eq(users.id, sessions.userId))
 					.then((res) => res[0])) ?? null;
 
-			return sessionAndUser;
+			return sessionAndUser as {
+				session: AdapterSession;
+				user: AdapterUser;
+			} | null;
 		},
 		updateUser: async (data) => {
-			if (!data.id) {
-				throw new Error("No user id.");
-			}
 
 			await client.update(users).set(data).where(eq(users.id, data.id));
 			const user =
@@ -126,6 +140,7 @@ export function PlanetScaleAdapter(
 				.delete(sessions)
 				.where(eq(sessions.sessionToken, sessionToken));
 		},
+
 		createVerificationToken: async (token) => {
 			await client.insert(verificationTokens).values(token);
 
@@ -138,7 +153,7 @@ export function PlanetScaleAdapter(
 		useVerificationToken: async (token) => {
 			try {
 				const deletedToken =
-					(await client
+					((await client
 						.select()
 						.from(verificationTokens)
 						.where(
@@ -147,7 +162,7 @@ export function PlanetScaleAdapter(
 								eq(verificationTokens.token, token.token)
 							)
 						)
-						.then((res) => res[0])) ?? null;
+						.then((res) => res[0])) as VerificationToken) ?? null;
 
 				await client
 					.delete(verificationTokens)
