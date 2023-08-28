@@ -41,13 +41,14 @@ interface Step {
 	component: React.ReactNode;
 }
 const formSchema = z.object({
-	username: z.string().min(2).max(50),
+	industry: z.string().min(2).max(50),
 	propertyType: z.string().min(2).max(50),
 	startDate: z.number().min(2).max(50).nullable(),
 	details: z.string().min(2).max(3000),
 });
 
 export default function CreateJobForm() {
+  const userId = useSession().data?.user?.id
 	const [formStep, setFormStep] = useState(0);
 	const [startDateType, setStartDateType] = useState<
 		"weeks" | "months" | "years"
@@ -58,9 +59,9 @@ export default function CreateJobForm() {
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			username: "lawn-maintenance",
+			industry: "lawn-maintenance",
 			propertyType: "apartment",
-			startDate: null,
+			startDate: undefined,
 			details: "",
 		},
 	});
@@ -68,18 +69,18 @@ export default function CreateJobForm() {
 
 	const steps: Step[] = [
 		{
-			fieldName: "username",
+			fieldName: "industry",
 			title: "What do you need done?",
 			description:
 				"Choose a task that best describes the work you need done on your home",
 			component: (
 				<ComboBox
-					defaultValue={form.getValues("username")}
+					defaultValue={form.getValues("industry")}
 					options={industries}
 					emptyText="Select An Industry"
 					notFoundText="No Industry Found"
 					onSelect={(value) => {
-						form.setValue("username", value, {
+						form.setValue("industry", value, {
 							shouldValidate: true,
 						});
 					}}
@@ -213,8 +214,20 @@ export default function CreateJobForm() {
 		});
 	};
 
-	function onSubmit(values: z.infer<typeof formSchema>) {
-		console.log(values);
+	async function onSubmit(values: z.infer<typeof formSchema>) {
+    const res = await fetch("/api/posts/jobs", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId,
+        ...values,
+      }),
+    });
+
+    const body = await res.json()
+    console.log(body);
 	}
 
 	return (
