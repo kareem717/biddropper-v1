@@ -13,7 +13,7 @@ import { selectAddressSchema } from "@/lib/validations/address";
 import Image from "next/image";
 import ImageCarousel from "@/components/image-carousel";
 
-import { industries } from "@/db/config/industries";
+import { industries } from "@/config/industries";
 import JobCard from "@/components/job-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -82,7 +82,7 @@ export default async function ContractPage({
 		<main className="flex">
 			<div className="flex-1">
 				{/* TODO: need to let loding version stay until component is fully ready, because teh transition dosen't go into affect until u wait like 5 seconds or so */}
-				<ImageCarousel slides={imageUrls} className="mx-2"/>
+				<ImageCarousel slides={imageUrls} className="mx-2" />
 				<div className="mx-2">
 					<div className="space-y-2">
 						<h1 className="capitalize text-sm sm:text-xl lg:text-2xl mt-2">
@@ -125,39 +125,39 @@ export default async function ContractPage({
 			</div>
 			<div className="flex-1 ">
 				{/* <ScrollArea> */}
-					<ul className="space-y-2 p-2 h-[100vh] overflow-auto">
-						{bundle.jobs.map((job) => {
-							if (job.isActive) {
-								let dateRange;
-								if (job.dateTo) {
-									dateRange = `${format(
-										new Date(job.dateFrom),
-										"MMM d"
-									)} - ${format(new Date(job.dateTo), "MMM d")}`;
-								} else {
-									//format to mmm d year
-									dateRange = `${format(new Date(job.dateFrom), "MMM do, Y")}`;
-								}
-								return (
-									<li key={job.id}>
-										<JobCard
-											id={job.id}
-											title={job.title}
-											summary={job.summary}
-											date={dateRange}
-											propertyType={job.propertyType}
-											industry={
-												industries.find(
-													(industry) => industry.value === job.industry
-												)?.label || "N/A"
-											}
-											budgetRange={getPriceRange(Number(job.budget))}
-										/>
-									</li>
-								);
+				<ul className="space-y-2 p-2 h-[100vh] overflow-auto">
+					{bundle.jobs.map((job) => {
+						if (job.isActive) {
+							let dateRange;
+							if (job.dateTo) {
+								dateRange = `${format(
+									new Date(job.dateFrom),
+									"MMM d"
+								)} - ${format(new Date(job.dateTo), "MMM d")}`;
+							} else {
+								//format to mmm d year
+								dateRange = `${format(new Date(job.dateFrom), "MMM do, Y")}`;
 							}
-						})}
-					</ul>
+							return (
+								<li key={job.id}>
+									<JobCard
+										id={job.id}
+										title={job.title}
+										summary={job.summary}
+										date={dateRange}
+										propertyType={job.propertyType}
+										industry={
+											industries.find(
+												(industry) => industry.value === job.industry
+											)?.label || "N/A"
+										}
+										budgetRange={getPriceRange(Number(job.budget))}
+									/>
+								</li>
+							);
+						}
+					})}
+				</ul>
 				{/* </ScrollArea> */}
 			</div>
 		</main>

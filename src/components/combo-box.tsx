@@ -1,4 +1,3 @@
-import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +14,10 @@ import {
 } from "@/components/ui/popover";
 import { Icons } from "./icons";
 import useComboBox from "@/hooks/use-combo-box";
+import { useState } from "react";
 
 interface ComboBoxProps {
+	defaultValue?: string;
 	buttonClassName?: string;
 	contentClassName?: string;
 	options: {
@@ -25,20 +26,23 @@ interface ComboBoxProps {
 	}[];
 	emptyText: string;
 	notFoundText: string;
+	onSelect?: (value: string) => void;
 }
 
 const ComboBox: React.FC<ComboBoxProps> = ({
+	defaultValue,
 	buttonClassName,
 	contentClassName,
 	options,
 	emptyText,
 	notFoundText,
+	onSelect,
 }) => {
-	const [open, setOpen] = React.useState(false);
-	const [value, setValue] = React.useState("");
+	const [open, setOpen] = useState(false);
+	const [value, setValue] = useState(defaultValue || "");
 	const { setValues } = useComboBox();
 
-  return (
+	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<Button
@@ -59,7 +63,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 					<Icons.chevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className={cn("w-4/5 p-0", contentClassName)} align="end">
+			<PopoverContent className={contentClassName} asChild align="center">
 				<Command>
 					<CommandInput placeholder="Search industry..." />
 					<CommandEmpty>{notFoundText}</CommandEmpty>
@@ -67,13 +71,14 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 						{options.map((object) => (
 							<CommandItem
 								key={object.value}
-                value={object.value}
+								value={object.value}
 								onSelect={(currentValue) => {
 									setValue(currentValue === value ? "" : currentValue);
 									setValues(object.label, object.value);
+									onSelect && onSelect(object.value);
 									setOpen(false);
 								}}
-								className=" w-full"
+								className="w-full mx-auto"
 							>
 								<Icons.check
 									className={cn(
@@ -81,7 +86,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 										value === object.value ? "opacity-100" : "opacity-0"
 									)}
 								/>
-								{object.label}
+								<span className="text-left">{object.label}</span>
 							</CommandItem>
 						))}
 					</CommandGroup>

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import React from "react";
 import { Icons } from "@/components/icons";
 import { Textarea } from "@/components/ui/textarea";
-import { industries } from "@/db/config/industries";
+import { industries } from "@/config/industries";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { insertJobSchema } from "@/lib/validations/posts";
 import CurrencyInput from "@/components/currency-input";
-import  useMultistepForm from "@/hooks/use-multistep-form";
+import useMultistepForm from "@/hooks/use-multistep-form";
 import { toast } from "sonner";
 import {
 	Dialog,

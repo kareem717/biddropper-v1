@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { industries } from "@/db/config/industries";
+import { industries } from "@/config/industries";
 
 const serviceValues = industries.map((category) => category.value) as [
 	string,
