@@ -38,7 +38,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 	const [value, setValue] = React.useState("");
 	const { setValues } = useComboBox();
 
-	return (
+  return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<Button
@@ -53,7 +53,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 				>
 					<span className="truncate">
 						{value
-							? options.find((object) => object.label === value)?.label
+							? options.find((object) => object.value === value)?.label
 							: emptyText}
 					</span>
 					<Icons.chevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -67,12 +67,13 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 						{options.map((object) => (
 							<CommandItem
 								key={object.value}
+                value={object.value}
 								onSelect={(currentValue) => {
 									setValue(currentValue === value ? "" : currentValue);
 									setValues(object.label, object.value);
 									setOpen(false);
 								}}
-								className="truncate w-full"
+								className=" w-full"
 							>
 								<Icons.check
 									className={cn(
