@@ -114,24 +114,7 @@ export default async function ContractPage({
 						</div>
 					</div>
 					<Separator className="my-4" />
-<<<<<<< HEAD
 					<p>{bundle.bundles.description}</p>
-=======
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed est
-						purus, commodo ut nisl ut, vestibulum commodo elit. Ut non est sit
-						amet lectus congue dapibus. Pellentesque sollicitudin ipsum velit,
-						egestas tempor ligula posuere non. Donec ultricies, turpis sed
-						euismod faucibus, sem lectus rhoncus arcu, vel aliquam quam felis
-						nec ante. Phasellus mauris est, sodales volutpat arcu ut, lobortis
-						aliquet eros. Etiam a mollis purus. Vestibulum ante ipsum primis in
-						faucibus orci luctus et ultrices posuere cubilia curae; Pellentesque
-						id odio vitae eros varius dignissim. Duis hendrerit massa ac dictum
-						tincidunt. Nam in consequat enim, sed congue tellus. Cras fringilla
-						ipsum a erat blandit imperdiet. Fusce nec porta felis, non maximus
-						sapien egestas.
-					</p>
->>>>>>> parent of 91010a5 (just made the w2 update)
 				</div>
 
 				{/* <ul>

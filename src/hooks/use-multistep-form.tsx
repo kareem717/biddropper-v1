@@ -1,22 +1,7 @@
-import { create, useStore } from "zustand";
-
-type Job = {
-	industry: string;
-	title: string;
-	summary: string;
-	budget: number;
-	currencyType: string;
-	propertyType: string;
-	dateRange: {
-		dateFrom: Date;
-		dateTo: Date | undefined;
-	};
-};
+import { create } from "zustand";
 
 interface MultistepFormState {
-	formData: {
-		jobs?: Job[];
-	};
+	formData: {};
 	step: number;
 	nextStep: () => void;
 	prevStep: () => void;
@@ -24,7 +9,7 @@ interface MultistepFormState {
 	addFormData: (data: object) => void;
 }
 
-export const useMultistepForm = create<MultistepFormState>((set) => ({
+ const useMultistepForm = create<MultistepFormState>((set) => ({
 	formData: {},
 	step: 0,
 	nextStep: () =>
@@ -43,3 +28,5 @@ export const useMultistepForm = create<MultistepFormState>((set) => ({
 	addFormData: (data) =>
 		set((state) => ({ formData: { ...state.formData, ...data } })),
 }));
+
+export default useMultistepForm;

@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { insertJobSchema } from "@/lib/validations/posts";
 import CurrencyInput from "@/components/currency-input";
-import { useMultistepForm } from "@/hooks/use-multistep-form";
+import  useMultistepForm from "@/hooks/use-multistep-form";
 import { toast } from "sonner";
 import {
 	Dialog,

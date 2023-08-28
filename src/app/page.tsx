@@ -1,3 +1,4 @@
+import CreateJobDialog from "@/components/forms/create-job";
 import { buttonVariants } from "@/components/ui/button";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
@@ -12,6 +13,10 @@ export default async function Home() {
 
 				<a href="/company" className={buttonVariants()}>
 					Company
+				</a>
+
+				<a href="/create-job" className={buttonVariants()}>
+					Create Job
 				</a>
 			</div>
 			<pre>{JSON.stringify(session, null, 2)}</pre>
