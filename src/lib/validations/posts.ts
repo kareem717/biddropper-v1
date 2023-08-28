@@ -1,5 +1,5 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { bundleMedia, bundles, jobs, bids } from "/drizzle/migrations/posts";
+import { media, bundles, jobs, bids } from "@/db/migrations/schema";
 import * as z from "zod";
 import { industryValues } from "@/config/industries";
 
@@ -42,52 +42,41 @@ export const insertBundleSchema = z.object({
 export const selectBundleSchema = createSelectSchema(bundles);
 
 export const insertJobSchema = createInsertSchema(jobs, {
-	title: z
+	id: z
 		.string()
-		.min(3, {
-			message: "Title must be at least 3 characters long",
-		})
 		.max(50, {
-			message: "Title must be at most 50 characters long",
-		}),
-	summary: z
-		.string()
-		.min(3, {
-			message: "Summary must be at least 3 characters long",
+			message: "ID must be at most 50 characters long",
 		})
-		.max(400, {
-			message: "Summary must be at most 400 characters long",
+		.regex(/^job_[A-Za-z0-9\-]+$/, {
+			message: "ID must be in the format of job_[A-Za-z0-9-]+",
 		}),
 	industry: z.string().refine((value) => {
 		return industryValues.includes(value);
 	}, "Please select a valid option"),
-	budget: z
+	userId: z 
 		.string()
-		.regex(/^\d+(\.\d{1,2})?$/gm, {
-			message: "Please enter a valid number",
+		.regex(/^user_[A-Za-z0-9\-]+$/, {
+			message: "User ID must be in the format of user_[A-Za-z0-9-]+",
 		})
-		.transform((val) => {
-			return parseFloat(val);
+		.min(5, {
+			message: "User ID must be at least 3 characters long",
+		})
+		.max(50, {
+			message: "User ID must be at most 50 characters long",
 		}),
-	dateFrom: z.date().refine((value) => {
-		const tomorrow = new Date();
-		const fiftyYearsFromNow = new Date();
-		fiftyYearsFromNow.setFullYear(tomorrow.getFullYear() + 15);
-		return value >= tomorrow && value <= fiftyYearsFromNow;
-	}, "Date must be between tomorrow and 15 years in the future"),
-	dateTo: z.optional(
-		z.date().refine((value) => {
-			const tomorrow = new Date();
-			tomorrow.setDate(tomorrow.getDate() + 1);
-			const fiftyYearsFromNow = new Date();
-			fiftyYearsFromNow.setFullYear(tomorrow.getFullYear() + 55);
-			return value >= tomorrow && value <= fiftyYearsFromNow;
-		}, "Date must be in at least 2 days time and 15 years in the future")
-	),
+	details: z
+		.string()
+		.min(10, {
+			message: "Details must be at least 10 characters long",
+		})
+		.max(3000, {
+			message: "Details must be at most 3000 characters long",
+		}),
 });
+
 export const selectJobSchema = createSelectSchema(jobs);
 
-export const insertBundleMediaSchema = createInsertSchema(bundleMedia, {
+export const insertBundleMediaSchema = createInsertSchema(media, {
 	bundleId: z.string().max(50, {
 		message: "Bundle ID must be at most 50 characters long",
 	}),
@@ -98,7 +87,7 @@ export const insertBundleMediaSchema = createInsertSchema(bundleMedia, {
 		message: "File key must be at most 191 characters long",
 	}),
 });
-export const selectBundleMediaSchema = createSelectSchema(bundleMedia);
+export const selectBundleMediaSchema = createSelectSchema(media);
 
 export const insertBidsSchema = createInsertSchema(bids);
 export const selectBidsSchema = createSelectSchema(bids);

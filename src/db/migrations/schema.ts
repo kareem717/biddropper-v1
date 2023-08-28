@@ -164,8 +164,8 @@ export const jobs = mysqlTable(
 	{
 		id: varchar("id", { length: 50 }).notNull(),
 		userId: varchar("user_id", { length: 50 }).notNull(),
+		industry: varchar("industry", { length: 255 }).notNull(),
 		isActive: tinyint("is_active").default(1),
-		service: varchar("service", { length: 255 }).notNull(),
 		isCommercialProperty: tinyint("is_commercial_property")
 			.default(0)
 			.notNull(),
@@ -176,6 +176,13 @@ export const jobs = mysqlTable(
 		updatedAt: timestamp("updated_at", { mode: "date" })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.onUpdateNow(),
+		timeHorizon: mysqlEnum("time_horizon", [
+			"asap",
+			"one-week",
+			"two-weeks",
+			"one-month",
+			"flexible",
+		]).notNull(),
 		propertyType: mysqlEnum("property_type", [
 			"detached",
 			"apartment",
