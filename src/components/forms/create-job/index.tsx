@@ -155,7 +155,7 @@ export default function CreateJobForm() {
 			),
 		},
 		{
-			fieldName: "startDate",
+			fieldName: "timeHorizon",
 			title: "When do you want to start this project?",
 			component: (
 				<>
@@ -174,8 +174,8 @@ export default function CreateJobForm() {
 							<Label htmlFor="one-week">Within a week</Label>
 						</div>
 						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="two-month" id="two-month" />
-							<Label htmlFor="two-month">Within two weeks</Label>
+							<RadioGroupItem value="two-weeks" id="two-weeks" />
+							<Label htmlFor="two-weeks">Within two weeks</Label>
 						</div>
 						<div className="flex items-center space-x-2">
 							<RadioGroupItem value="one-month" id="one-month" />
@@ -207,7 +207,6 @@ export default function CreateJobForm() {
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsFetching(true);
 
-
 		const res = await fetch("/api/posts/jobs", {
 			method: "POST",
 			headers: {
@@ -238,9 +237,14 @@ export default function CreateJobForm() {
 	return (
 		<div>
 			<Shell>
+				{`formStep: ${formStep === totalSteps - 1}`}
 				{`${form.getValues("propertyType")}`}
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+					<form
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="space-y-8"
+						id="job-form"
+					>
 						{steps.map((step, index) => (
 							<FormField
 								key={index}
@@ -264,29 +268,15 @@ export default function CreateJobForm() {
 								)}
 							/>
 						))}
-						{formStep === totalSteps - 1 &&
-							(isFetching ? (
-								<Button disabled={true} type={"button"}>
-									<Icons.spinner
-										className="mr-2 h-4 w-4 animate-spin"
-										aria-hidden="true"
-									/>
-									<span className="sr-only">Loading</span>
-								</Button>
-							) : (
-								<Button type="submit" className="w-full">
-									Finish and Create
-								</Button>
-							))}
 					</form>
 				</Form>
-				{formStep < totalSteps - 1 && (
-					<div className="flex w-full gap-2">
-						{formStep > 0 && (
-							<Button onClick={handlePreviousStep} className="w-full">
-								Back
-							</Button>
-						)}
+				<div className="flex w-full gap-2">
+					{formStep > 0 && !isFetching && (
+						<Button onClick={handlePreviousStep} className="w-full">
+							Back
+						</Button>
+					)}
+					{formStep < totalSteps - 1 && (
 						<Button
 							onClick={async () => {
 								await form.trigger(fields[formStep] as any);
@@ -295,7 +285,6 @@ export default function CreateJobForm() {
 									fields[formStep] as any
 								).invalid;
 
-								console.log(fields[formStep] as any);
 								if (!fieldInvalid) {
 									handleNextStep();
 								}
@@ -304,8 +293,22 @@ export default function CreateJobForm() {
 						>
 							Next
 						</Button>
-					</div>
-				)}
+					)}
+					{formStep === totalSteps - 1 &&
+						(isFetching ? (
+							<Button disabled={true} type={"button"} className="w-full">
+								<Icons.spinner
+									className="mr-2 h-4 w-4 animate-spin"
+									aria-hidden="true"
+								/>
+								<span className="sr-only">Loading</span>
+							</Button>
+						) : (
+							<Button type="submit" form="job-form" className="w-full">
+								Finish and Create
+							</Button>
+						))}
+				</div>
 			</Shell>
 		</div>
 	);
