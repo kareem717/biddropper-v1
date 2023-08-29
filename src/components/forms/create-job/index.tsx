@@ -27,20 +27,14 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import CustomRadioButtons from "@/components/custom-radio-buttons";
+import { LucideIcon } from "lucide-react";
 
 export default function CreateJobForm() {
 	const userId = useSession().data?.user?.id;
 	const totalSteps = 4;
 
-	const [formStep, setFormStep] = useState<number>(0);
+	const [formStep, setFormStep] = useState<number>(1);
 	const [isCommercial, setIsCommercial] = useState<boolean>(false);
 	const [isFetching, setIsFetching] = useState<boolean>(false);
 
@@ -111,46 +105,33 @@ export default function CreateJobForm() {
 			title: "What type of property do you have?",
 			component: (
 				<>
-					<RadioGroup
-						defaultValue={form.getValues("propertyType")}
+					<CustomRadioButtons
 						onValueChange={(value) => {
 							form.setValue("propertyType", value as any);
 						}}
-					>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="detached" id="detached" />
-							<Label htmlFor="detached">Detached</Label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="apartment" id="apartment" />
-							<Label htmlFor="apartment">Apartment</Label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="semi-detached" id="semi-detached" />
-							<Label htmlFor="semi-detached">Semi-Detached</Label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="town-house" id="town-house" />
-							<Label htmlFor="town-house">Town House</Label>
-						</div>
-					</RadioGroup>
-					<div className="items-top flex space-x-2">
-						<Checkbox
-							id="commercial-property"
-							checked={isCommercial}
-							onCheckedChange={(value) => {
-								setIsCommercial(!isCommercial);
-							}}
-						/>
-						<div className="grid gap-1.5 leading-none">
-							<label
-								htmlFor="commercial-property"
-								className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-							>
-								This is a commercial property
-							</label>
-						</div>
-					</div>
+						buttons={[
+							{
+								icon: Icons.home as any,
+								label: "Detached",
+								value: "detached",
+							},
+							{
+								icon: Icons.building as any,
+								label: "Apartment",
+								value: "apartment",
+							},
+							{
+								icon: Icons.building2 as any,
+								label: "Semi-Detached",
+								value: "semi-detached",
+							},
+							{
+								icon: Icons.attachedBuilding as any,
+								label: "Townhouse",
+								value: "town-house",
+							},
+						]}
+					/>
 				</>
 			),
 		},
