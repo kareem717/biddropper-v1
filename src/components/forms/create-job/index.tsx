@@ -39,11 +39,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function CreateJobForm() {
 	const userId = useSession().data?.user?.id;
 	const totalSteps = 4;
+	const router = useRouter();
 
 	const [formStep, setFormStep] = useState<number>(0);
 	const [isCommercial, setIsCommercial] = useState<boolean>(false);
@@ -227,16 +228,18 @@ export default function CreateJobForm() {
 		});
 
 		const body = await res.json();
-
-		if (res.status === 200) {
-			redirect("/jobs")
+		if (res.status === 201) {
 			toast.success("Success!", {
 				description: "Your job has been created",
 			});
+			router.replace("/");
+			// router.push(`/jobs/${body.id}`); TODO: redirect to job page
+		} else {
+			toast.error("Error!", {
+				description: "Something went wrong. Please try again later.",
+			});
+			setIsFetching(false);
 		}
-
-		console.log(body);
-		setIsFetching(false);
 	}
 
 	return (

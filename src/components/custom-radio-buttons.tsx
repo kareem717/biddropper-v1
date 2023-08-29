@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Icons } from "./icons";
-import { Label } from "./ui/label";
 import { cn } from "@/lib/utils";
 
 interface CustomRadioButtonsProps {
@@ -40,7 +39,7 @@ const CustomRadioButtons: React.FC<CustomRadioButtonsProps> = ({
 						<button.icon className=" w-[60%] h-[60%] stroke-[1.5px]" />
 					</div>
 					<div
-						className="w-full flex justify-center text-[20px] lg:text-3xl"
+						className="w-full flex justify-center text-base sm:text-lg lg:text-2xl"
 					>
 						{button.label}
 					</div>
