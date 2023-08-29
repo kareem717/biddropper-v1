@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import ComboBox from "@/components/combo-box";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { industries } from "@/config/industries";
 import { Shell } from "@/components/shells";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +17,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,10 +26,8 @@ import { toast } from "sonner";
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
-	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
 import CustomRadioButtons from "@/components/custom-radio-buttons";
@@ -44,6 +39,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { redirect } from "next/navigation";
 
 export default function CreateJobForm() {
 	const userId = useSession().data?.user?.id;
@@ -233,6 +229,7 @@ export default function CreateJobForm() {
 		const body = await res.json();
 
 		if (res.status === 200) {
+			redirect("/jobs")
 			toast.success("Success!", {
 				description: "Your job has been created",
 			});
