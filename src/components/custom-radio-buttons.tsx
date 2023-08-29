@@ -28,35 +28,32 @@ const CustomRadioButtons: React.FC<CustomRadioButtonsProps> = ({
 	};
 
 	return (
-		<div className={cn("mx-auto", className)}>
-			<div className="grid grid-cols-2 gap-10">
-				{buttons.map((button) => (
-					<div key={button.value} className="aspect-square">
-						<div
-							className={`bg-secondary rounded-full flex justify-center items-center w-full h-full ${
-								selectedValue === button.value ? "border-8 border-primary" : ""
-							}`}
-							onClick={() => handleButtonClick(button.value)}
-						>
-							<button.icon className=" w-[60%] h-[60%] stroke-[1.5px]" />
-						</div>
-						<Label
-							htmlFor={button.value}
-							className="w-full flex justify-center text-2xl mt-3"
-						>
-							{button.label}
-						</Label>
-						<input
-							type="radio"
-							id={button.value}
-							name="propertyType"
-							value={button.value}
-							className="sr-only"
-							checked={selectedValue === button.value}
-						/>
+		<div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-10", className)}>
+			{buttons.map((button) => (
+				<div key={button.value} className="aspect-square">
+					<div
+						className={`bg-secondary rounded-full flex justify-center items-center w-full h-full ${
+							selectedValue === button.value ? "border-[min(4vw,6px)] sm:border-8 xl:border-[12px] border-primary" : ""
+						}`}
+						onClick={() => handleButtonClick(button.value)}
+					>
+						<button.icon className=" w-[60%] h-[60%] stroke-[1.5px]" />
 					</div>
-				))}
-			</div>
+					<div
+						className="w-full flex justify-center text-[20px] lg:text-3xl"
+					>
+						{button.label}
+					</div>
+					<input
+						type="radio"
+						id={button.value}
+						name="propertyType"
+						value={button.value}
+						className="sr-only"
+						checked={selectedValue === button.value}
+					/>
+				</div>
+			))}
 		</div>
 	);
 };

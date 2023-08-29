@@ -10,6 +10,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
@@ -28,13 +36,20 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import CustomRadioButtons from "@/components/custom-radio-buttons";
-import { LucideIcon } from "lucide-react";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 
 export default function CreateJobForm() {
 	const userId = useSession().data?.user?.id;
 	const totalSteps = 4;
 
-	const [formStep, setFormStep] = useState<number>(1);
+	const [formStep, setFormStep] = useState<number>(0);
 	const [isCommercial, setIsCommercial] = useState<boolean>(false);
 	const [isFetching, setIsFetching] = useState<boolean>(false);
 
@@ -81,15 +96,17 @@ export default function CreateJobForm() {
 		description?: string;
 		component: React.ReactNode;
 	}
-	console.log(form.getValues());
+
 	const steps: Step[] = [
 		{
 			fieldName: "industry",
 			title: "What do you need done?",
 			description:
-				"Choose a task that best describes the work you need done on your home",
+				"Choose a task that best describes the work you need done on your home.",
 			component: (
 				<ComboBox
+					buttonClassName="w-full"
+					contentClassName="w-full max-h-[max(200px,25vh)] overflow-auto"
 					defaultValue={form.getValues("industry")}
 					options={industries}
 					emptyText="Select An Industry"
@@ -103,9 +120,11 @@ export default function CreateJobForm() {
 		{
 			fieldName: "propertyType",
 			title: "What type of property do you have?",
+			description: "Select the type of property you need work done on.",
 			component: (
-				<>
+				<div className="space-y-8">
 					<CustomRadioButtons
+						className="w-1/2 h-1/2 mx-auto"
 						onValueChange={(value) => {
 							form.setValue("propertyType", value as any);
 						}}
@@ -132,48 +151,56 @@ export default function CreateJobForm() {
 							},
 						]}
 					/>
-				</>
+					<div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+						<FormControl>
+							<Checkbox
+								checked={isCommercial}
+								onCheckedChange={(value) => setIsCommercial(!isCommercial)}
+							/>
+						</FormControl>
+						<div className="space-y-1 leading-none">
+							<label
+								htmlFor="terms1"
+								className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+							>
+								Commercial Property
+							</label>
+							<p className="text-sm text-muted-foreground">
+								Select this option if you are a business owner or property
+								manager.
+							</p>
+						</div>
+					</div>
+				</div>
 			),
 		},
 		{
 			fieldName: "timeHorizon",
 			title: "When do you want to start this project?",
 			component: (
-				<>
-					<RadioGroup
-						defaultValue={form.getValues("propertyType")}
-						onValueChange={(value) => {
-							form.setValue("timeHorizon", value as any);
-						}}
-					>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="asap" id="asap" />
-							<Label htmlFor="asap">ASAP</Label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="one-week" id="one-week" />
-							<Label htmlFor="one-week">Within a week</Label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="two-weeks" id="two-weeks" />
-							<Label htmlFor="two-weeks">Within two weeks</Label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="one-month" id="one-month" />
-							<Label htmlFor="one-month">Within a month</Label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<RadioGroupItem value="flexible" id="flexible" />
-							<Label htmlFor="flexible">Time is flexible</Label>
-						</div>
-					</RadioGroup>
-				</>
+				<Select
+					onValueChange={(value) => form.setValue("timeHorizon", value as any)}
+					defaultValue={form.getValues("timeHorizon" as any)}
+				>
+					<SelectTrigger className="w-full">
+						<SelectValue placeholder="Select a time frame" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="asap">As soon as possible</SelectItem>
+						<SelectItem value="one-week">Within a week</SelectItem>
+						<SelectItem value="two-weeks">Within two weeks</SelectItem>
+						<SelectItem value="one-month">Within a month</SelectItem>
+						<SelectItem value="flexible">
+							The time schedule is flexible
+						</SelectItem>
+					</SelectContent>
+				</Select>
 			),
 		},
 		{
 			fieldName: "details",
-			title: "Details",
-			description: "Provide some details about your project",
+			title: "Final details",
+			description: "Provide any useful details about your project.",
 			component: (
 				<Textarea
 					className="max-h-[15vh] overflow-auto"
@@ -218,78 +245,89 @@ export default function CreateJobForm() {
 	return (
 		<div>
 			<Shell>
-				{`formStep: ${formStep === totalSteps - 1}`}
-				{`${form.getValues("propertyType")}`}
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(onSubmit)}
-						className="space-y-8"
-						id="job-form"
-					>
-						{steps.map((step, index) => (
-							<FormField
-								key={index}
-								control={form.control}
-								name={step.fieldName as any}
-								render={({ field }) => (
-									<FormItem
-										className={cn(
-											"transition duration-300",
-											index !== formStep && "hidden"
-										)}
-									>
-										{step.title && <FormLabel>{step.title}</FormLabel>}
+				<Card>
+					<CardHeader>
+						<div className="mb-8">
+							<Progress value={((formStep + 1) / totalSteps) * 100} />
+						</div>
 
-										{step.description && (
-											<FormDescription>{step.description}</FormDescription>
-										)}
-										<FormControl>{step.component}</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						))}
-					</form>
-				</Form>
-				<div className="flex w-full gap-2">
-					{formStep > 0 && !isFetching && (
-						<Button onClick={handlePreviousStep} className="w-full">
-							Back
-						</Button>
-					)}
-					{formStep < totalSteps - 1 && (
-						<Button
-							onClick={async () => {
-								await form.trigger(fields[formStep] as any);
-
-								const fieldInvalid = form.getFieldState(
-									fields[formStep] as any
-								).invalid;
-
-								if (!fieldInvalid) {
-									handleNextStep();
-								}
-							}}
-							className="w-full"
+						<CardTitle>{steps[formStep]?.title}</CardTitle>
+						<CardDescription>{steps[formStep]?.description}</CardDescription>
+					</CardHeader>
+					<Form {...form}>
+						<form
+							onSubmit={form.handleSubmit(onSubmit)}
+							className="space-y-8"
+							id="job-form"
 						>
-							Next
-						</Button>
-					)}
-					{formStep === totalSteps - 1 &&
-						(isFetching ? (
-							<Button disabled={true} type={"button"} className="w-full">
-								<Icons.spinner
-									className="mr-2 h-4 w-4 animate-spin"
-									aria-hidden="true"
-								/>
-								<span className="sr-only">Loading</span>
-							</Button>
-						) : (
-							<Button type="submit" form="job-form" className="w-full">
-								Finish and Create
-							</Button>
-						))}
-				</div>
+							<CardContent>
+								{steps.map((step, index) => (
+									<FormField
+										key={index}
+										control={form.control}
+										name={step.fieldName as any}
+										render={({ field }) => (
+											<FormItem
+												className={cn(
+													"transition duration-300",
+													index !== formStep && "hidden"
+												)}
+											>
+												<FormControl>{step.component}</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								))}
+							</CardContent>
+						</form>
+					</Form>
+					<CardFooter>
+						<div className="flex w-full gap-2">
+							{formStep > 0 && !isFetching && (
+								<Button
+									onClick={handlePreviousStep}
+									className="w-full"
+									variant={"secondary"}
+								>
+									Back
+								</Button>
+							)}
+							{formStep < totalSteps - 1 && (
+								<Button
+									onClick={async () => {
+										await form.trigger(fields[formStep] as any);
+
+										const fieldInvalid = form.getFieldState(
+											fields[formStep] as any
+										).invalid;
+
+										if (!fieldInvalid) {
+											handleNextStep();
+										}
+									}}
+									className="w-full"
+								>
+									Next
+								</Button>
+							)}
+							{formStep === totalSteps - 1 &&
+								(isFetching ? (
+									<Button disabled={true} type={"button"} className="w-full">
+										<Icons.spinner
+											className="mr-2 h-4 w-4 animate-spin"
+											aria-hidden="true"
+										/>
+										<span className="sr-only">Loading</span>
+									</Button>
+								) : (
+									<Button type="submit" form="job-form" className="w-full">
+										Finish and Create
+									</Button>
+								))}
+						</div>
+					</CardFooter>
+				</Card>
 			</Shell>
 		</div>
 	);
