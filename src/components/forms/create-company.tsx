@@ -28,7 +28,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { useAuth } from "@clerk/nextjs";
 import CreateClerkOrg from "@/app/_actions/create-clerk-org";
 import { catchClerkError, cn } from "@/lib/utils";
 import { redirect, useRouter } from "next/navigation";
@@ -36,15 +35,20 @@ import { Icons } from "../icons";
 import { industries } from "@/config/industries";
 import { toast } from "sonner";
 import { Textarea } from "../ui/textarea";
+import { useSession } from "next-auth/react";
 
 const formSchema = createCompanySchema.omit({ slug: true });
 type Inputs = z.infer<typeof formSchema>;
 
 export function CreateCompanyForm() {
 	const router = useRouter();
-	const { userId } = useAuth();
+	const session = useSession();
 
-	if (!userId) redirect("/sign-in");
+	if (!session) {
+		redirect("/sign-in");
+	}
+
+	const userId = session.data?.user?.id;
 
 	const [values, setValues] = React.useState<string[]>([]);
 	const toggleValue = (value: string) => {
@@ -68,7 +72,7 @@ export function CreateCompanyForm() {
 		defaultValues: {
 			name: "",
 			max_allowed_memberships: 3,
-			created_by: userId,
+			// created_by: userId,
 			services: undefined,
 			private_metadata: {},
 			public_metadata: {},
@@ -98,17 +102,17 @@ export function CreateCompanyForm() {
 		try {
 			router.prefetch("/");
 
-			await CreateClerkOrg({
-				name: data.name,
-				slug: createSlug(data.name),
-				max_allowed_memberships: 3,
-				created_by: userId,
-				private_metadata: {},
-				public_metadata: {},
-				services: data.services,
-				invitees: data.invitees,
-				tagline: data.tagline,
-			});
+			// await CreateClerkOrg({
+			// 	name: data.name,
+			// 	slug: createSlug(data.name),
+			// 	max_allowed_memberships: 3,
+			// 	// created_by: userId,
+			// 	private_metadata: {},
+			// 	public_metadata: {},
+			// 	services: data.services,
+			// 	invitees: data.invitees,
+			// 	tagline: data.tagline,
+			// });
 
 			toast.message("Organization created successfully");
 			form.reset();
