@@ -81,3 +81,13 @@ input[type="number"]::-webkit-outer-spin-button {
 		@apply bg-background text-foreground;
 	}
 }
+
+@layer utilities {
+	.animation-delay-2000 {
+		animation-delay: 2000ms;
+	}
+
+	.animation-delay-4000 {
+		animation-delay: 4000ms;
+	}
+}

@@ -1,21 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FC, ComponentPropsWithoutRef } from "react";
 import ComboBox from "@/components/combo-box";
 import { industries } from "@/config/industries";
-import { Shell } from "@/components/shells";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
@@ -23,6 +15,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { insertJobSchema } from "@/lib/validations/posts";
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
+import CustomRadioButtons from "@/components/custom-radio-buttons";
+import { useRouter } from "next/navigation";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	Form,
 	FormControl,
@@ -30,7 +31,6 @@ import {
 	FormItem,
 	FormMessage,
 } from "@/components/ui/form";
-import CustomRadioButtons from "@/components/custom-radio-buttons";
 import {
 	Card,
 	CardContent,
@@ -39,9 +39,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
 
-export default function CreateJobForm() {
+const CreateJobForm: FC<ComponentPropsWithoutRef<typeof Card>> = ({
+	...props
+}) => {
 	const userId = useSession().data?.user?.id;
 	const totalSteps = 4;
 	const router = useRouter();
@@ -149,12 +150,10 @@ export default function CreateJobForm() {
 						]}
 					/>
 					<div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-						<FormControl>
-							<Checkbox
-								checked={isCommercial}
-								onCheckedChange={(value) => setIsCommercial(!isCommercial)}
-							/>
-						</FormControl>
+						<Checkbox
+							checked={isCommercial}
+							onCheckedChange={(value) => setIsCommercial(!isCommercial)}
+						/>
 						<div className="space-y-1 leading-none">
 							<label
 								htmlFor="terms1"
@@ -200,7 +199,7 @@ export default function CreateJobForm() {
 			description: "Provide any useful details about your project.",
 			component: (
 				<Textarea
-					className="max-h-[15vh] overflow-auto"
+					className="max-h-[30vh] min-h-[15vh] overflow-auto"
 					{...form.register("details")}
 				/>
 			),
@@ -216,7 +215,7 @@ export default function CreateJobForm() {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"Job-Creator-Type": "user"
+				"Job-Creator-Type": "user",
 			},
 			body: JSON.stringify({
 				userId,
@@ -244,92 +243,94 @@ export default function CreateJobForm() {
 	}
 
 	return (
-		<div>
-			<Shell>
-				<Card>
-					<CardHeader>
-						<div className="mb-8">
-							<Progress value={((formStep + 1) / totalSteps) * 100} />
-						</div>
+		<Card {...props}>
+			<CardHeader>
+				<div className="mb-8">
+					<Progress value={((formStep + 1) / totalSteps) * 100} />
+				</div>
 
-						<CardTitle>{steps[formStep]?.title}</CardTitle>
-						<CardDescription>{steps[formStep]?.description}</CardDescription>
-					</CardHeader>
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="space-y-8"
-							id="job-form"
-						>
-							<CardContent>
-								{steps.map((step, index) => (
-									<FormField
-										key={index}
-										control={form.control}
-										name={step.fieldName as any}
-										render={({ field }) => (
-											<FormItem
-												className={cn(
-													"transition duration-300",
-													index !== formStep && "hidden"
-												)}
-											>
-												<FormControl>{step.component}</FormControl>
-												<FormMessage />
-											</FormItem>
+				<CardTitle>{steps[formStep]?.title}</CardTitle>
+				<CardDescription>{steps[formStep]?.description}</CardDescription>
+			</CardHeader>
+			<Form {...form}>
+				<form
+					onSubmit={form.handleSubmit(onSubmit)}
+					className="space-y-8"
+					id="job-form"
+				>
+					<CardContent>
+						{steps.map((step, index) => (
+							<FormField
+								key={index}
+								control={form.control}
+								name={step.fieldName as any}
+								render={({ field }) => (
+									<FormItem
+										className={cn(
+											"transition duration-300",
+											index !== formStep && "hidden"
 										)}
-									/>
-								))}
-							</CardContent>
-						</form>
-					</Form>
-					<CardFooter>
-						<div className="flex w-full gap-2">
-							{formStep > 0 && !isFetching && (
-								<Button
-									onClick={handlePreviousStep}
-									className="w-full"
-									variant={"secondary"}
-								>
-									Back
-								</Button>
-							)}
-							{formStep < totalSteps - 1 && (
-								<Button
-									onClick={async () => {
-										await form.trigger(fields[formStep] as any);
+									>
+										<FormControl>{step.component}</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						))}
+					</CardContent>
+				</form>
+			</Form>
+			<CardFooter>
+				<div className="flex w-full gap-2">
+					{formStep > 0 && !isFetching && (
+						<Button
+							onClick={handlePreviousStep}
+							className="w-full"
+							variant={"secondary"}
+						>
+							Back
+						</Button>
+					)}
+					{formStep < totalSteps - 1 && (
+						<Button
+							onClick={async () => {
+								await form.trigger(fields[formStep] as any);
 
-										const fieldInvalid = form.getFieldState(
-											fields[formStep] as any
-										).invalid;
+								const fieldInvalid = form.getFieldState(
+									fields[formStep] as any
+								).invalid;
 
-										if (!fieldInvalid) {
-											handleNextStep();
-										}
-									}}
-									className="w-full"
-								>
-									Next
-								</Button>
-							)}
-							{formStep === totalSteps - 1 &&
-								(isFetching ? (
-									<Button disabled={true} type={"button"} className="w-full">
-										<Icons.spinner
-											className="mr-2 h-4 w-4 animate-spin"
-											aria-hidden="true"
-										/>
-										<span className="sr-only">Loading</span>
-									</Button>
-								) : (
-									<Button type="submit" form="job-form" className="w-full">
-										Finish and Create
-									</Button>
-								))}
-						</div>
-					</CardFooter>
-				</Card>
-			</Shell>
-		</div>
+								if (!fieldInvalid) {
+									handleNextStep();
+								}
+							}}
+							className="w-full"
+						>
+							Next
+						</Button>
+					)}
+					{formStep === totalSteps - 1 &&
+						(isFetching ? (
+							<Button disabled={true} type={"button"} className="w-full">
+								<Icons.spinner
+									className="mr-2 h-4 w-4 animate-spin"
+									aria-hidden="true"
+								/>
+								<span className="sr-only">Loading</span>
+							</Button>
+						) : (
+							<Button type="submit" form="job-form" className="w-full">
+								<span className="hidden sm:block">
+
+								Finish and Create
+								</span>
+								<span className="sm:hidden">Done</span>
+							</Button>
+						))}
+				</div>
+			</CardFooter>
+		</Card>
 	);
-}
+};
+
+export default CreateJobForm;
