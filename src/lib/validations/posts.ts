@@ -53,17 +53,6 @@ export const insertJobSchema = createInsertSchema(jobs, {
 	industry: z.string().refine((value) => {
 		return industryValues.includes(value);
 	}, "Please select a valid option"),
-	userId: z 
-		.string()
-		.regex(/^user_[A-Za-z0-9\-]+$/, {
-			message: "User ID must be in the format of user_[A-Za-z0-9-]+",
-		})
-		.min(5, {
-			message: "User ID must be at least 3 characters long",
-		})
-		.max(50, {
-			message: "User ID must be at most 50 characters long",
-		}),
 	details: z
 		.string()
 		.min(10, {

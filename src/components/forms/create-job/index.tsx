@@ -216,6 +216,7 @@ export default function CreateJobForm() {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
+				"Job-Creator-Type": "user"
 			},
 			body: JSON.stringify({
 				userId,
