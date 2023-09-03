@@ -18,6 +18,9 @@ export default async function Home() {
 				<a href="/create-job" className={buttonVariants()}>
 					Create Job
 				</a>
+				<a href="/job-view" className={buttonVariants()}>
+					job view
+				</a>
 			</div>
 			<pre>{JSON.stringify(session, null, 2)}</pre>
 		</main>

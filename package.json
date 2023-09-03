@@ -18,6 +18,8 @@
     "@clerk/nextjs": "^4.23.0",
     "@googlemaps/js-api-loader": "^1.16.2",
     "@hookform/resolvers": "^3.1.1",
+    "@mapbox/search-js-react": "^1.0.0-beta.17",
+    "@mapbox/search-js-web": "^1.0.0-beta.17",
     "@planetscale/database": "^1.8.0",
     "@radix-ui/react-aspect-ratio": "^1.0.3",
     "@radix-ui/react-avatar": "^1.0.3",
@@ -57,7 +59,10 @@
     "drizzle-zod": "^0.5.0",
     "eslint": "8.45.0",
     "eslint-config-next": "13.4.12",
+    "jotai": "^2.4.0",
+    "keen-slider": "^6.8.6",
     "lucide-react": "^0.263.1",
+    "mapbox-gl": "^2.15.0",
     "nanoid": "^4.0.2",
     "next": "13.4.12",
     "next-auth": "^4.23.0",
@@ -70,9 +75,11 @@
     "react-google-autocomplete": "^2.7.3",
     "react-hook-form": "^7.45.2",
     "react-select": "^5.7.4",
+    "recharts": "^2.8.0",
     "resend": "^1.0.0",
     "sonner": "^0.6.2",
     "svix": "^1.7.0",
+    "swiper": "^10.2.0",
     "tailwind-merge": "^1.14.0",
     "tailwindcss": "3.3.3",
     "tailwindcss-animate": "^1.0.6",
@@ -84,6 +91,8 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
     "@types/google.maps": "^3.53.6",
+    "@types/mapbox": "^1.6.42",
+    "@types/mapbox-gl": "^2.7.13",
     "drizzle-kit": "^0.19.12"
   }
 }
