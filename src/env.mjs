@@ -33,10 +33,13 @@ export const env = createEnv({
 		NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: z.string().min(1),
 		NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().min(1),
 		NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1),
+		NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: z.string().min(1),
 	},
 
 	runtimeEnv: {
 		NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+		NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:
+			process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
 		RESEND_API_KEY: process.env.RESEND_API_KEY,
 		NODE_ENV: process.env.NODE_ENV,
 		PLANETSCALE_HOST_NAME: process.env.PLANETSCALE_HOST_NAME,
