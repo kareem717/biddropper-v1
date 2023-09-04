@@ -48,7 +48,7 @@ const JobMap = dynamic(() => import("@/components/job-map"), {
 
 export default function JobView({ params }: { params: { id: string } }) {
 	const { data, error } = useSWR(["/api/posts/jobs", params.id[0]], fetcher);
-
+	// TODO: Implement real image fetching, implement location fetching
 	const images = [
 		"https://images.unsplash.com/photo-1590004953392-5aba2e72269a?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=500&w=800&q=80",
 		"https://images.unsplash.com/photo-1590004845575-cc18b13d1d0a?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=500&w=800&q=80",
@@ -57,7 +57,12 @@ export default function JobView({ params }: { params: { id: string } }) {
 	];
 
 	if (error) return <div>failed to load</div>;
-	if (!data) return <div>loading...</div>;
+	if (!data)
+		return (
+			<div className="w-full h-screen  bg-cover relative xl:bg-bottom">
+				<Skeleton className="sm:w-[min(80vw,1250px)] w-[95vw] h-[80vh] absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4" />
+			</div>
+		);
 
 	const jobSchema = selectJobSchema.extend({
 		media: z.array(selectMediaSchema).nullable(),
@@ -72,7 +77,8 @@ export default function JobView({ params }: { params: { id: string } }) {
 	);
 
 	return (
-		<div className="w-full h-screen bg-[url('/images/blob-scene.svg')] bg-cover relative xl:bg-bottom">
+		// //TODO: find cool bg
+		<div className="w-full h-screen  bg-cover relative xl:bg-bottom">
 			<Card className="sm:w-[min(80vw,1250px)] w-[95vw]  bg-background absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4">
 				<CardHeader>
 					<CardTitle>
@@ -123,7 +129,7 @@ export default function JobView({ params }: { params: { id: string } }) {
 								/>
 							}
 
-							<div className="mt-4 flex flex-wrap md:flex-row gap-2 ">
+							<div className="mt-4 flex flex-wrap gap-2 ">
 								{job.isCommercialProperty ? (
 									<BadgeTooltip
 										label="Commercial"
