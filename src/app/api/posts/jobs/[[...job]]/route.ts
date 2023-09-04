@@ -1,7 +1,8 @@
 import { db } from "@/db";
-import { companyJobs, jobs, userJobs } from "@/db/migrations/schema";
+import { companyJobs, jobMedia, jobs, userJobs, media } from "@/db/migrations/schema";
 import { insertJobSchema } from "@/lib/validations/posts";
 import { headers } from "next/headers";
+import { eq } from "drizzle-orm";
 import * as z from "zod";
 
 export async function POST(req: Request) {
@@ -93,5 +94,57 @@ export async function POST(req: Request) {
 			"content-type": "application/json",
 		},
 		status: 201,
+	});
+}
+
+export async function GET(req: Request) {
+	console.log(req)
+	const headersList = headers();
+	const id = headersList.get("Job-ID")
+
+	if (!id) {
+		return new Response(JSON.stringify({ error: "No job ID provided" }), {
+			headers: {
+				"content-type": "application/json",
+			},
+			status: 400,
+		});
+	}
+
+	const jobId = insertJobSchema.pick({ id: true }).safeParse({id});
+
+	console.log(jobId, id)
+	if (!jobId.success) {
+		return new Response(JSON.stringify(jobId.error), {
+			headers: {
+				"content-type": "application/json",
+			},
+			status: 400,
+		});
+	}
+
+	const data = jobId.data;
+
+	// TODO: Is this the best way to do this?
+	const query = await db
+		.select()
+		.from(jobs)
+		.where(eq(jobs.id, data.id))
+		.leftJoin(jobMedia, eq(jobs.id, jobMedia.jobId))
+		.leftJoin(media, eq(jobMedia.mediaId, media.id));
+
+	//TODO: implement when job media uploads are implemented
+	// const job = query.reduce((acc, curr) => {
+	// 	return {
+	// 		...acc,
+	// 		...curr,
+	// 	};
+	// })
+
+	return new Response(JSON.stringify(query), {
+		headers: {
+			"content-type": "application/json",
+		},
+		status: 200,
 	});
 }

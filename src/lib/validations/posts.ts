@@ -80,3 +80,6 @@ export const selectBundleMediaSchema = createSelectSchema(media);
 
 export const insertBidsSchema = createInsertSchema(bids);
 export const selectBidsSchema = createSelectSchema(bids);
+
+export const insertMediaSchema = createInsertSchema(media);
+export const selectMediaSchema = createSelectSchema(media);

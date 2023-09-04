@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import { ComponentPropsWithoutRef, useState } from "react";
 import { Button, buttonVariants } from "./ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -14,15 +14,18 @@ import { Input } from "@/components/ui/input";
 import { Icons } from "./icons";
 import { toast } from "sonner";
 
-interface BidButtonProps {
-	className?: string;
+interface BidButtonProps extends ComponentPropsWithoutRef<"button"> {
 	jobId: string;
 }
 
-const BidButton: React.FC<BidButtonProps> = ({ className, jobId }) => {
-	const [inputValue, setInputValue] = React.useState("");
-	const [fetching, setFetching] = React.useState(false);
-	const [open, setOpen] = React.useState(false);
+const BidButton: React.FC<BidButtonProps> = ({
+	jobId,
+	className,
+	...props
+}) => {
+	const [inputValue, setInputValue] = useState("");
+	const [fetching, setFetching] = useState(false);
+	const [open, setOpen] = useState(false);
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const value = event.target.value;
@@ -54,7 +57,11 @@ const BidButton: React.FC<BidButtonProps> = ({ className, jobId }) => {
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger className={cn(buttonVariants(), className)}>
+			<DialogTrigger
+				className={cn(buttonVariants(), className)}
+				role="button"
+				{...props}
+			>
 				Bid
 			</DialogTrigger>
 			<DialogContent>
@@ -65,15 +72,17 @@ const BidButton: React.FC<BidButtonProps> = ({ className, jobId }) => {
 					</DialogDescription>
 				</DialogHeader>
 				{/* //todo: yo dosent this work exactly how i wanted currency input to? */}
-				<Input
-					type="number"
-					value={inputValue}
-					onChange={handleInputChange}
-					step="0.01"
-					min="0"
-					max="99999999.99"
-					placeholder="$0.00"
-				/>
+				<div className="flex items-center space-x-2">
+					<Icons.dollarSign />
+					<Input
+						type="number"
+						value={inputValue}
+						onChange={handleInputChange}
+						step="0.01"
+						min="0"
+						max="99999999.99"
+					/>
+				</div>
 
 				{fetching ? (
 					<Button disabled={true} type={"button"}>
