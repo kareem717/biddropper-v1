@@ -14,7 +14,7 @@ import Image from "next/image";
 import ImageCarousel from "@/components/image-carousel";
 
 import { industries } from "@/config/industries";
-import JobCard from "@/components/job-card";
+import JobCard from "@/components/job-cards/small";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 //todo: idk if this is the best way to do this, but i think it is

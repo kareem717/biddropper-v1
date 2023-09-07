@@ -17,7 +17,7 @@ export const propertyTypes = [
 	},
 	{
 		label: "Townhouse",
-		value: "townhouse",
+		value: "town-house",
 		description: "This property is a townhome",
 	},
 ];
