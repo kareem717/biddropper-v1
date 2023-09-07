@@ -17,6 +17,17 @@ declare module "next-auth" {
 	interface Session extends DefaultSession {
 		user: {
 			id: string;
+			name: string;
+			email: string;
+			image: string;
+			createdAt: string;
+			updatedAt: string;
+			ownedCompanies: Array<{
+				id: string;
+				name: string;
+				ownerId: string;
+
+			}>;
 		};
 	}
 }

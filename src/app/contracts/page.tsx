@@ -1,10 +1,25 @@
 import * as React from "react";
 import { db } from "@/db";
 import { bundles } from "@/db/migrations/schema";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 //TODO: can thus be cone with zustand/react-query?
 export default async function ContractPage() {
 	const res = db.select().from(bundles).prepare();
+
+	const session = await getServerSession(authOptions);
+
+	if (!session) {
+		redirect("/");
+	}
+
+	const ownedCompanies = session.user.ownedCompanies;
+
+	if (!ownedCompanies) {
+		redirect("/");
+	}
 
 	const data = await res.execute();
 
@@ -18,7 +33,7 @@ export default async function ContractPage() {
 						<ul className="flex  w-full flex-col items-center justify-center gap-5 overflow-y-auto p-6 md:grid md:grid-cols-2 lg:grid-cols-3">
 							{data.map((bundle) => (
 								<li
-									className="col-span-1 w-full max-w-sm overflow-hidden"
+									className="col-span-1 w-full max-w-sm over flow-hidden"
 									key={bundle.id}
 								>
 									<div className="flex items-center h-[80px] justify-center px-4 rounded-t-lg py-5 font-bold text-white sm:p-6 bg-cover bg-[url('/images/gradient-filler-01.jpeg')]" />

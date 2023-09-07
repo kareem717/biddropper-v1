@@ -44,8 +44,8 @@ export const addresses = mysqlTable("addresses", {
 	region: varchar("region", { length: 50 }).notNull(),
 	postalCode: varchar("postal_code", { length: 10 }).notNull(),
 	country: varchar("country", { length: 60 }).notNull(),
-	createdAt: timestamp("created_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 },
 (table) => {
 	return {
@@ -55,39 +55,16 @@ export const addresses = mysqlTable("addresses", {
 
 export const bids = mysqlTable("bids", {
 	id: varchar("id", { length: 50 }).notNull(),
-	jobId: varchar("job_id", { length: 50 }).notNull(),
 	price: decimal("price", { precision: 10, scale: 2 }).notNull(),
 	status: mysqlEnum("status", ['pending','accepted','declined']).default('pending').notNull(),
-	createdAt: timestamp("created_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 	companyId: varchar("company_id", { length: 50 }).notNull(),
 },
 (table) => {
 	return {
 		companyId: index("company_id").on(table.companyId),
-		jobId: index("job_id").on(table.jobId),
 		bidsId: primaryKey(table.id)
-	}
-});
-
-export const bundles = mysqlTable("bundles", {
-	id: varchar("id", { length: 50 }).notNull(),
-	isActive: tinyint("is_active").default(1),
-	userId: varchar("user_id", { length: 50 }).default('').notNull(),
-	title: varchar("title", { length: 100 }).default('').notNull(),
-	description: varchar("description", { length: 750 }).default(''),
-	createdAt: timestamp("created_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
-	bundleType: mysqlEnum("bundle_type", ['sub-contract','contractor-wanted']).default('contractor-wanted').notNull(),
-	posterType: mysqlEnum("poster_type", ['business-owner','property-owner']).default('property-owner').notNull(),
-	addressId: varchar("address_id", { length: 50 }).notNull(),
-	showExactLocation: tinyint("show_exact_location").default(0).notNull(),
-},
-(table) => {
-	return {
-		userId: index("user_id").on(table.userId),
-		id: unique("id").on(table.id),
-		bundlesId: primaryKey(table.id)
 	}
 });
 
@@ -112,6 +89,52 @@ export const companyJobs = mysqlTable("company_jobs", {
 	}
 });
 
+export const contractBids = mysqlTable("contract_bids", {
+	bidId: varchar("bid_id", { length: 50 }).notNull(),
+	contractId: varchar("contract_id", { length: 50 }).notNull(),
+},
+(table) => {
+	return {
+		contractBidsBidIdContractId: primaryKey(table.bidId, table.contractId)
+	}
+});
+
+export const contractJobs = mysqlTable("contract_jobs", {
+	contractId: varchar("contract_id", { length: 50 }).notNull(),
+	jobId: varchar("job_id", { length: 50 }).notNull(),
+},
+(table) => {
+	return {
+		contractJobsContractIdJobId: primaryKey(table.contractId, table.jobId)
+	}
+});
+
+export const contracts = mysqlTable("contracts", {
+	id: varchar("id", { length: 50 }).notNull(),
+	isActive: tinyint("is_active").default(1),
+	companyId: varchar("company_id", { length: 50 }).default('').notNull(),
+	title: varchar("title", { length: 100 }).default('').notNull(),
+	description: varchar("description", { length: 3000 }),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+},
+(table) => {
+	return {
+		id: unique("id").on(table.id),
+		contractsId: primaryKey(table.id)
+	}
+});
+
+export const jobBids = mysqlTable("job_bids", {
+	bidId: varchar("bid_id", { length: 50 }).notNull(),
+	jobId: varchar("job_id", { length: 50 }).notNull(),
+},
+(table) => {
+	return {
+		jobBidsBidIdJobId: primaryKey(table.bidId, table.jobId)
+	}
+});
+
 export const jobMedia = mysqlTable("job_media", {
 	mediaId: varchar("media_id", { length: 50 }).notNull(),
 	jobId: varchar("job_id", { length: 50 }).notNull(),
@@ -128,8 +151,8 @@ export const jobs = mysqlTable("jobs", {
 	isActive: tinyint("is_active").default(1),
 	isCommercialProperty: tinyint("is_commercial_property").default(0).notNull(),
 	details: varchar("details", { length: 3000 }).notNull(),
-	createdAt: timestamp("created_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 	timeHorizon: mysqlEnum("time_horizon", ['asap','one-week','two-weeks','one-month','flexible']).notNull(),
 	propertyType: mysqlEnum("property_type", ['detached','apartment','semi-detached','town-house']).notNull(),
 },
@@ -153,9 +176,9 @@ export const media = mysqlTable("media", {
 export const sessions = mysqlTable("sessions", {
 	sessionToken: varchar("sessionToken", { length: 255 }).notNull(),
 	userId: varchar("userId", { length: 255 }).notNull(),
-	expires: timestamp("expires", { mode: "date" }).notNull(),
-	createdAt: timestamp("created_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+	expires: timestamp("expires", { mode: 'string' }).notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 },
 (table) => {
 	return {
@@ -177,10 +200,10 @@ export const users = mysqlTable("users", {
 	id: varchar("id", { length: 255 }).notNull(),
 	name: varchar("name", { length: 255 }),
 	email: varchar("email", { length: 255 }).notNull(),
-	emailVerified: timestamp("emailVerified", { mode: "date" }),
+	emailVerified: timestamp("emailVerified", { mode: 'string' }),
 	image: varchar("image", { length: 255 }),
-	createdAt: timestamp("created_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 },
 (table) => {
 	return {
@@ -191,9 +214,9 @@ export const users = mysqlTable("users", {
 export const verificationTokens = mysqlTable("verificationTokens", {
 	identifier: varchar("identifier", { length: 255 }).notNull(),
 	token: varchar("token", { length: 255 }).notNull(),
-	expires: timestamp("expires", { mode: "date" }).notNull(),
-	createdAt: timestamp("created_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp("updated_at", { mode: "date" }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+	expires: timestamp("expires", { mode: 'string' }).notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 },
 (table) => {
 	return {

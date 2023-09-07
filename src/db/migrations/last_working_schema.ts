@@ -146,6 +146,19 @@ export const companies = mysqlTable(
 	}
 );
 
+export const companyJobs = mysqlTable(
+	"company_jobs",
+	{
+		companyId: varchar("company_id", { length: 50 }).notNull(),
+		jobId: varchar("job_id", { length: 50 }).notNull(),
+	},
+	(table) => {
+		return {
+			companyJobsCompanyIdJobId: primaryKey(table.companyId, table.jobId),
+		};
+	}
+);
+
 export const jobMedia = mysqlTable(
 	"job_media",
 	{
@@ -163,7 +176,6 @@ export const jobs = mysqlTable(
 	"jobs",
 	{
 		id: varchar("id", { length: 50 }).notNull(),
-		userId: varchar("user_id", { length: 50 }).notNull(),
 		industry: varchar("industry", { length: 255 }).notNull(),
 		isActive: tinyint("is_active").default(1),
 		isCommercialProperty: tinyint("is_commercial_property")
@@ -227,6 +239,19 @@ export const sessions = mysqlTable(
 	(table) => {
 		return {
 			sessionsSessionToken: primaryKey(table.sessionToken),
+		};
+	}
+);
+
+export const userJobs = mysqlTable(
+	"user_jobs",
+	{
+		jobId: varchar("job_id", { length: 50 }).notNull(),
+		userId: varchar("user_id", { length: 50 }).notNull(),
+	},
+	(table) => {
+		return {
+			userJobsJobIdUserId: primaryKey(table.jobId, table.userId),
 		};
 	}
 );
