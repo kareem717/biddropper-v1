@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import BidButton from "@/components/bid-button";
+import BidButton from "@/components/job-bid-button";
 import { selectJobSchema, selectMediaSchema } from "@/lib/validations/posts";
 import * as z from "zod";
 import { cn } from "@/lib/utils";

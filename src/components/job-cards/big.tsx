@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import BidButton from "@/components/bid-button";
+import BidButton from "@/components/job-bid-button";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -38,17 +38,15 @@ interface JobCardProps extends ComponentPropsWithoutRef<typeof Card> {
 	isCommercialProperty?: boolean;
 	isActive?: boolean;
 	timeHorizon?: {
-    label: string;
-    value: string;
-    description: string;
-
-  };
+		label: string;
+		value: string;
+		description: string;
+	};
 	propertyType?: {
-    label: string;
-    value: string;
-    description: string;
-
-  };
+		label: string;
+		value: string;
+		description: string;
+	};
 	scrollAreaProps?: ComponentPropsWithoutRef<typeof ScrollArea>;
 	cardContentProps?: ComponentPropsWithoutRef<typeof CardContent>;
 }
@@ -66,117 +64,116 @@ const JobCard: FC<JobCardProps> = ({
 	zoom,
 	scrollAreaProps,
 	cardContentProps,
-  ...props
+	...props
 }) => {
-
 	return (
 		// <div className="w-full h-screen  bg-cover relative xl:bg-bottom">
-    //className="sm:w-[min(80vw,1250px)] w-[95vw]  bg-background absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4"
-			<Card {...props} >
-				<CardHeader>
-					<CardTitle>{title}</CardTitle>
+		//className="sm:w-[min(80vw,1250px)] w-[95vw]  bg-background absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4"
+		<Card {...props}>
+			<CardHeader>
+				<CardTitle>{title}</CardTitle>
 				{/* className="max-h-[70vh]"b  */}
-        </CardHeader>
+			</CardHeader>
 
-				<ScrollArea  {...scrollAreaProps}>
-          {/* //className="flex flex-col md:flex-row h-[70vh] w-full items-center justify-between md:space-x-6" */}
-					<CardContent  {...cardContentProps}>
-						<div
-							className={cn(
-								"h-full md:w-[50%] rounded-md grid gap-4",
-								images ? "grid-rows-2" : "grid-rows-1"
-							)}
-						>
-							{images && (
-								<ImageSlider
-									images={images}
-									className="rounded-md border overflow-hidden"
-									swiperProps={{
-										className: "w-full h-full",
-									}}
-								/>
-							)}
-							<div className="flex flex-col gap-2">
-								<Label htmlFor="job-details">
-									<span>Job Details</span>
-								</Label>
-								<ScrollArea
-									className="rounded-md border p-4 h-full"
-									id="job-details"
-								>
-									{details}
-								</ScrollArea>
-							</div>
+			<ScrollArea {...scrollAreaProps}>
+				{/* //className="flex flex-col md:flex-row h-[70vh] w-full items-center justify-between md:space-x-6" */}
+				<CardContent {...cardContentProps}>
+					<div
+						className={cn(
+							"h-full md:w-[50%] rounded-md grid gap-4",
+							images ? "grid-rows-2" : "grid-rows-1"
+						)}
+					>
+						{images && (
+							<ImageSlider
+								images={images}
+								className="rounded-md border overflow-hidden"
+								swiperProps={{
+									className: "w-full h-full",
+								}}
+							/>
+						)}
+						<div className="flex flex-col gap-2">
+							<Label htmlFor="job-details">
+								<span>Job Details</span>
+							</Label>
+							<ScrollArea
+								className="rounded-md border p-4 h-full"
+								id="job-details"
+							>
+								{details}
+							</ScrollArea>
 						</div>
-						<Separator orientation="vertical" className="hidden md:block" />
-						<Separator className="my-4 md:hidden" />
-						<div className="h-full md:w-[50%] w-full rounded-md  flex flex-col">
-							{
-								<JobMap
-									className="w-full rounded-md border h-[30vh] md:h-full"
-									zoom={zoom || 15}
-									lng={lng}
-									lat={lat}
-								/>
-							}
+					</div>
+					<Separator orientation="vertical" className="hidden md:block" />
+					<Separator className="my-4 md:hidden" />
+					<div className="h-full md:w-[50%] w-full rounded-md  flex flex-col">
+						{
+							<JobMap
+								className="w-full rounded-md border h-[30vh] md:h-full"
+								zoom={zoom || 15}
+								lng={lng}
+								lat={lat}
+							/>
+						}
 
-							<div className="mt-4 flex flex-wrap gap-2 ">
-								{isCommercialProperty ? (
-									<BadgeTooltip
-										label="Commercial"
-										tooltipContent={<p>This is a commercial property</p>}
-									/>
-								) : (
-									<BadgeTooltip
-										label="Residential"
-										tooltipContent={<p>This is a residential property</p>}
-									/>
-								)}
-								{isActive ? (
-									<BadgeTooltip
-										label="Active"
-										tooltipContent={<p>This listing is active</p>}
-									/>
-								) : (
-									<BadgeTooltip
-										label="Inactive"
-										tooltipContent={<p>This listing is no longer active</p>}
-									/>
-								)}
-								{timeHorizon && (
-									<BadgeTooltip
-										label={timeHorizon.label}
-										variant="secondary"
-										tooltipContent={<p>{timeHorizon.description}</p>}
-									/>
-								)}
-								{propertyType && (
-									<BadgeTooltip
-										label={propertyType.label}
-										variant="secondary"
-										tooltipContent={<p>{propertyType.description}</p>}
-									/>
-								)}
-							</div>
-							<Separator className="my-4 hidden md:block" />
-							<div className="flex flex-row gap-2 mt-4 md:mt-0">
-								<BidButton
-									jobId="job_58556711-6f83-4bf1-8607-b8284cdfa862"
-									className="w-full"
+						<div className="mt-4 flex flex-wrap gap-2 ">
+							{isCommercialProperty ? (
+								<BadgeTooltip
+									label="Commercial"
+									tooltipContent={<p>This is a commercial property</p>}
 								/>
-								<Button
-									className="w-full"
-									onClick={(e) => {
-										toast.error("This feature is not yet implemented");
-									}}
-								>
-									Request More Info
-								</Button>
-							</div>
+							) : (
+								<BadgeTooltip
+									label="Residential"
+									tooltipContent={<p>This is a residential property</p>}
+								/>
+							)}
+							{isActive ? (
+								<BadgeTooltip
+									label="Active"
+									tooltipContent={<p>This listing is active</p>}
+								/>
+							) : (
+								<BadgeTooltip
+									label="Inactive"
+									tooltipContent={<p>This listing is no longer active</p>}
+								/>
+							)}
+							{timeHorizon && (
+								<BadgeTooltip
+									label={timeHorizon.label}
+									variant="secondary"
+									tooltipContent={<p>{timeHorizon.description}</p>}
+								/>
+							)}
+							{propertyType && (
+								<BadgeTooltip
+									label={propertyType.label}
+									variant="secondary"
+									tooltipContent={<p>{propertyType.description}</p>}
+								/>
+							)}
 						</div>
-					</CardContent>
-				</ScrollArea>
-			</Card>
+						<Separator className="my-4 hidden md:block" />
+						<div className="flex flex-row gap-2 mt-4 md:mt-0">
+							<BidButton
+								jobId="job_58556711-6f83-4bf1-8607-b8284cdfa862"
+								className="w-full"
+							/>
+							<Button
+								className="w-full"
+								onClick={(e) => {
+									toast.error("This feature is not yet implemented");
+								}}
+							>
+								Request More Info
+							</Button>
+						</div>
+					</div>
+				</CardContent>
+			</ScrollArea>
+		</Card>
 		// </div>
 	);
 };

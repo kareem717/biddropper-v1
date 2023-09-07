@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { insertJobSchema } from "@/lib/validations/posts";
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
+import { Label } from "../ui/label";
 import CustomRadioButtons from "@/components/custom-radio-buttons";
 import { useRouter } from "next/navigation";
 import {
@@ -40,14 +41,24 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 
-const CreateJobForm: FC<ComponentPropsWithoutRef<typeof Card>> = ({
+interface CreateJobFormProps extends ComponentPropsWithoutRef<typeof Card> {
+	companies?: {
+		name: string;
+		id: string;
+	}[];
+	userId: string;
+}
+
+const CreateJobForm: FC<CreateJobFormProps> = ({
+	companies,
+	userId,
 	...props
 }) => {
-	const userId = useSession().data?.user?.id;
 	const totalSteps = 4;
 	const router = useRouter();
 
 	const [formStep, setFormStep] = useState<number>(0);
+	const [company, setCompany] = useState<string | undefined>(undefined);
 	const [isCommercial, setIsCommercial] = useState<boolean>(false);
 	const [isFetching, setIsFetching] = useState<boolean>(false);
 
@@ -162,8 +173,8 @@ const CreateJobForm: FC<ComponentPropsWithoutRef<typeof Card>> = ({
 								Commercial Property
 							</label>
 							<p className="text-sm text-muted-foreground">
-								Select this option if you are a business owner or property
-								manager.
+								Select this option if a business operates out of this property
+								or you are a commercial manager.
 							</p>
 						</div>
 					</div>
@@ -196,12 +207,35 @@ const CreateJobForm: FC<ComponentPropsWithoutRef<typeof Card>> = ({
 		{
 			fieldName: "details",
 			title: "Final details",
-			description: "Provide any useful details about your project.",
+			description: companies
+				? "Provide any useful details about your project, and select the company you'd like to post this job for or leave empty if you'd like to post it on your personal account."
+				: "Provide any useful details about your project.",
 			component: (
-				<Textarea
-					className="max-h-[30vh] min-h-[15vh] overflow-auto"
-					{...form.register("details")}
-				/>
+				<div>
+					<Textarea
+						className="max-h-[30vh] min-h-[15vh] overflow-auto"
+						{...form.register("details")}
+					/>
+					{companies && (
+						<Select
+							onValueChange={(value) => setCompany(value)}
+							value={company}
+						>
+							<SelectTrigger className="w-full mt-4">
+								<SelectValue placeholder="Select a company" />
+							</SelectTrigger>
+							<SelectContent>
+								{companies.map((company) => {
+									return (
+										<SelectItem value={company.id} key={company.id}>
+											{company.name}
+										</SelectItem>
+									);
+								})}
+							</SelectContent>
+						</Select>
+					)}
+				</div>
 			),
 		},
 	];
@@ -210,15 +244,24 @@ const CreateJobForm: FC<ComponentPropsWithoutRef<typeof Card>> = ({
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsFetching(true);
-
+console.log({
+	userId,
+	companyId: company || null,
+	industry: values.industry,
+	propertyType: values.propertyType,
+	timeHorizon: values.timeHorizon,
+	details: values.details,
+	isCommercialProperty: isCommercial,
+})
 		const res = await fetch("/api/posts/jobs", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"Job-Creator-Type": "user",
+				"Job-Creator-Type": company ? "company" : "user",
 			},
 			body: JSON.stringify({
 				userId,
+				companyId: company || null,
 				industry: values.industry,
 				propertyType: values.propertyType,
 				timeHorizon: values.timeHorizon,
@@ -320,10 +363,7 @@ const CreateJobForm: FC<ComponentPropsWithoutRef<typeof Card>> = ({
 							</Button>
 						) : (
 							<Button type="submit" form="job-form" className="w-full">
-								<span className="hidden sm:block">
-
-								Finish and Create
-								</span>
+								<span className="hidden sm:block">Finish and Create</span>
 								<span className="sm:hidden">Done</span>
 							</Button>
 						))}

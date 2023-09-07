@@ -1,9 +1,9 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { media, bundles, jobs, bids } from "@/db/migrations/schema";
+import { media, contracts, jobs, bids } from "@/db/migrations/schema";
 import * as z from "zod";
 import { industryValues } from "@/config/industries";
 
-export const insertBundleSchema = z.object({
+export const insertContractSchema = z.object({
 	title: z
 		.string()
 		.min(3, {
@@ -24,7 +24,7 @@ export const insertBundleSchema = z.object({
 		.max(750, {
 			message: "Description must be at most 750 characters long",
 		}),
-	bundleType: z.enum(["sub-contract", "contractor-wanted"], {
+	contractType: z.enum(["sub-contract", "contractor-wanted"], {
 		errorMap: (issue, ctx) => {
 			return { message: "Please select a valid option" };
 		},
@@ -39,7 +39,7 @@ export const insertBundleSchema = z.object({
 	}),
 	showExactLocation: z.boolean(),
 });
-export const selectBundleSchema = createSelectSchema(bundles);
+export const selectContractSchema = createSelectSchema(contracts);
 
 export const insertJobSchema = createInsertSchema(jobs, {
 	id: z
@@ -65,18 +65,18 @@ export const insertJobSchema = createInsertSchema(jobs, {
 
 export const selectJobSchema = createSelectSchema(jobs);
 
-export const insertBundleMediaSchema = createInsertSchema(media, {
-	bundleId: z.string().max(50, {
-		message: "Bundle ID must be at most 50 characters long",
-	}),
-	mediaUrl: z.string().url({
-		message: "Please enter a valid URL",
-	}),
-	fileKey: z.string().max(191, {
-		message: "File key must be at most 191 characters long",
-	}),
-});
-export const selectBundleMediaSchema = createSelectSchema(media);
+// export const insertContractMediaSchema = createInsertSchema(media, {
+// 	contractId: z.string().max(50, {
+// 		message: "Contract ID must be at most 50 characters long",
+// 	}),
+// 	mediaUrl: z.string().url({
+// 		message: "Please enter a valid URL",
+// 	}),
+// 	fileKey: z.string().max(191, {
+// 		message: "File key must be at most 191 characters long",
+// 	}),
+// });
+export const selectContractMediaSchema = createSelectSchema(media);
 
 export const insertBidsSchema = createInsertSchema(bids);
 export const selectBidsSchema = createSelectSchema(bids);
