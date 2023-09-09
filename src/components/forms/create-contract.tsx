@@ -9,8 +9,8 @@ import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import {
+	createContractSchema,
 	insertContractSchema,
-	insertJobSchema,
 	selectJobSchema,
 } from "@/lib/validations/posts";
 import { Icons } from "@/components/icons";
@@ -31,25 +31,20 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-} from "@/components/ui/command";
-import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
 import { Input } from "../ui/input";
-import { useFieldArray } from "react-hook-form";
-import ComboBox from "../combo-box";
-import { industries } from "@/config/industries";
 import type { SelectedCompanyJobs } from "@/lib/validations/companies";
 import JobCard from "../job-cards/small";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
+import { Calendar } from "../ui/calendar";
+import { env } from "@/env.mjs";
 
 interface CreateContractFormProps
 	extends ComponentPropsWithoutRef<typeof Card> {
@@ -62,12 +57,15 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 	jobs,
 	...props
 }) => {
-	const totalSteps = 2;
 	const router = useRouter();
-
-	const [formStep, setFormStep] = useState<number>(1);
+	const [date, setDate] = useState<Date>();
+	const [formStep, setFormStep] = useState<number>(0);
 	const [isFetching, setIsFetching] = useState<boolean>(false);
+	const [paymentType, setPaymentType] = useState<"fixed" | "commission">(
+		"fixed"
+	);
 
+	// todo: maybe abstract this into a hook atp cause ur using it in multiple places
 	const handleNextStep = () => {
 		setFormStep((prevStep) => {
 			if (prevStep < fields.length - 1) {
@@ -88,14 +86,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 		});
 	};
 
-	const formSchema = insertContractSchema
-		.pick({
-			title: true,
-			description: true,
-		})
-		.extend({
-			jobs: selectJobSchema.array(),
-		});
+	const formSchema = createContractSchema;
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
@@ -103,16 +94,12 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			title: undefined,
 			description: undefined,
 			jobs: [],
+			payment: {
+				type: paymentType,
+				value: 0,
+			},
+			endDate: null,
 		},
-	});
-
-	const {
-		fields: fieldArrayFields,
-		append,
-		remove,
-	} = useFieldArray({
-		control: form.control,
-		name: "jobs",
 	});
 
 	interface Step {
@@ -123,18 +110,27 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 	}
 	const steps: Step[] = [
 		{
-			fieldName: "details",
-			title: "Basic Details",
-			description:
-				"Explain the ins and outs of the contract you want to create",
+			fieldName: "title",
+			title: "Contract Title",
+			description: "Give your contract a title",
 			component: (
 				<div className="space-y-8">
 					<Input
 						placeholder="ABC Inc. Plumbing Contract"
 						{...form.register("title")}
 					/>
+				</div>
+			),
+		},
+		{
+			fieldName: "description",
+			title: "Basic Details",
+			description:
+				"Explain the ins and outs of the contract you want to create",
+			component: (
+				<div className="space-y-8">
 					<Textarea
-						className="max-h-[30vh] min-h-[15vh] overflow-auto"
+						className="max-h-[25vh]"
 						{...form.register("description")}
 					/>
 				</div>
@@ -156,7 +152,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 										return (
 											<div key={index} className="flex items-center gap-4 my-2">
 												<Checkbox
-													checked={
+													defaultChecked={
 														form.getValues("jobs").find((j) => j.id === job.id)
 															? true
 															: false
@@ -167,13 +163,11 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 															(j) => j.id === job.id
 														);
 														if (isInArray) {
-															// If the job is already in the array, remove it
 															const updatedJobs = currentJobs.filter(
 																(j) => j.id !== job.id
 															);
 															form.setValue("jobs", updatedJobs);
 														} else {
-															// If the job is not in the array, add it
 															const updatedJobs = [...currentJobs, job];
 															form.setValue("jobs", updatedJobs);
 														}
@@ -195,21 +189,161 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 				</ScrollArea>
 			),
 		},
+		{
+			fieldName: "payment",
+			title: "Payment",
+			description:
+				"Pick and configure only one of the payment structures for this contract",
+			component: (
+				<div>
+					<Tabs
+						value={paymentType}
+						onValueChange={(value) => {
+							setPaymentType(value as any);
+							form.setValue("payment", {
+								type: value as any,
+								value: 0,
+							});
+						}}
+						className=""
+					>
+						<TabsList className="grid w-full grid-cols-2">
+							<TabsTrigger value="fixed">Fixed Price</TabsTrigger>
+							<TabsTrigger value="commission">Commission</TabsTrigger>
+						</TabsList>
+						<TabsContent value="fixed">
+							<Card>
+								<CardHeader>
+									<CardTitle>Fixed Price</CardTitle>
+									<CardDescription>
+										Set the fixed minimum price for this contract. Entered price
+										will be rounded to the nearest cent.
+									</CardDescription>
+								</CardHeader>
+								<CardContent className="space-y-2">
+									{/* //TODO: Maybe implement currency-input? */}
+									<div className="space-y-1">
+										<Label htmlFor="price">Price</Label>
+										<div className="flex items-center gap-2">
+											<Icons.dollarSign />
+											<Input
+												id="price"
+												type="number"
+												className="w-1/2"
+												onChange={(val) => {
+													form.setValue(
+														"payment.value",
+														Number(parseFloat(val.target.value).toFixed(2))
+													);
+												}}
+											/>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						</TabsContent>
+
+						<TabsContent value="commission">
+							<Card>
+								<CardHeader>
+									<CardTitle>Commission</CardTitle>
+									<CardDescription>
+										Set your commission percentage for this contract. Entered
+										percentage will be rounded to the nearest 0.0001%.
+									</CardDescription>
+								</CardHeader>
+								<CardContent className="space-y-2">
+									<div className="space-y-1">
+										<Label htmlFor="percent">Precentage</Label>
+										<div className="flex items-center gap-2">
+											<Input
+												id="percent"
+												type="number"
+												className="w-1/2"
+												onChange={(val) => {
+													form.setValue(
+														"payment.value",
+														Number(parseFloat(val.target.value).toFixed(4))
+													);
+												}}
+											/>
+											<Icons.percent />
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						</TabsContent>
+					</Tabs>
+				</div>
+			),
+		},
+		{
+			fieldName: "endDate",
+			title: "End Date",
+			description:
+				"Set the date when this contract will no longer be active for trading",
+			component: (
+				<div>
+					<Popover>
+						<div className="flex justify-center w-full">
+							<PopoverTrigger asChild>
+								<Button
+									variant={"outline"}
+									className={cn(
+										"w-full justify-start font-normal",
+										!date && "text-muted-foreground"
+									)}
+								>
+									<div className="flex justify-center w-full">
+										<Icons.calendar className="mr-2 h-4 w-4" />
+										{date ? format(date, "PPP") : <span>Pick a date</span>}
+									</div>
+								</Button>
+							</PopoverTrigger>
+							<PopoverContent className="w-auto p-0" align="center">
+								<Calendar
+									mode="single"
+									selected={date}
+									onSelect={(date) => {
+										setDate(date);
+										form.setValue("endDate", date as any);
+									}}
+									disabled={(date) => date < new Date()}
+									initialFocus
+								/>
+							</PopoverContent>
+						</div>
+					</Popover>
+				</div>
+			),
+		},
 	];
 
 	const fields = Object.keys(form.getValues());
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsFetching(true);
-		console.log(values);
+		console.log(JSON.stringify(values));
+
+		const res = await fetch(`${env.NEXT_PUBLIC_APP_URL}/api/posts/bundles`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"Owner-Id": userId,
+			},
+			body: JSON.stringify(values),
+		});
+		const data = await res.json();
+		console.log(data, res.status);
 		setIsFetching(false);
 	}
 
+	console.log(form.getValues());
 	return (
 		<Card {...props}>
 			<CardHeader>
 				<div className="mb-8">
-					<Progress value={((formStep + 1) / totalSteps) * 100} />
+					<Progress value={((formStep + 1) / fields.length) * 100} />
 				</div>
 
 				<CardTitle>{steps[formStep]?.title}</CardTitle>
@@ -254,16 +388,18 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 							Back
 						</Button>
 					)}
-					{formStep < totalSteps - 1 && (
+					{formStep < fields.length - 1 && (
 						<Button
 							onClick={async () => {
-								await form.trigger(fields[formStep] as any);
+								const currentField = fields[formStep];
 
-								const fieldInvalid = form.getFieldState(
-									fields[formStep] as any
-								).invalid;
+								await form.trigger(currentField as any);
 
-								if (!fieldInvalid) {
+								const currentStepInvalid = Object.keys(
+									form.formState.errors
+								).some((field) => field === currentField);
+
+								if (!currentStepInvalid) {
 									handleNextStep();
 								}
 							}}
@@ -272,7 +408,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 							Next
 						</Button>
 					)}
-					{formStep === totalSteps - 1 &&
+					{formStep === fields.length - 1 &&
 						(isFetching ? (
 							<Button disabled={true} type={"button"} className="w-full">
 								<Icons.spinner

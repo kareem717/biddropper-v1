@@ -1,227 +1,173 @@
 import { db } from "@/db";
 // import { addresses } from "/drizzle/migrations/address";
-// import { bundleMedia, contracts, jobs } from "/drizzle/migrations/posts";
+import {
+	createContractSchema,
+	insertContractSchema,
+} from "@/lib/validations/posts";
 import { authOptions } from "@/lib/auth";
 import { insertAddressSchema } from "@/lib/validations/address";
-import {
-	insertBundleMediaSchema,
-	insertJobSchema,
-} from "@/lib/validations/posts";
-import { insertBundleSchema } from "@/lib/validations/posts";
 import { auth } from "@clerk/nextjs";
 // import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { bids, contractJobs, contracts, jobs } from "@/db/migrations/schema";
 import { InferModel, eq } from "drizzle-orm";
 import { addresses } from "@/db/migrations/schema";
+import { getServerSession } from "next-auth";
+import * as z from "zod";
 
 //TODO: Refactor for schema update
-// export async function POST(req: Request) {
-// 	const { userId } = auth(); //TODO: switch to next auth when able
-// 	if (!userId) return new Response("Unauthorized", { status: 401 });
+export async function POST(req: Request) {
+	const session = getServerSession(authOptions); //TODO: switch to next auth when able\
+	if (!session) return new Response("Unauthorized", { status: 401 });
 
-// 	const body = await req.json();
-
-// 	const address_id = `addr_${crypto.randomUUID()}`;
-// 	const bundle_id = `bndl_${crypto.randomUUID()}`;
-
-// 	await db.transaction(async (tx) => {
-// 		// Insert address
-// 		const address = insertAddressSchema.safeParse({
-// 			id: address_id,
-// 			...body.address,
-// 		});
-// 		if (!address.success) {
-// 			await tx.rollback();
-// 			return new Response("Incorrect address details", {
-// 				status: 400,
-// 			});
-// 		}
-// 		await tx.insert(addresses).values(address.data);
-// 		console.log(11);
-// 		// Insert bundle
-// 		const bundleDetails = insertBundleSchema.safeParse({
-// 			userId,
-// 			addressId: address_id,
-// 			isActive: true,
-// 			title: body.title,
-// 			description: body.description,
-// 			posterType: body.posterType,
-// 			bundleType: body.bundleType,
-// 			showExactLocation: body.showExactLocation,
-// 		});
-// 		if (!bundleDetails.success) {
-// 			await tx.rollback();
-// 			return new Response("Incorrect bundle details", {
-// 				status: 400,
-// 			});
-// 		}
-// 		await tx.insert(contracts).values({
-// 			id: bundle_id,
-// 			userId,
-// 			title: body.title,
-// 			description: body.description,
-// 			posterType: body.posterType,
-// 			bundleType: body.bundleType,
-// 			addressId: address_id,
-// 			showExactLocation: body.showExactLocation,
-// 		});
-// 		console.log(11);
-
-// 		// Insert jobs
-// 		const insertableJobs = body.jobs.map((job) => {
-// 			let dateTo = null;
-// 			if (job.dateRange.dateTo) {
-// 				dateTo = new Date(job.dateRange.dateTo);
-// 			}
-
-// 			return insertJobSchema.safeParse({
-// 				userId,
-// 				bundleId: bundle_id,
-// 				id: `job_${crypto.randomUUID()}`,
-// 				dateFrom: new Date(job.dateRange.dateFrom),
-// 				dateTo: dateTo,
-// 				industry: job.industry,
-// 				title: job.title,
-// 				summary: job.summary,
-// 				budget: String(job.budget),
-// 				currencyType: job.currencyType,
-// 				propertyType: job.propertyType,
-// 			});
-// 		});
-// 		if (!insertableJobs.every((job) => job.success)) {
-// 			await tx.rollback();
-// 			return new Response("Incorrect job details", {
-// 				status: 400,
-// 			});
-// 		}
-// 		await tx.insert(jobs).values(insertableJobs.map((job) => job.data));
-// 		console.log(11);
-
-// 		// Insert photos
-
-// 		if (body.images) {
-// 			const insertablePhotos = body.images.map((photo) => {
-// 				return insertBundleMediaSchema.safeParse({
-// 					id: `photo_${crypto.randomUUID()}`,
-// 					bundleId: bundle_id,
-// 					fileKey: photo.fileKey,
-// 					mediaUrl: photo.fileUrl,
-// 				});
-// 			});
-// 			console.log(insertablePhotos);
-// 			if (!insertablePhotos.every((photo) => photo.success)) {
-// 				console.log(11);
-
-// 				await tx.rollback();
-// 				return new Response("Incorrect photo details", {
-// 					status: 400,
-// 				});
-// 			}
-// 			await tx
-// 				.insert(bundleMedia)
-// 				.values(insertablePhotos.map((photo) => photo.data));
-// 			console.log(11);
-// 		}
-// 	});
-
-// 	return new Response(`${body}`, {
-// 		status: 200,
-// 	});
-// }
-// TODO: change so that u can do a full-table fetch or a simpler fetch
-export async function GET(req: Request) {
-	const headersList = headers();
-	const contractId = headersList.get("Contract-ID");
-	const companyId = headersList.get("Company-ID");
-	// todo: implement single bundle fetch
-	type Bundle = InferModel<typeof contracts>;
-	type Job = InferModel<typeof jobs>;
-	type Address = InferModel<typeof addresses>;
-	type Bid = InferModel<typeof bids>;
-
-	let query;
-	if (contractId) {
-		query = db
-			.select()
-			.from(contracts)
-			.where(eq(contracts.id, contractId))
-			.innerJoin(jobs, eq(jobs.bundleId, contracts.id))
-			.innerJoin(addresses, eq(contracts.addressId, addresses.id))
-			.leftJoin(bundleMedia, eq(contracts.id, bundleMedia.bundleId))
-			.leftJoin(bids, eq(jobs.id, bids.jobId))
-			.prepare();
-	} else if (companyId) {
-		query = db
-			.select()
-			.from(contracts)
-			.innerJoin(jobs, eq(jobs.bundleId, contracts.id))
-			.innerJoin(addresses, eq(contracts.addressId, addresses.id))
-			.leftJoin(bundleMedia, eq(contracts.id, bundleMedia.bundleId))
-			.leftJoin(bids, eq(jobs.id, bids.jobId))
-			.prepare();
-	} 
-	}else {
-		query = db
-			.select()
-			.from(contracts)
-			.innerJoin(jobs, eq(jobs.bundleId, contracts.id))
-			.innerJoin(addresses, eq(contracts.addressId, addresses.id))
-			.leftJoin(bundleMedia, eq(contracts.id, bundleMedia.bundleId))
-			.leftJoin(bids, eq(jobs.id, bids.jobId))
-			.prepare();
-	}
+	const ownerId = headers().get("Owner-ID");
+	const body = await req.json();
+	console.log(body);
 
 	try {
-		const data = await query.execute();
+		const reqBody = createContractSchema.parse({
+			endDate: new Date(body.endDate),
+			...body,
+		});
 
-		const result = data.reduce<
-			Record<
-				string,
-				{
-					contracts: Bundle;
-					jobs: Job[];
-					addresses: Address;
-					bids?: Bid[];
-				}
-			>
-		>((acc, curr) => {
-			if (curr) {
-				const {
-					contracts,
-					jobs: job,
-					addresses,
-					bids,
-				} = curr;
+		const newID = `cntr_${crypto.randomUUID()}`;
 
-				if (acc[contracts.id]) {
-					if (!acc[contracts.id]?.jobs.some((j) => j.id === job.id)) {
-						acc[contracts.id]?.jobs.push(job);
-					}
+		const contractValues = insertContractSchema.parse({
+			id: newID,
+			title: reqBody.title,
+			description: reqBody.description,
+			paymentType: reqBody.payment.type,
+			price: reqBody.payment.value,
+			endDate: reqBody.endDate,
+		});
 
+		const contractJobValues = reqBody.jobs.map((job) => {
+			return {
+				contractId: newID,
+				jobId: job.id,
+			};
+		});
 
-					if (bids && !acc[contracts.id]?.bids?.some((b) => b.id === bids?.id)) {
-						acc[contracts.id]?.bids?.push(bids);
-					}
-				} else {
-					acc[contracts.id] = {
-						contracts,
-						jobs: [job],
-						addresses,
-						bids: bids ? [bids] : [],
-					};
-				}
-			}
-			return acc;
-		}, {});
+		await db.transaction(async (tx) => {
+			// insert Contract
+			await tx.insert(contracts).values({
+				id: newID,
+				title: reqBody.title,
+				description: reqBody.description,
+				paymentType: reqBody.payment.type,
+				price: Number(reqBody.payment.value),
+				endDate: reqBody.endDate,
+			} as any);
+	
+			// Insert contract jobs
+			await tx.insert(contractJobs).values(contractJobValues);
 
-		return new Response(JSON.stringify(result), {
-			status: 200,
+		});
+		
+		return new Response(JSON.stringify({
+			id: newID,
+		}), {
+			status: 201,
 		});
 	} catch (err) {
-		console.log(err);
-		return new Response("Error", {
-			status: 500,
+		return new Response(JSON.stringify(err), {
+			status: 400,
 		});
 	}
 }
+
+// TODO: change so that u can do a full-table fetch or a simpler fetch
+// export async function GET(req: Request) {
+// 	const headersList = headers();
+// 	const contractId = headersList.get("Contract-ID");
+// 	const companyId = headersList.get("Company-ID");
+// 	// todo: implement single bundle fetch
+// 	type Bundle = InferModel<typeof contracts>;
+// 	type Job = InferModel<typeof jobs>;
+// 	type Address = InferModel<typeof addresses>;
+// 	type Bid = InferModel<typeof bids>;
+
+// 	let query;
+// 	if (contractId) {
+// 		query = db
+// 			.select()
+// 			.from(contracts)
+// 			.where(eq(contracts.id, contractId))
+// 			.innerJoin(jobs, eq(jobs.bundleId, contracts.id))
+// 			.innerJoin(addresses, eq(contracts.addressId, addresses.id))
+// 			.leftJoin(bundleMedia, eq(contracts.id, bundleMedia.bundleId))
+// 			.leftJoin(bids, eq(jobs.id, bids.jobId))
+// 			.prepare();
+// 	} else if (companyId) {
+// 		query = db
+// 			.select()
+// 			.from(contracts)
+// 			.innerJoin(jobs, eq(jobs.bundleId, contracts.id))
+// 			.innerJoin(addresses, eq(contracts.addressId, addresses.id))
+// 			.leftJoin(bundleMedia, eq(contracts.id, bundleMedia.bundleId))
+// 			.leftJoin(bids, eq(jobs.id, bids.jobId))
+// 			.prepare();
+// 	}
+// 	}else {
+// 		query = db
+// 			.select()
+// 			.from(contracts)
+// 			.innerJoin(jobs, eq(jobs.bundleId, contracts.id))
+// 			.innerJoin(addresses, eq(contracts.addressId, addresses.id))
+// 			.leftJoin(bundleMedia, eq(contracts.id, bundleMedia.bundleId))
+// 			.leftJoin(bids, eq(jobs.id, bids.jobId))
+// 			.prepare();
+// 	}
+
+// 	try {
+// 		const data = await query.execute();
+
+// 		const result = data.reduce<
+// 			Record<
+// 				string,
+// 				{
+// 					contracts: Bundle;
+// 					jobs: Job[];
+// 					addresses: Address;
+// 					bids?: Bid[];
+// 				}
+// 			>
+// 		>((acc, curr) => {
+// 			if (curr) {
+// 				const {
+// 					contracts,
+// 					jobs: job,
+// 					addresses,
+// 					bids,
+// 				} = curr;
+
+// 				if (acc[contracts.id]) {
+// 					if (!acc[contracts.id]?.jobs.some((j) => j.id === job.id)) {
+// 						acc[contracts.id]?.jobs.push(job);
+// 					}
+
+// 					if (bids && !acc[contracts.id]?.bids?.some((b) => b.id === bids?.id)) {
+// 						acc[contracts.id]?.bids?.push(bids);
+// 					}
+// 				} else {
+// 					acc[contracts.id] = {
+// 						contracts,
+// 						jobs: [job],
+// 						addresses,
+// 						bids: bids ? [bids] : [],
+// 					};
+// 				}
+// 			}
+// 			return acc;
+// 		}, {});
+
+// 		return new Response(JSON.stringify(result), {
+// 			status: 200,
+// 		});
+// 	} catch (err) {
+// 		console.log(err);
+// 		return new Response("Error", {
+// 			status: 500,
+// 		});
+// 	}
+// }

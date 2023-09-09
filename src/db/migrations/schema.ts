@@ -104,6 +104,12 @@ export const companies = mysqlTable(
 		id: varchar("id", { length: 50 }).notNull(),
 		name: varchar("name", { length: 50 }).notNull(),
 		ownerId: varchar("owner_id", { length: 50 }).notNull(),
+		createdAt: timestamp("created_at", { mode: "date" }).default(
+			sql`CURRENT_TIMESTAMP`
+		),
+		updatedAt: timestamp("updated_at", { mode: "date" })
+			.default(sql`CURRENT_TIMESTAMP`)
+			.onUpdateNow(),
 	},
 	(table) => {
 		return {
@@ -156,15 +162,17 @@ export const contracts = mysqlTable(
 	{
 		id: varchar("id", { length: 50 }).notNull(),
 		isActive: tinyint("is_active").default(1),
-		companyId: varchar("company_id", { length: 50 }).default("").notNull(),
-		title: varchar("title", { length: 100 }).default("").notNull(),
-		description: varchar("description", { length: 3000 }),
+		title: varchar("title", { length: 100 }).notNull(),
+		description: varchar("description", { length: 3000 }).notNull(),
+		paymentType: mysqlEnum("paymentType", ["fixed", "commission"]).notNull(),
+		price: decimal("price", { precision: 13, scale: 4 }).notNull(),
 		createdAt: timestamp("created_at", { mode: "date" }).default(
 			sql`CURRENT_TIMESTAMP`
 		),
 		updatedAt: timestamp("updated_at", { mode: "date" })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.onUpdateNow(),
+		endDate: timestamp("end_date", { mode: "date" }),
 	},
 	(table) => {
 		return {
