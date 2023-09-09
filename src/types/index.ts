@@ -10,3 +10,12 @@ export type ClerkWebhookEvent = {
 // Drizzle ORM
 export type Contract = InferModel<typeof contracts>;
 export type NewContract = Omit<Contract, "id" | "createdAt" | "updatedAt">;
+
+export type Option = {
+	label: string;
+	value: string;
+};
+
+
+
+export type GroupOptions = Record<string, Option[]>;

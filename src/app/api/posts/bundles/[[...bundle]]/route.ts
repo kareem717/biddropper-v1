@@ -11,7 +11,7 @@ import { insertBundleSchema } from "@/lib/validations/posts";
 import { auth } from "@clerk/nextjs";
 // import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
-import { bids, contracts, jobs } from "@/db/migrations/schema";
+import { bids, contractJobs, contracts, jobs } from "@/db/migrations/schema";
 import { InferModel, eq } from "drizzle-orm";
 import { addresses } from "@/db/migrations/schema";
 
@@ -160,7 +160,8 @@ export async function GET(req: Request) {
 			.leftJoin(bundleMedia, eq(contracts.id, bundleMedia.bundleId))
 			.leftJoin(bids, eq(jobs.id, bids.jobId))
 			.prepare();
-	} else {
+	} 
+	}else {
 		query = db
 			.select()
 			.from(contracts)

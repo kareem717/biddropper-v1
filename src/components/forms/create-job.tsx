@@ -5,7 +5,6 @@ import ComboBox from "@/components/combo-box";
 import { industries } from "@/config/industries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { insertJobSchema } from "@/lib/validations/posts";
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
-import { Label } from "../ui/label";
 import CustomRadioButtons from "@/components/custom-radio-buttons";
 import { useRouter } from "next/navigation";
 import {
@@ -47,11 +45,13 @@ interface CreateJobFormProps extends ComponentPropsWithoutRef<typeof Card> {
 		id: string;
 	}[];
 	userId: string;
+	onSuccessRedirect?: string;
 }
 
 const CreateJobForm: FC<CreateJobFormProps> = ({
 	companies,
 	userId,
+	onSuccessRedirect,
 	...props
 }) => {
 	const totalSteps = 4;
@@ -272,15 +272,11 @@ console.log({
 
 		const body = await res.json();
 		if (res.status === 201) {
-			toast.success("Success!", {
-				description: "Your job has been created",
-			});
-			router.replace("/");
-			// router.push(`/jobs/${body.id}`); TODO: redirect to job page
+				toast.success("Job created successfully");
+				router.replace(onSuccessRedirect || "/");
 		} else {
-			toast.error("Error!", {
-				description: "Something went wrong. Please try again later.",
-			});
+			toast.error("Failed to create job");
+
 			setIsFetching(false);
 		}
 	}

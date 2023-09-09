@@ -3,42 +3,7 @@ import { media, contracts, jobs, bids } from "@/db/migrations/schema";
 import * as z from "zod";
 import { industryValues } from "@/config/industries";
 
-export const insertContractSchema = z.object({
-	title: z
-		.string()
-		.min(3, {
-			message: "Title must be at least 3 characters long",
-		})
-		.max(100, {
-			message: "Title must be at most 100 characters long",
-		}),
-	isActive: z.boolean(),
-	userId: z.string().max(50, {
-		message: "User ID must be at most 50 characters long",
-	}),
-	description: z
-		.string()
-		.min(3, {
-			message: "Description must be at least 3 characters long",
-		})
-		.max(750, {
-			message: "Description must be at most 750 characters long",
-		}),
-	contractType: z.enum(["sub-contract", "contractor-wanted"], {
-		errorMap: (issue, ctx) => {
-			return { message: "Please select a valid option" };
-		},
-	}),
-	posterType: z.enum(["business-owner", "property-owner"], {
-		errorMap: (issue, ctx) => {
-			return { message: "Please select a valid option" };
-		},
-	}),
-	addressId: z.string().max(50, {
-		message: "Address ID must be at most 50 characters long",
-	}),
-	showExactLocation: z.boolean(),
-});
+export const insertContractSchema = createInsertSchema(contracts)
 export const selectContractSchema = createSelectSchema(contracts);
 
 export const insertJobSchema = createInsertSchema(jobs, {
@@ -65,17 +30,7 @@ export const insertJobSchema = createInsertSchema(jobs, {
 
 export const selectJobSchema = createSelectSchema(jobs);
 
-// export const insertContractMediaSchema = createInsertSchema(media, {
-// 	contractId: z.string().max(50, {
-// 		message: "Contract ID must be at most 50 characters long",
-// 	}),
-// 	mediaUrl: z.string().url({
-// 		message: "Please enter a valid URL",
-// 	}),
-// 	fileKey: z.string().max(191, {
-// 		message: "File key must be at most 191 characters long",
-// 	}),
-// });
+export type SelectedJob = z.infer<typeof selectJobSchema>;
 export const selectContractMediaSchema = createSelectSchema(media);
 
 export const insertBidsSchema = createInsertSchema(bids);

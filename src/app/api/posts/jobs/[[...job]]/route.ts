@@ -5,6 +5,8 @@ import {
 	jobs,
 	userJobs,
 	media,
+	companies,
+	users,
 } from "@/db/migrations/schema";
 import { insertJobSchema } from "@/lib/validations/posts";
 import { headers } from "next/headers";
@@ -91,8 +93,73 @@ export async function GET(req: Request) {
 	console.log(req);
 	const headersList = headers();
 	const id = headersList.get("Job-ID");
+	const ownerId = headersList.get("Owner-ID");
+	const jobId = insertJobSchema.pick({ id: true }).safeParse({ id });
 
-	if (!id) {
+	if (id) {
+		if (!jobId.success) {
+			return new Response(JSON.stringify(jobId.error), {
+				headers: {
+					"content-type": "application/json",
+				},
+				status: 400,
+			});
+		}
+
+		const data = jobId.data;
+
+		// TODO: Is this the best way to do this?
+		const query = await db
+			.select()
+			.from(jobs)
+			.where(eq(jobs.id, data.id))
+			.leftJoin(jobMedia, eq(jobs.id, jobMedia.jobId))
+			.leftJoin(media, eq(jobMedia.mediaId, media.id));
+
+		//TODO: implement when job media uploads are implemented
+		// const job = query.reduce((acc, curr) => {
+		// 	return {
+		// 		...acc,
+		// 		...curr,
+		// 	};
+		// })
+
+		return new Response(JSON.stringify(query), {
+			headers: {
+				"content-type": "application/json",
+			},
+			status: 200,
+		});
+	} else if (ownerId) {
+		const query = await db
+			.select()
+			.from(companies)
+			.where(eq(companies.ownerId, ownerId))
+			.innerJoin(companyJobs, eq(companies.id, companyJobs.companyId))
+			.innerJoin(jobs, eq(companyJobs.jobId, jobs.id));
+
+		const res = query.reduce((final, item) => {
+			const currentCompany = item.companies.name;
+
+			if (!final[currentCompany]) {
+				final[currentCompany] = {
+					...item.companies,
+					jobs: [item.jobs],
+				};
+			} else {
+				final[currentCompany].jobs.push(item.jobs);
+			}
+			return final;
+		}, {} as Record<string, any>);
+
+		console.log(res);
+		return new Response(JSON.stringify(res), {
+			headers: {
+				"content-type": "application/json",
+			},
+			status: 200,
+		});
+	} else {
 		return new Response(JSON.stringify({ error: "No job ID provided" }), {
 			headers: {
 				"content-type": "application/json",
@@ -100,41 +167,4 @@ export async function GET(req: Request) {
 			status: 400,
 		});
 	}
-
-	const jobId = insertJobSchema.pick({ id: true }).safeParse({ id });
-
-	console.log(jobId, id);
-	if (!jobId.success) {
-		return new Response(JSON.stringify(jobId.error), {
-			headers: {
-				"content-type": "application/json",
-			},
-			status: 400,
-		});
-	}
-
-	const data = jobId.data;
-
-	// TODO: Is this the best way to do this?
-	const query = await db
-		.select()
-		.from(jobs)
-		.where(eq(jobs.id, data.id))
-		.leftJoin(jobMedia, eq(jobs.id, jobMedia.jobId))
-		.leftJoin(media, eq(jobMedia.mediaId, media.id));
-
-	//TODO: implement when job media uploads are implemented
-	// const job = query.reduce((acc, curr) => {
-	// 	return {
-	// 		...acc,
-	// 		...curr,
-	// 	};
-	// })
-
-	return new Response(JSON.stringify(query), {
-		headers: {
-			"content-type": "application/json",
-		},
-		status: 200,
-	});
 }

@@ -36,7 +36,7 @@ const JobCard: FC<JobCardProps> = ({
 	);
 
 	return (
-			<Card className="group hover:bg-gray-700 hover:bg-opacity-10 ease-in-out">
+			<Card className="group hover:bg-gray-700 hover:bg-opacity-10 ease-in-out w-full">
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle className="text-base font-bold hover:opacity-80 duration-200 ease-in-out cursor-pointer ">
 						<Link href={`/job-view/${id}`}>
