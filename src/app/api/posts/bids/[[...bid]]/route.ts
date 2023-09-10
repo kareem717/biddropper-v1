@@ -1,24 +1,97 @@
 import { db } from "@/db";
-import { bids } from "@/db/migrations/schema";
-
+import { bids, jobBids } from "@/db/migrations/schema";
+import * as z from "zod";
 import { insertBidsSchema } from "@/lib/validations/posts";
+import { headers } from "next/headers";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
+import { contractBids } from "@/db/migrations/last_working_schema";
 
 export async function POST(req: Request) {
+	const session = await getServerSession(authOptions);
+
+	if (!session || !session.user.ownedCompanies)
+		return new Response("Unauthorized", { status: 401 });
+
 	const body = await req.json();
+	const bidType = headers().get("Bid-Type");
 
-	const data = insertBidsSchema.parse(body);
+	const safeParse =
+		bidType === "contract"
+			? insertBidsSchema
+					.extend({
+						companyId: z
+							.string()
+							.max(50, {
+								message: "Company ID must be at most 50 characters long",
+							})
+							.regex(/^comp_[A-Za-z0-9\-]+$/, {
+								message:
+									"Company ID must be in the format of comp_[A-Za-z0-9-]+",
+							}),
+						contractId: z
+							.string()
+							.max(50, {
+								message: "Contract ID must be at most 50 characters long",
+							})
+							.regex(/^cntr_[A-Za-z0-9\-]+$/, {
+								message:
+									"Contract ID must be in the format of cntr_[A-Za-z0-9-]+",
+							}),
+					})
+					.safeParse(body)
+			: insertBidsSchema
+					.extend({
+						companyId: z
+							.string()
+							.max(50, {
+								message: "Company ID must be at most 50 characters long",
+							})
+							.regex(/^comp_[A-Za-z0-9\-]+$/, {
+								message:
+									"Company ID must be in the format of comp_[A-Za-z0-9-]+",
+							}),
 
-	const bidId = `bid_${crypto.randomUUID()}`;
-	console.log(bidId);
+						jobId: z
+							.string()
+							.max(50, {
+								message: "Job ID must be at most 50 characters long",
+							})
+							.regex(/^job_[A-Za-z0-9\-]+$/, {
+								message: "Job ID must be in the format of job_[A-Za-z0-9-]+",
+							}),
+					})
+					.safeParse(body);
+
+	if (!safeParse.success) {
+		return new Response(safeParse.error.message, { status: 400 });
+	}
+
+	const data = safeParse.data;
+
+	const newId = `bid_${crypto.randomUUID()}`;
 	// TODO: price should not be optional
-	const query = db.insert(bids).values({
-		id: bidId,
-		jobId: data.jobId,
-		companyId: data.companyId,
-		price: data.price || 0,
-	});
+	const query = await db.transaction(async (tx) => {
+		await tx.insert(bids).values({
+			id: newId,
+			price: data.price,
+			companyId: data.companyId,
+		});
 
-	await query.execute();
+		if (bidType === "contract") {
+			await tx.insert(contractBids).values({
+				bidId: newId,
+				contractId: data.contractId as any,
+			});
+		}
+
+		if (bidType === "job") {
+			await tx.insert(jobBids).values({
+				bidId: newId,
+				jobId: data.jobId as any,
+			});
+		}
+	});
 
 	return new Response("Bid created", { status: 201 });
 }
