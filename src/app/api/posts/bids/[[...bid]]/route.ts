@@ -16,6 +16,7 @@ export async function POST(req: Request) {
 	const body = await req.json();
 	const bidType = headers().get("Bid-Type");
 
+	
 	const safeParse =
 		bidType === "contract"
 			? insertBidsSchema
@@ -81,14 +82,16 @@ export async function POST(req: Request) {
 		if (bidType === "contract") {
 			await tx.insert(contractBids).values({
 				bidId: newId,
-				contractId: data.contractId as any,
+				// @ts-ignore
+				contractId: data.contractId,
 			});
 		}
 
 		if (bidType === "job") {
 			await tx.insert(jobBids).values({
 				bidId: newId,
-				jobId: data.jobId as any,
+				// @ts-ignore
+				jobId: data.jobId,
 			});
 		}
 	});

@@ -19,6 +19,13 @@ export default async function ContractPage() {
 	if (!session || !session.user.ownedCompanies) {
 		redirect("/");
 	}
+
+	const companyOptions = session.user.ownedCompanies.map((company) => {
+		return {
+			id: company.id,
+			name: company.name,
+		};
+	});
 	// Select the companies that the user owns
 	// Select the jobs that belong to those companies
 	// Select the contracts include those jobs
@@ -65,11 +72,11 @@ export default async function ContractPage() {
 						{/* <ul className="flex  w-full flex-col items-center justify-center gap-5 overflow-y-auto p-6 md:grid md:grid-cols-2 lg:grid-cols-3"></ul> */}
 						<BidButton
 							jobId={"job_5e2102b5-c3ba-4d97-ad4e-e1ac54e16c7e"}
-							companyId={"comp_64b989bc-aeea-4670-a27f-e044e86f8da6"}
+							companies={companyOptions}
 						/>
 						<BidButton
 							contractId={"cntr_7289948b-69b4-4def-970f-36999ffd3456"}
-							companyId={"comp_64b989bc-aeea-4670-a27f-e044e86f8da6"}
+							companies={companyOptions}
 						/>
 					</div>
 				</div>

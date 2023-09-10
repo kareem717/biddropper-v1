@@ -19,6 +19,8 @@ import { propertyTypes } from "@/config/property-types";
 import { industries } from "@/config/industries";
 import { toast } from "sonner";
 import BigJobCard from "@/components/job-cards/big";
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 const fetcher = (url: string, id: string) =>
 	fetch(url, {
 		method: "GET",
@@ -29,6 +31,10 @@ const fetcher = (url: string, id: string) =>
 	}).then((res) => res.json());
 
 export default function JobView({ params }: { params: { id: string } }) {
+	const session = useSession();
+	
+	if (!session || !session.data?.user?.ownedCompanies) redirect("/")
+	
 	const { data, error } = useSWR(["/api/posts/jobs", params.id[0]], fetcher);
 	// TODO: Implement real image fetching, implement location fetching
 	const images = [
@@ -61,6 +67,7 @@ export default function JobView({ params }: { params: { id: string } }) {
 	return (
 		<div className="w-full h-screen  bg-cover relative xl:bg-bottom">
 			<BigJobCard
+				id={job.id}
 				title={industries.find((i) => i.value === job.industry)?.label as any}
 				details={job.details}
 				lat={12}

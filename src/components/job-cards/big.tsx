@@ -29,6 +29,8 @@ const JobMap = dynamic(() => import("@/components/job-map"), {
 });
 
 interface JobCardProps extends ComponentPropsWithoutRef<typeof Card> {
+	id: string;
+	companyId: string;
 	title: string;
 	details: string;
 	lng: number;
@@ -52,6 +54,8 @@ interface JobCardProps extends ComponentPropsWithoutRef<typeof Card> {
 }
 
 const JobCard: FC<JobCardProps> = ({
+	id,
+	companyId,
 	title,
 	images,
 	timeHorizon,
@@ -158,7 +162,8 @@ const JobCard: FC<JobCardProps> = ({
 						<Separator className="my-4 hidden md:block" />
 						<div className="flex flex-row gap-2 mt-4 md:mt-0">
 							<BidButton
-								jobId="job_58556711-6f83-4bf1-8607-b8284cdfa862"
+								jobId={id}
+								companyId={"comp_64b989bc-aeea-4670-a27f-e044e86f8da6"}
 								className="w-full"
 							/>
 							<Button
