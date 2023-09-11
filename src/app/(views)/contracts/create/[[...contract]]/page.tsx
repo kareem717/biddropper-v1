@@ -15,7 +15,7 @@ export default async function CreateContractPage() {
 	}
 
 	const userId = session.user.id;
-	console.log(userId)
+	console.log(userId);
 	const companyIds = session.user.ownedCompanies.map((company) => {
 		return {
 			id: company.id,
@@ -32,13 +32,17 @@ export default async function CreateContractPage() {
 	});
 
 	const jobs = await res.json();
-console.log(jobs)
+	console.log(jobs);
 
-const parsedJobs = selectCompananyJobsSchema.parse(jobs);
-console.log(parsedJobs)
+	const parsedJobs = selectCompananyJobsSchema.parse(jobs);
+	console.log(parsedJobs);
 	return (
 		<div className="w-full h-screen bg-[url('/images/wave.svg')] bg-cover relative xl:bg-bottom">
-			<CreateContractForm jobs={jobs} userId={userId} className="sm:w-[min(80vw,1000px)] w-[95vw] bg-background absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4" />
+			<CreateContractForm
+				jobs={jobs}
+				userId={userId}
+				className="sm:w-[min(80vw,1000px)] w-[95vw] bg-background absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4"
+			/>
 		</div>
 	);
 }

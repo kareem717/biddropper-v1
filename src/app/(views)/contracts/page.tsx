@@ -89,7 +89,6 @@ export default async function ContractPage() {
 											id={contract.id}
 											title={contract.title}
 											isActive={contract.isActive}
-											paymentType={contract.paymentType}
 											price={contract.price}
 											companiesInContract={contract.companies_in_contract}
 											endDate={contract.endDate}

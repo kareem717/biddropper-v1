@@ -172,6 +172,7 @@ export const contracts = mysqlTable(
 		updatedAt: timestamp("updated_at", { mode: "date" })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.onUpdateNow(),
+		endDate: timestamp("end_date", { mode: "date" }),
 	},
 	(table) => {
 		return {

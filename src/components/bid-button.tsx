@@ -24,6 +24,7 @@ import {
 interface JobProps extends ComponentPropsWithoutRef<typeof DialogTrigger> {
 	jobId: string;
 	contractId?: never;
+	minimumBid: never;
 	companies:
 		| {
 				id: string;
@@ -34,6 +35,7 @@ interface JobProps extends ComponentPropsWithoutRef<typeof DialogTrigger> {
 interface ContractProps extends ComponentPropsWithoutRef<typeof DialogTrigger> {
 	jobId?: never;
 	contractId: string;
+	minimumBid: number;
 	companies:
 		| {
 				id: string;
@@ -49,6 +51,7 @@ const BidButton: React.FC<BidButtonProps> = ({
 	contractId,
 	companies,
 	className,
+	minimumBid,
 	...props
 }) => {
 	const [inputValue, setInputValue] = useState("");
@@ -66,6 +69,31 @@ const BidButton: React.FC<BidButtonProps> = ({
 
 	const enterBid = async () => {
 		console.log(biddingCompany);
+
+		//todo: test to make sure this works
+		if (companies instanceof Array && !biddingCompany) {
+			toast.error("Please select a company to bid from");
+			setFetching(false);
+
+			return;
+		} else if (
+			companies instanceof Array &&
+			!companies.find((c) => c.id === biddingCompany)
+		) {
+			toast.error("Please select a valid company to bid from");
+			setFetching(false);
+
+			return;
+		} else if (companies instanceof String) {
+			setBiddingCompany(companies as string);
+		}
+
+		if (Number(inputValue) < Number((contractId && minimumBid) || 0)) {
+			toast.error("Bid must be greater than the minimum bid");
+			setFetching(false);
+
+			return;
+		}
 		const res = jobId
 			? await fetch(`${env.NEXT_PUBLIC_APP_URL}/api/posts/bids`, {
 					method: "POST",
@@ -79,7 +107,7 @@ const BidButton: React.FC<BidButtonProps> = ({
 						companyId: biddingCompany,
 					}),
 			  })
-			: await fetch(`/api/posts/bids`, {
+			: await fetch(`${env.NEXT_PUBLIC_APP_URL}/api/posts/bids`, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
@@ -88,7 +116,6 @@ const BidButton: React.FC<BidButtonProps> = ({
 					body: JSON.stringify({
 						price: inputValue,
 						contractId,
-
 						companyId: biddingCompany,
 					}),
 			  });

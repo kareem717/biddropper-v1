@@ -4,16 +4,18 @@ import React, {
 	useCallback,
 	useState,
 } from "react";
-import { PieChart, Pie, Sector } from "recharts";
+import { PieChart, Pie, Sector, ResponsiveContainer } from "recharts";
 
 // const data = ;
 
-interface LabeledPieChartProps
-	extends ComponentPropsWithoutRef<typeof PieChart> {
+interface LabeledPieChartProps {
 	data: {
 		name: string;
 		value: number;
 	}[];
+	width: string | number;
+	height: string | number;
+	className?: string;
 }
 
 const renderActiveShape = (props: any) => {
@@ -43,7 +45,7 @@ const renderActiveShape = (props: any) => {
 
 	return (
 		<g>
-			<text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill}>
+			<text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="capitalize">
 				{payload.name}
 			</text>
 			<Sector
@@ -100,20 +102,20 @@ const LabeledPieChart: FC<LabeledPieChartProps> = ({ data, ...props }) => {
 	);
 
 	return (
-		<PieChart width={400} height={400} {...props}>
-			<Pie
-				activeIndex={activeIndex}
-				activeShape={renderActiveShape}
-				data={data}
-				cx={200}
-				cy={200}
-				innerRadius={60}
-				outerRadius={80}
-				fill="#16a34a"
-				dataKey="value"
-				onMouseEnter={onPieEnter}
-			/>
-		</PieChart>
+		<ResponsiveContainer {...props}>
+			<PieChart>
+				<Pie
+					activeIndex={activeIndex}
+					activeShape={renderActiveShape}
+					data={data}
+					innerRadius="48%"
+					outerRadius="60%"
+					fill="#16a34a"
+					dataKey="value"
+					onMouseEnter={onPieEnter}
+				/>
+			</PieChart>
+		</ResponsiveContainer>
 	);
 };
 

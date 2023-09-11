@@ -56,65 +56,46 @@ export const createContractSchema = z.object({
 	jobs: selectJobSchema.array().min(1, {
 		message: "You must select at least one job",
 	}),
-	payment: z.union([
-		z.object({
-			type: z.literal("commission"),
-			value: z
-				.number()
-				.positive({
-					message: "Commission must be greater than 0%",
-				})
-				.max(100, {
-					message: "Commission must be less than 100%",
-				})
-				.multipleOf(0.0001, {
-					message: "Commission must be rounded to the nearest 0.0001%",
-				}),
+	price: z
+		.number()
+		.positive({
+			message: "Price must be greater than 0",
+		})
+		.max(100000000, {
+			message: "Price must be less than 100,000,000",
+		})
+		.multipleOf(0.01, {
+			message: "Price must be rounded to the nearest cent",
 		}),
-		z.object({
-			type: z.literal("fixed"),
-			value: z
-				.number()
-				.positive({
-					message: "Price must be greater than 0",
-				})
-				.max(100000000, {
-					message: "Price must be less than 100,000,000",
-				})
-				.multipleOf(0.01, {
-					message: "Price must be rounded to the nearest cent",
-				}),
-		}),
-	]),
 	endDate: z
-  .string()
-  .refine(
-    (value) => {
-      const dateValue = Date.parse(value);
-      const now = new Date();
-      return !isNaN(dateValue) && new Date(value) > now;
-    },
-    {
-      message: "endDate must be a valid date string representing a date in the future",
-    }
-  )
-  .transform((value) => {
-    return new Date(value);
-  })
-  .or(
-    z.date().refine(
-      (value) => {
-        const now = new Date();
-        return value > now;
-      },
-      {
-        message: "endDate must be a date in the future",
-      }
-    )
-  )
-  .nullable(),
+		.string()
+		.refine(
+			(value) => {
+				const dateValue = Date.parse(value);
+				const now = new Date();
+				return !isNaN(dateValue) && new Date(value) > now;
+			},
+			{
+				message:
+					"endDate must be a valid date string representing a date in the future",
+			}
+		)
+		.transform((value) => {
+			return new Date(value);
+		})
+		.or(
+			z.date().refine(
+				(value) => {
+					const now = new Date();
+					return value > now;
+				},
+				{
+					message: "endDate must be a date in the future",
+				}
+			)
+		)
+		.nullable(),
 });
-
 
 export const selectContractMediaSchema = createSelectSchema(media);
 

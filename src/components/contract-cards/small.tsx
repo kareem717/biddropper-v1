@@ -8,7 +8,6 @@ interface ContractCardProps {
 	isActive: boolean;
 	createdAt: Date;
 	title: string;
-	paymentType: "fixed" | "commission";
 	price: string;
 	endDate: Date | null;
 	totalJobs: number;
@@ -20,7 +19,6 @@ const ContractCard: FC<ContractCardProps> = async ({
 	id,
 	title,
 	isActive,
-	paymentType,
 	price,
 	endDate,
 	totalJobs,
@@ -32,10 +30,6 @@ const ContractCard: FC<ContractCardProps> = async ({
 		minimumFractionDigits: 0,
 		maximumFractionDigits: 4,
 	});
-
-	const contractAge = Math.floor(
-		(new Date().getTime() - new Date(createdAt).getTime()) / 1000 / 60 / 60 / 24
-	);
 
 	const formattedContractAge = (createdAt: Date) => {
 		const contractAge = Math.floor(
@@ -71,8 +65,10 @@ const ContractCard: FC<ContractCardProps> = async ({
 					</Link>
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="mt-4 flex justify-between min-h-[80px]
-			">
+			<CardContent
+				className="mt-4 flex justify-between min-h-[80px]
+			"
+			>
 				<div className="flex flex-wrap gap-2">
 					<BadgeTooltip
 						className="hover:-translate-y-0.5 duration-300"
@@ -94,16 +90,10 @@ const ContractCard: FC<ContractCardProps> = async ({
 						tooltipProps={{
 							delayDuration: 300,
 						}}
-						label={
-							paymentType === "fixed"
-								? `$${formattedPrice}`
-								: `${formattedPrice}%`
-						}
+						label={`$${formattedPrice}`}
 						tooltipContent={
 							<p>
-								{paymentType === "fixed"
-									? `This listing has a fixed minimum bid price of $${formattedPrice}`
-									: `This listing is sold on commission at ${formattedPrice}%`}
+								{`This listing has a minimum bid price of $${formattedPrice}`}
 							</p>
 						}
 					/>
@@ -141,7 +131,7 @@ const ContractCard: FC<ContractCardProps> = async ({
 						tooltipProps={{
 							delayDuration: 300,
 						}}
-						label={`${totalJobs} jobs`}
+						label={`${totalJobs} Job${totalJobs > 1 ? "s" : ""}`}
 						tooltipContent={
 							<p>
 								This listing includes {totalJobs} job{totalJobs > 1 ? "s" : ""}
@@ -155,7 +145,7 @@ const ContractCard: FC<ContractCardProps> = async ({
 							tooltipProps={{
 								delayDuration: 300,
 							}}
-							label={`${totalBids} bids`}
+							label={`${totalBids} Bid${totalBids > 1 ? "s" : ""}`}
 							tooltipContent={
 								<p>
 									This listing already has {totalBids} bid
@@ -165,13 +155,13 @@ const ContractCard: FC<ContractCardProps> = async ({
 						/>
 					)}
 
-					{companiesInContract > 0 && (
+					{companiesInContract > 1 && (
 						<BadgeTooltip
 							className="hover:-translate-y-0.5 duration-300"
 							tooltipProps={{
 								delayDuration: 300,
 							}}
-							label={`${companiesInContract} companies`}
+							label={`${companiesInContract} Companies`}
 							tooltipContent={
 								<p>This listing involves {companiesInContract} companies</p>
 							}

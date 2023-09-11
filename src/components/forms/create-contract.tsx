@@ -57,13 +57,11 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 	jobs,
 	...props
 }) => {
+	// todo: might have bugs as i removed commision and didnt test it
 	const router = useRouter();
 	const [date, setDate] = useState<Date>();
 	const [formStep, setFormStep] = useState<number>(0);
 	const [isFetching, setIsFetching] = useState<boolean>(false);
-	const [paymentType, setPaymentType] = useState<"fixed" | "commission">(
-		"fixed"
-	);
 
 	// todo: maybe abstract this into a hook atp cause ur using it in multiple places
 	const handleNextStep = () => {
@@ -94,10 +92,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			title: undefined,
 			description: undefined,
 			jobs: [],
-			payment: {
-				type: paymentType,
-				value: 0,
-			},
+			price: undefined,
 			endDate: null,
 		},
 	});
@@ -196,84 +191,35 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 				"Pick and configure only one of the payment structures for this contract",
 			component: (
 				<div>
-					<Tabs
-						value={paymentType}
-						onValueChange={(value) => {
-							setPaymentType(value as any);
-							form.setValue("payment", {
-								type: value as any,
-								value: 0,
-							});
-						}}
-						className=""
-					>
-						<TabsList className="grid w-full grid-cols-2">
-							<TabsTrigger value="fixed">Fixed Price</TabsTrigger>
-							<TabsTrigger value="commission">Commission</TabsTrigger>
-						</TabsList>
-						<TabsContent value="fixed">
-							<Card>
-								<CardHeader>
-									<CardTitle>Fixed Price</CardTitle>
-									<CardDescription>
-										Set the fixed minimum price for this contract. Entered price
-										will be rounded to the nearest cent.
-									</CardDescription>
-								</CardHeader>
-								<CardContent className="space-y-2">
-									{/* //TODO: Maybe implement currency-input? */}
-									<div className="space-y-1">
-										<Label htmlFor="price">Price</Label>
-										<div className="flex items-center gap-2">
-											<Icons.dollarSign />
-											<Input
-												id="price"
-												type="number"
-												className="w-1/2"
-												onChange={(val) => {
-													form.setValue(
-														"payment.value",
-														Number(parseFloat(val.target.value).toFixed(2))
-													);
-												}}
-											/>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
-						</TabsContent>
-
-						<TabsContent value="commission">
-							<Card>
-								<CardHeader>
-									<CardTitle>Commission</CardTitle>
-									<CardDescription>
-										Set your commission percentage for this contract. Entered
-										percentage will be rounded to the nearest 0.0001%.
-									</CardDescription>
-								</CardHeader>
-								<CardContent className="space-y-2">
-									<div className="space-y-1">
-										<Label htmlFor="percent">Precentage</Label>
-										<div className="flex items-center gap-2">
-											<Input
-												id="percent"
-												type="number"
-												className="w-1/2"
-												onChange={(val) => {
-													form.setValue(
-														"payment.value",
-														Number(parseFloat(val.target.value).toFixed(4))
-													);
-												}}
-											/>
-											<Icons.percent />
-										</div>
-									</div>
-								</CardContent>
-							</Card>
-						</TabsContent>
-					</Tabs>
+					<Card>
+						<CardHeader>
+							<CardTitle>Fixed Price</CardTitle>
+							<CardDescription>
+								Set the fixed minimum price for this contract. Entered price
+								will be rounded to the nearest cent.
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-2">
+							{/* //TODO: Maybe implement currency-input? */}
+							<div className="space-y-1">
+								<Label htmlFor="price">Price</Label>
+								<div className="flex items-center gap-2">
+									<Icons.dollarSign />
+									<Input
+										id="price"
+										type="number"
+										className="w-1/2"
+										onChange={(val) => {
+											form.setValue(
+												"price",
+												Number(parseFloat(val.target.value).toFixed(2))
+											);
+										}}
+									/>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
 				</div>
 			),
 		},
