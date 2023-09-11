@@ -1,114 +1,185 @@
-"use client";
-import { useTheme } from "next-themes";
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer } from "recharts";
-
-import { useConfig } from "@/hooks/use-config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { themes } from "@/components/themes";
 import { FC } from "react";
-import { industries } from "@/config/industries";
 import BadgeTooltip from "../badge-tooltip";
-import { timeHorizons } from "@/config/time-horizons";
-import { propertyTypes } from "@/config/property-types";
-import { Icons } from "../icons";
 import Link from "next/link";
 
 interface ContractCardProps {
 	id: string;
-	industry: string;
-	propertyType: string;
-	timeHorizon: string;
-	isActive?: boolean;
-	isCommercialProperty?: boolean;
+	isActive: boolean;
+	createdAt: Date;
+	title: string;
+	paymentType: "fixed" | "commission";
+	price: string;
+	endDate: Date | null;
+	totalJobs: number;
+	totalBids: number;
+	companiesInContract: number;
 }
 
-const ContractCard: FC<ContractCardProps> = ({
+const ContractCard: FC<ContractCardProps> = async ({
 	id,
-	industry,
-	propertyType,
-	timeHorizon,
+	title,
 	isActive,
-	isCommercialProperty,
+	paymentType,
+	price,
+	endDate,
+	totalJobs,
+	totalBids,
+	createdAt,
+	companiesInContract,
 }) => {
-	const timeFrame = timeHorizons.find((time) => time.value === timeHorizon);
-	const propertyTypeLabel = propertyTypes.find(
-		(property) => property.value === propertyType
+	const formattedPrice = Number(price).toLocaleString(undefined, {
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 4,
+	});
+
+	const contractAge = Math.floor(
+		(new Date().getTime() - new Date(createdAt).getTime()) / 1000 / 60 / 60 / 24
 	);
 
+	const formattedContractAge = (createdAt: Date) => {
+		const contractAge = Math.floor(
+			(new Date().getTime() - new Date(createdAt).getTime()) /
+				1000 /
+				60 /
+				60 /
+				24
+		);
+		const suffix = contractAge > 1 ? "s" : "";
+		if (contractAge < 1) {
+			return "<1 day";
+		} else if (contractAge < 7) {
+			return `${contractAge} day${suffix}`;
+		} else if (contractAge < 30) {
+			const weeks = Math.floor(contractAge / 7);
+			return `${weeks} week${suffix}`;
+		} else if (contractAge < 365) {
+			const months = Math.floor(contractAge / 30);
+			return `${months} month${suffix}`;
+		} else {
+			const years = Math.floor(contractAge / 365);
+			return `${years} year${suffix}`;
+		}
+	};
+
 	return (
-			<Card className="group hover:bg-gray-700 hover:bg-opacity-10 ease-in-out w-full">
-				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle className="text-base font-bold hover:opacity-80 duration-200 ease-in-out cursor-pointer ">
-						<Link href={`/job-view/${id}`}>
-							{industries.find((i) => i.value === industry)?.label}
-						</Link>
-					</CardTitle>
-				</CardHeader>
-				<CardContent className="mt-4 flex  justify-between">
-					<div className="flex flex-wrap gap-2 ">
-						{isCommercialProperty ? (
-							<BadgeTooltip
-								className="hover:-translate-y-0.5 duration-300"
-								tooltipProps={{
-									delayDuration: 300,
-								}}
-								label="Commercial"
-								tooltipContent={<p>This is a commercial property</p>}
-							/>
-						) : (
-							<BadgeTooltip
-								className="hover:-translate-y-0.5 duration-300"
-								tooltipProps={{
-									delayDuration: 300,
-								}}
-								label="Residential"
-								tooltipContent={<p>This is a residential property</p>}
-							/>
-						)}
-						{isActive ? (
-							<BadgeTooltip
-								className="hover:-translate-y-0.5 duration-300"
-								tooltipProps={{
-									delayDuration: 300,
-								}}
-								label="Active"
-								tooltipContent={<p>This listing is active</p>}
-							/>
-						) : (
-							<BadgeTooltip
-								className="hover:-translate-y-0.5 duration-300"
-								label="Inactive"
-								tooltipProps={{
-									delayDuration: 300,
-								}}
-								tooltipContent={<p>This listing is no longer active</p>}
-							/>
-						)}
-						{timeFrame && (
-							<BadgeTooltip
-								className="hover:-translate-y-0.5 duration-300"
-								tooltipProps={{
-									delayDuration: 300,
-								}}
-								label={timeFrame.label}
-								variant="secondary"
-								tooltipContent={<p>{timeFrame.description}</p>}
-							/>
-						)}
-						{propertyTypeLabel && (
-							<BadgeTooltip
-								className="hover:-translate-y-0.5 duration-300"
-								tooltipProps={{
-									delayDuration: 300,
-								}}
-								label={propertyTypeLabel.label}
-								variant="secondary"
-								tooltipContent={<p>{propertyTypeLabel.description}</p>}
-							/>
-						)}
-					</div>
-				</CardContent>
-			</Card>
+		<Card className="group hover:bg-gray-700 hover:bg-opacity-10 ease-in-out w-full">
+			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardTitle className="text-base font-bold hover:opacity-80 duration-200 ease-in-out cursor-pointer ">
+					<Link href={`/contracts/${id}`} className="capitalize">
+						{title}
+					</Link>
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="mt-4 flex justify-between min-h-[80px]
+			">
+				<div className="flex flex-wrap gap-2">
+					<BadgeTooltip
+						className="hover:-translate-y-0.5 duration-300"
+						tooltipProps={{
+							delayDuration: 300,
+						}}
+						label={isActive ? "Active" : "Inactive"}
+						tooltipContent={
+							<p>
+								{isActive
+									? "This listing is active"
+									: "This listing is no longer active"}
+							</p>
+						}
+					/>
+
+					<BadgeTooltip
+						className="hover:-translate-y-0.5 duration-300"
+						tooltipProps={{
+							delayDuration: 300,
+						}}
+						label={
+							paymentType === "fixed"
+								? `$${formattedPrice}`
+								: `${formattedPrice}%`
+						}
+						tooltipContent={
+							<p>
+								{paymentType === "fixed"
+									? `This listing has a fixed minimum bid price of $${formattedPrice}`
+									: `This listing is sold on commission at ${formattedPrice}%`}
+							</p>
+						}
+					/>
+
+					<BadgeTooltip
+						className="hover:-translate-y-0.5 duration-300"
+						tooltipProps={{
+							delayDuration: 300,
+						}}
+						label={`${formattedContractAge(createdAt)} ago`}
+						tooltipContent={
+							<p>
+								This listing was created {formattedContractAge(createdAt)} ago
+							</p>
+						}
+					/>
+
+					{endDate && (
+						<BadgeTooltip
+							className="hover:-translate-y-0.5 duration-300"
+							tooltipProps={{
+								delayDuration: 300,
+							}}
+							label={`Ends in ${formattedContractAge(endDate)}`}
+							tooltipContent={
+								<p>
+									This listing will expire in {formattedContractAge(endDate)}
+								</p>
+							}
+						/>
+					)}
+
+					<BadgeTooltip
+						className="hover:-translate-y-0.5 duration-300"
+						tooltipProps={{
+							delayDuration: 300,
+						}}
+						label={`${totalJobs} jobs`}
+						tooltipContent={
+							<p>
+								This listing includes {totalJobs} job{totalJobs > 1 ? "s" : ""}
+							</p>
+						}
+					/>
+
+					{totalBids > 0 && (
+						<BadgeTooltip
+							className="hover:-translate-y-0.5 duration-300"
+							tooltipProps={{
+								delayDuration: 300,
+							}}
+							label={`${totalBids} bids`}
+							tooltipContent={
+								<p>
+									This listing already has {totalBids} bid
+									{totalBids > 1 ? "s" : ""}
+								</p>
+							}
+						/>
+					)}
+
+					{companiesInContract > 0 && (
+						<BadgeTooltip
+							className="hover:-translate-y-0.5 duration-300"
+							tooltipProps={{
+								delayDuration: 300,
+							}}
+							label={`${companiesInContract} companies`}
+							tooltipContent={
+								<p>This listing involves {companiesInContract} companies</p>
+							}
+						/>
+					)}
+				</div>
+			</CardContent>
+		</Card>
 	);
 };
 

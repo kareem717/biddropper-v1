@@ -75,6 +75,7 @@
     "react-dropzone": "^14.2.3",
     "react-google-autocomplete": "^2.7.3",
     "react-hook-form": "^7.45.2",
+    "react-query": "^3.39.3",
     "react-select": "^5.7.4",
     "recharts": "^2.8.0",
     "resend": "^1.0.0",

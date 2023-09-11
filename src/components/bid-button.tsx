@@ -48,6 +48,7 @@ const BidButton: React.FC<BidButtonProps> = ({
 	jobId,
 	contractId,
 	companies,
+	className,
 	...props
 }) => {
 	const [inputValue, setInputValue] = useState("");
@@ -108,7 +109,7 @@ const BidButton: React.FC<BidButtonProps> = ({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger
-				className={cn(buttonVariants(), { ...props })}
+				className={cn(buttonVariants(), className)}
 				role="button"
 				{...props}
 			>

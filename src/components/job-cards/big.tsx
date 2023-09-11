@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import BidButton from "@/components/job-bid-button";
+import BidButton from "@/components/bid-button";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,7 @@ const ImageSlider = dynamic(() => import("@/components/image-slider"), {
 	loading: () => <Skeleton className="rounded-md border overflow-hidden" />,
 	ssr: false,
 });
-
+//todO: bid button is hard coded atm
 const JobMap = dynamic(() => import("@/components/job-map"), {
 	loading: () => (
 		<Skeleton className="w-full h-[30vh] md:h-full rounded-md border" />
@@ -30,7 +30,12 @@ const JobMap = dynamic(() => import("@/components/job-map"), {
 
 interface JobCardProps extends ComponentPropsWithoutRef<typeof Card> {
 	id: string;
-	companyId: string;
+	companies:
+		| {
+				id: string;
+				name: string;
+		  }[]
+		| string;
 	title: string;
 	details: string;
 	lng: number;
@@ -55,7 +60,7 @@ interface JobCardProps extends ComponentPropsWithoutRef<typeof Card> {
 
 const JobCard: FC<JobCardProps> = ({
 	id,
-	companyId,
+	companies,
 	title,
 	images,
 	timeHorizon,
@@ -161,11 +166,7 @@ const JobCard: FC<JobCardProps> = ({
 						</div>
 						<Separator className="my-4 hidden md:block" />
 						<div className="flex flex-row gap-2 mt-4 md:mt-0">
-							<BidButton
-								jobId={id}
-								companyId={"comp_64b989bc-aeea-4670-a27f-e044e86f8da6"}
-								className="w-full"
-							/>
+							<BidButton jobId={id} companies={companies} className="w-full" />
 							<Button
 								className="w-full"
 								onClick={(e) => {

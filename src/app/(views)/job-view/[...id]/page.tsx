@@ -32,9 +32,9 @@ const fetcher = (url: string, id: string) =>
 
 export default function JobView({ params }: { params: { id: string } }) {
 	const session = useSession();
-	
-	if (!session || !session.data?.user?.ownedCompanies) redirect("/")
-	
+
+	if (!session || !session.data?.user?.ownedCompanies) redirect("/");
+
 	const { data, error } = useSWR(["/api/posts/jobs", params.id[0]], fetcher);
 	// TODO: Implement real image fetching, implement location fetching
 	const images = [
@@ -51,7 +51,12 @@ export default function JobView({ params }: { params: { id: string } }) {
 				<Skeleton className="sm:w-[min(80vw,1250px)] w-[95vw] h-[80vh] absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4" />
 			</div>
 		);
-
+	const companyOptions = session.data.user.ownedCompanies.map((company) => {
+		return {
+			id: company.id,
+			name: company.name,
+		};
+	});
 	const jobSchema = selectJobSchema.extend({
 		media: z.array(selectMediaSchema).nullable(),
 	});
@@ -67,6 +72,7 @@ export default function JobView({ params }: { params: { id: string } }) {
 	return (
 		<div className="w-full h-screen  bg-cover relative xl:bg-bottom">
 			<BigJobCard
+				companies={companyOptions}
 				id={job.id}
 				title={industries.find((i) => i.value === job.industry)?.label as any}
 				details={job.details}
