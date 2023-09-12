@@ -14,7 +14,7 @@ import {
 	selectJobSchema,
 } from "@/lib/validations/posts";
 import { Icons } from "@/components/icons";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import {
 	Form,
 	FormControl,
@@ -96,7 +96,6 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			endDate: null,
 		},
 	});
-
 	interface Step {
 		fieldName: string;
 		title?: string;
@@ -113,7 +112,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 					<Input
 						placeholder="ABC Inc. Plumbing Contract"
 						{...form.register("title")}
-					/>
+						/>
 				</div>
 			),
 		},
@@ -121,7 +120,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			fieldName: "description",
 			title: "Basic Details",
 			description:
-				"Explain the ins and outs of the contract you want to create",
+			"Explain the ins and outs of the contract you want to create",
 			component: (
 				<div className="space-y-8">
 					<Textarea
@@ -136,8 +135,8 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			title: "Select Jobs",
 			description:
 				"Select the jobs you want to include in this contract or create new ones",
-			component: (
-				<ScrollArea className="flex flex-col max-h-[50vh]">
+				component: (
+					<ScrollArea className="flex flex-col max-h-[50vh]">
 					{Object.values(jobs).map((company, index) => {
 						return (
 							<div key={index} className="mb-8">
@@ -149,31 +148,31 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 												<Checkbox
 													defaultChecked={
 														form.getValues("jobs").find((j) => j.id === job.id)
-															? true
-															: false
+														? true
+														: false
 													}
 													onCheckedChange={() => {
 														const currentJobs = form.getValues("jobs");
 														const isInArray = currentJobs.find(
 															(j) => j.id === job.id
-														);
-														if (isInArray) {
-															const updatedJobs = currentJobs.filter(
-																(j) => j.id !== job.id
 															);
-															form.setValue("jobs", updatedJobs);
+															if (isInArray) {
+																const updatedJobs = currentJobs.filter(
+																	(j) => j.id !== job.id
+																	);
+																	form.setValue("jobs", updatedJobs);
 														} else {
 															const updatedJobs = [...currentJobs, job];
 															form.setValue("jobs", updatedJobs);
 														}
 													}}
-												/>
+													/>
 												<JobCard
 													id={job.id}
 													industry={job.industry}
 													propertyType={job.propertyType}
 													timeHorizon={job.timeHorizon}
-												/>
+													/>
 											</div>
 										);
 									})}
@@ -188,21 +187,21 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			fieldName: "payment",
 			title: "Payment",
 			description:
-				"Pick and configure only one of the payment structures for this contract",
+			"Set the minimum bidding price for your contract",
 			component: (
 				<div>
-					<Card>
+					{/* <Card>
 						<CardHeader>
-							<CardTitle>Fixed Price</CardTitle>
-							<CardDescription>
-								Set the fixed minimum price for this contract. Entered price
-								will be rounded to the nearest cent.
-							</CardDescription>
+						<CardTitle>Fixed Price</CardTitle>
+						<CardDescription>
+						Set the fixed minimum price for this contract. Entered price
+						will be rounded to the nearest cent.
+						</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-2">
+					<CardContent className="space-y-2"> */}
 							{/* //TODO: Maybe implement currency-input? */}
 							<div className="space-y-1">
-								<Label htmlFor="price">Price</Label>
+								{/* <Label htmlFor="price">Price</Label> */}
 								<div className="flex items-center gap-2">
 									<Icons.dollarSign />
 									<Input
@@ -213,21 +212,21 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 											form.setValue(
 												"price",
 												Number(parseFloat(val.target.value).toFixed(2))
-											);
-										}}
-									/>
+												);
+											}}
+											/>
 								</div>
 							</div>
-						</CardContent>
-					</Card>
-				</div>
+						{/* </CardContent>
+					</Card>*/}
+				</div> 
 			),
 		},
 		{
 			fieldName: "endDate",
 			title: "End Date",
 			description:
-				"Set the date when this contract will no longer be active for trading",
+			"Set the date when this contract will no longer be active for trading",
 			component: (
 				<div>
 					<Popover>
@@ -238,8 +237,8 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 									className={cn(
 										"w-full justify-start font-normal",
 										!date && "text-muted-foreground"
-									)}
-								>
+										)}
+										>
 									<div className="flex justify-center w-full">
 										<Icons.calendar className="mr-2 h-4 w-4" />
 										{date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -256,7 +255,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 									}}
 									disabled={(date) => date < new Date()}
 									initialFocus
-								/>
+									/>
 							</PopoverContent>
 						</div>
 					</Popover>
@@ -264,8 +263,9 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			),
 		},
 	];
-
+	
 	const fields = Object.keys(form.getValues());
+	console.log(formStep, fields.length - 1)
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsFetching(true);
@@ -281,6 +281,8 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 		});
 		const data = await res.json();
 		console.log(data, res.status);
+
+		router.replace(`/contracts/${data.id}`);
 		setIsFetching(false);
 	}
 
@@ -354,7 +356,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 							Next
 						</Button>
 					)}
-					{formStep === fields.length - 1 &&
+					{formStep === fields.length -1 &&
 						(isFetching ? (
 							<Button disabled={true} type={"button"} className="w-full">
 								<Icons.spinner

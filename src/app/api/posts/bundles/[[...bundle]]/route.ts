@@ -36,8 +36,7 @@ export async function POST(req: Request) {
 			id: newID,
 			title: reqBody.title,
 			description: reqBody.description,
-			paymentType: reqBody.payment.type,
-			price: reqBody.payment.value,
+			price: reqBody.price,
 			endDate: reqBody.endDate,
 		});
 
@@ -54,8 +53,7 @@ export async function POST(req: Request) {
 				id: newID,
 				title: reqBody.title,
 				description: reqBody.description,
-				paymentType: reqBody.payment.type,
-				price: Number(reqBody.payment.value),
+				price: Number(reqBody.price),
 				endDate: reqBody.endDate,
 			} as any);
 	

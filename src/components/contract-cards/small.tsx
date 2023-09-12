@@ -66,8 +66,7 @@ const ContractCard: FC<ContractCardProps> = async ({
 				</CardTitle>
 			</CardHeader>
 			<CardContent
-				className="mt-4 flex justify-between min-h-[80px]
-			"
+				className="mt-4 flex justify-between min-h-[80px]"
 			>
 				<div className="flex flex-wrap gap-2">
 					<BadgeTooltip

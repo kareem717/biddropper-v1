@@ -16,12 +16,11 @@ import { toast } from "sonner";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Label } from "../ui/label";
 import PieChart from "../pie-chart";
-import BidPrice from "../bid-price";
 import { format } from "date-fns";
 import JobCard from "../job-cards/small";
-import { Badge } from "../ui/badge";
 import BadgeTooltip from "../badge-tooltip";
-//TODO: idk why scroll areas dont worlk
+
+//TODO: idk why scroll areas dont work, implement and get rid of the overflow-auto scroll bars!!
 interface ContractCardProps extends ComponentPropsWithoutRef<typeof Card> {
 	id: string;
 	title: string;
@@ -85,7 +84,6 @@ const ContractCard: FC<ContractCardProps> = ({
 	return (
 		<Card
 			{...props}
-			className="sm:w-[min(80vw,1250px)] w-[95vw]  bg-background absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4"
 		>
 			<CardHeader>
 				<CardTitle>{title}</CardTitle>
@@ -143,7 +141,7 @@ const ContractCard: FC<ContractCardProps> = ({
 							label={`${totalBids} Bid${totalBids > 1 ? "s" : ""}`}
 							tooltipContent={
 								<p>
-									This listing already has {totalBids} bid
+									This contract already has {totalBids} bid
 									{totalBids > 1 ? "s" : ""}
 								</p>
 							}
@@ -157,7 +155,7 @@ const ContractCard: FC<ContractCardProps> = ({
 						label={`${totalJobs} Job${totalJobs > 1 ? "s" : ""}`}
 						tooltipContent={
 							<p>
-								This listing already has {totalJobs} bid
+								This contract includes {totalJobs}
 								{totalJobs > 1 ? "s" : ""}
 							</p>
 						}
@@ -166,58 +164,40 @@ const ContractCard: FC<ContractCardProps> = ({
 			</CardHeader>
 
 			<CardContent className="">
-				<div className="flex flex-grow mb-4 flex-shrink flex-wrap h-[50vh] justify-between flex-grow-1 overflow-auto">
+				<div className="flex flex-grow mb-4 flex-shrink flex-wrap max-h-[50vh] justify-between flex-grow-1 overflow-auto">
 					{companyStakes.length > 1 && (
-						<PieChart
+						<div 
+						className="w-full h-[min(400px,30vh)] hidden sm:block"
+						>
+							<PieChart
 							data={companyStakes}
 							width="100%"
-							height="70%"
-							className="hidden sm:block"
+							height="100%"
 						/>
+						</div>
+						
 					)}
-					<Label htmlFor="jobs">Jobs</Label>
-					<div
-						className="flex flex-col max-h-[50vh] overflow-auto w-full mt-2"
-						id="jobs"
-					>
-						{Object.values(jobs).map((job, index) => {
-							return (
-								<>
-									<div key={index} className="flex items-center gap-4 my-2">
-										<JobCard
-											id={job.id}
-											industry={job.industry}
-											propertyType={job.propertyType}
-											timeHorizon={job.timeHorizon}
-										/>
-									</div>
-									<div key={index} className="flex items-center gap-4 my-2">
-										<JobCard
-											id={job.id}
-											industry={job.industry}
-											propertyType={job.propertyType}
-											timeHorizon={job.timeHorizon}
-										/>
-									</div>
-									<div key={index} className="flex items-center gap-4 my-2">
-										<JobCard
-											id={job.id}
-											industry={job.industry}
-											propertyType={job.propertyType}
-											timeHorizon={job.timeHorizon}
-										/>
-									</div>
-									<div key={index} className="flex items-center gap-4 my-2">
-										<JobCard
-											id={job.id}
-											industry={job.industry}
-											propertyType={job.propertyType}
-											timeHorizon={job.timeHorizon}
-										/>
-									</div>
-								</>
-							);
-						})}
+					<div className="w-full">
+						<Label htmlFor="jobs">Jobs</Label>
+						<div
+							className="flex flex-col max-h-[50vh] overflow-auto w-full mt-2"
+							id="jobs"
+						>
+							{Object.values(jobs).map((job, index) => {
+								return (
+									<>
+										<div key={index} className="flex items-center gap-4 my-2">
+											<JobCard
+												id={job.id}
+												industry={job.industry}
+												propertyType={job.propertyType}
+												timeHorizon={job.timeHorizon}
+											/>
+										</div>
+									</>
+								);
+							})}
+						</div>
 					</div>
 				</div>
 				<Label htmlFor="description">Description</Label>

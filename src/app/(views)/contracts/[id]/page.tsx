@@ -1,6 +1,4 @@
 import * as React from "react";
-import * as z from "zod";
-import { env } from "@/env.mjs";
 import { db } from "@/db";
 
 import { eq, sql, and } from "drizzle-orm";
@@ -12,18 +10,11 @@ import {
 	companyJobs,
 	jobs,
 	contractBids,
+	bids
 } from "@/db/migrations/schema";
-import { format } from "date-fns";
-import { Separator } from "@/components/ui/separator";
-import { selectAddressSchema } from "@/lib/validations/address";
-import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { industries } from "@/config/industries";
-import JobCard from "@/components/job-cards/small";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { redirect } from "next/navigation";
-import { bids } from "@/db/migrations/last_working_schema";
 import ContractCard from "@/components/contract-cards/big";
 
 //todo: idk if this is the best way to do this, but i think it is
@@ -64,7 +55,13 @@ export default async function ContractPage({
 		.innerJoin(companyJobs, eq(companyJobs.companyId, companies.id))
 		.innerJoin(jobs, eq(jobs.id, companyJobs.jobId))
 		.innerJoin(contractJobs, eq(contractJobs.jobId, jobs.id))
-		.innerJoin(contracts, and(eq(contracts.id, contractJobs.contractId), eq(contracts.id, params.id)))
+		.innerJoin(
+			contracts,
+			and(
+				eq(contracts.id, contractJobs.contractId),
+				eq(contracts.id, params.id)
+			)
+		)
 		.groupBy(contracts.id, jobs.id, companies.id);
 
 	console.log(data);
@@ -105,19 +102,26 @@ export default async function ContractPage({
 					value: 1,
 				});
 			}
-
-			
-
-
 		}
 
 		return output;
 	}, {} as Record<string, any>);
 
-
 	console.log(cleanData);
+
+	const allContractBids = await db
+		.select({
+			bids,
+		})
+		.from(contractBids)
+		.where(eq(contractBids.contractId, params.id))
+		.innerJoin(bids, eq(bids.id, contractBids.bidId));
+
+	console.log(allContractBids);
+
+
 	return (
-		<div className="w-full h-screen  bg-cover relative xl:bg-bottom">
+		<div className="w-full h-screen bg-[url('/images/wave.svg')] bg-cover relative xl:bg-bottom">
 			{cleanData &&
 				Object.values(cleanData).map((contract) => (
 					<ContractCard
@@ -126,7 +130,6 @@ export default async function ContractPage({
 						id={contract.id}
 						description={contract.description}
 						title={contract.title}
-						paymentType={contract.paymentType}
 						price={contract.price}
 						endDate={contract.endDate}
 						totalJobs={contract.totalJobs}
@@ -134,10 +137,9 @@ export default async function ContractPage({
 						createdAt={contract.createdAt}
 						companyStakes={contract.companyStakes}
 						jobs={contract.jobs}
+						className="sm:w-[min(80vw,1000px)] w-[95vw] bg-background absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4"
 					/>
-				)
-				)
-			}
+				))}
 		</div>
 	);
 }
