@@ -187,14 +187,15 @@ export async function PUT(req: Request) {
 					status: "accepted",
 				})
 				.where(eq(bids.id, data.acceptedBidId));
-
+				
+			//Set contract to inactive
 			await tx.update(contracts).set({
 				isActive: 0,
-			});
+			}).where(eq(contracts.id, data.contractId));
 		});
 
 		return new Response("Bid accepted", { status: 200 });
 	} catch (err) {
-		return new Response(err, { status: 400 });
+		return new Response(JSON.stringify(err), { status: 400 });
 	}
 }

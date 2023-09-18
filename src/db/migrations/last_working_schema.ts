@@ -10,8 +10,9 @@ import {
 	index,
 	decimal,
 	mysqlEnum,
-	unique,
 	tinyint,
+	smallint,
+	unique,
 } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 import type { AdapterAccount } from "next-auth/adapters";
@@ -131,6 +132,68 @@ export const companyJobs = mysqlTable(
 	}
 );
 
+export const companyProfiles = mysqlTable(
+	"company_profiles",
+	{
+		id: varchar("id", { length: 50 }).notNull(),
+		companyId: varchar("company_id", { length: 50 }).notNull(),
+		addressId: varchar("address_id", { length: 50 }),
+		serviceArea: decimal("service_area", { precision: 7, scale: 3 }),
+		emailAddress: varchar("email_address", { length: 320 }).notNull(),
+		phoneNumberId: varchar("phone_number_id", { length: 50 }).notNull(),
+		phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
+		websiteUrl: varchar("website_url", { length: 2048 }),
+		products: varchar("products", { length: 300 }),
+		isVerified: tinyint("is_verified").default(0),
+		specialties: varchar("specialties", { length: 400 }),
+		services: varchar("services", { length: 400 }),
+		yearEstablished: smallint("year_established"),
+		createdAt: timestamp("created_at", { mode: "date" }).default(
+			sql`CURRENT_TIMESTAMP`
+		),
+		updatedAt: timestamp("updated_at", { mode: "date" })
+			.default(sql`CURRENT_TIMESTAMP`)
+			.onUpdateNow(),
+	},
+	(table) => {
+		return {
+			companyProfilesId: primaryKey(table.id),
+		};
+	}
+);
+
+export const companyProjects = mysqlTable(
+	"company_projects",
+	{
+		companyId: varchar("company_id", { length: 50 }).notNull(),
+		projectId: varchar("project_id", { length: 50 }).notNull(),
+	},
+	(table) => {
+		return {
+			companyProjectsCompanyIdProjectId: primaryKey(
+				table.companyId,
+				table.projectId
+			),
+		};
+	}
+);
+
+export const companyReviews = mysqlTable(
+	"company_reviews",
+	{
+		companyId: varchar("company_id", { length: 50 }).notNull(),
+		reviewId: varchar("review_id", { length: 50 }).notNull(),
+	},
+	(table) => {
+		return {
+			companyReviewsCompanyIdReviewId: primaryKey(
+				table.companyId,
+				table.reviewId
+			),
+		};
+	}
+);
+
 export const contractBids = mysqlTable(
 	"contract_bids",
 	{
@@ -164,7 +227,6 @@ export const contracts = mysqlTable(
 		isActive: tinyint("is_active").default(1),
 		title: varchar("title", { length: 100 }).notNull(),
 		description: varchar("description", { length: 3000 }).notNull(),
-		paymentType: mysqlEnum("paymentType", ["fixed", "commission"]).notNull(),
 		price: decimal("price", { precision: 13, scale: 4 }).notNull(),
 		createdAt: timestamp("created_at", { mode: "date" }).default(
 			sql`CURRENT_TIMESTAMP`
@@ -255,6 +317,72 @@ export const media = mysqlTable(
 	(table) => {
 		return {
 			mediaId: primaryKey(table.id),
+		};
+	}
+);
+
+export const projectMedia = mysqlTable(
+	"project_media",
+	{
+		projectId: varchar("project_id", { length: 50 }).notNull(),
+		mediaId: varchar("media_id", { length: 50 }).notNull(),
+	},
+	(table) => {
+		return {
+			projectMediaMediaIdProjectId: primaryKey(table.mediaId, table.projectId),
+		};
+	}
+);
+
+export const projects = mysqlTable(
+	"projects",
+	{
+		id: varchar("id", { length: 50 }).notNull(),
+		title: varchar("title", { length: 255 }),
+		details: varchar("details", { length: 3000 }),
+		createdAt: timestamp("created_at", { mode: "date" }).default(
+			sql`CURRENT_TIMESTAMP`
+		),
+		updatedAt: timestamp("updated_at", { mode: "date" })
+			.default(sql`CURRENT_TIMESTAMP`)
+			.onUpdateNow(),
+	},
+	(table) => {
+		return {
+			projectsId: primaryKey(table.id),
+		};
+	}
+);
+
+export const reviewMedia = mysqlTable(
+	"review_media",
+	{
+		reviewId: varchar("review_id", { length: 50 }).notNull(),
+		mediaId: varchar("media_id", { length: 50 }).notNull(),
+	},
+	(table) => {
+		return {
+			reviewMediaMediaIdReviewId: primaryKey(table.mediaId, table.reviewId),
+		};
+	}
+);
+
+export const reviews = mysqlTable(
+	"reviews",
+	{
+		id: varchar("id", { length: 50 }).notNull(),
+		authorId: varchar("author_id", { length: 50 }).notNull(),
+		rating: decimal("rating", { precision: 2, scale: 1 }).notNull(),
+		createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+		updatedAt: timestamp("updated_at", { mode: "date" })
+			.default(sql`CURRENT_TIMESTAMP`)
+			.onUpdateNow(),
+		details: varchar("details", { length: 1500 }).notNull(),
+		title: varchar("title", { length: 255 }).notNull(),
+	},
+	(table) => {
+		return {
+			reviewsId: primaryKey(table.id),
 		};
 	}
 );

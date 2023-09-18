@@ -97,7 +97,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "default": "CURRENT_TIMESTAMP",
@@ -105,7 +105,7 @@
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "onUpdate": true
         }
       },
@@ -180,7 +180,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "default": "CURRENT_TIMESTAMP",
@@ -188,15 +188,16 @@
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "onUpdate": true
         }
       },
       "compositePrimaryKeys": {
-        "addresses_id": {
-          "name": "addresses_id",
+        "addresses_provider_providerAccountId": {
+          "name": "addresses_provider_providerAccountId",
           "columns": [
-            "id"
+            "provider",
+            "providerAccountId"
           ]
         }
       },
@@ -210,13 +211,6 @@
         "id": {
           "autoincrement": false,
           "name": "id",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "job_id": {
-          "autoincrement": false,
-          "name": "job_id",
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
@@ -242,7 +236,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "default": "CURRENT_TIMESTAMP",
@@ -250,7 +244,7 @@
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "onUpdate": true
         },
         "company_id": {
@@ -262,10 +256,11 @@
         }
       },
       "compositePrimaryKeys": {
-        "bids_id": {
-          "name": "bids_id",
+        "bids_provider_providerAccountId": {
+          "name": "bids_provider_providerAccountId",
           "columns": [
-            "id"
+            "provider",
+            "providerAccountId"
           ]
         }
       },
@@ -276,20 +271,13 @@
             "company_id"
           ],
           "isUnique": false
-        },
-        "job_id": {
-          "name": "job_id",
-          "columns": [
-            "job_id"
-          ],
-          "isUnique": false
         }
       },
       "foreignKeys": {},
       "uniqueConstraints": {}
     },
-    "bundle_media": {
-      "name": "bundle_media",
+    "companies": {
+      "name": "companies",
       "columns": {
         "id": {
           "autoincrement": false,
@@ -298,17 +286,601 @@
           "primaryKey": false,
           "notNull": true
         },
-        "bundle_id": {
+        "name": {
           "autoincrement": false,
-          "name": "bundle_id",
+          "name": "name",
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },
-        "media_url": {
+        "owner_id": {
           "autoincrement": false,
-          "name": "media_url",
-          "type": "varchar(500)",
+          "name": "owner_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "onUpdate": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "companies_provider_providerAccountId": {
+          "name": "companies_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "company_jobs": {
+      "name": "company_jobs",
+      "columns": {
+        "company_id": {
+          "autoincrement": false,
+          "name": "company_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "autoincrement": false,
+          "name": "job_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "company_jobs_provider_providerAccountId": {
+          "name": "company_jobs_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "company_profiles": {
+      "name": "company_profiles",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "company_id": {
+          "autoincrement": false,
+          "name": "company_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address_id": {
+          "autoincrement": false,
+          "name": "address_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_area": {
+          "autoincrement": false,
+          "name": "service_area",
+          "type": "decimal(7,3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email_address": {
+          "autoincrement": false,
+          "name": "email_address",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_number_id": {
+          "autoincrement": false,
+          "name": "phone_number_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_number": {
+          "autoincrement": false,
+          "name": "phone_number",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "website_url": {
+          "autoincrement": false,
+          "name": "website_url",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "products": {
+          "autoincrement": false,
+          "name": "products",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_verified": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "is_verified",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "specialties": {
+          "autoincrement": false,
+          "name": "specialties",
+          "type": "varchar(400)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "services": {
+          "autoincrement": false,
+          "name": "services",
+          "type": "varchar(400)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year_established": {
+          "autoincrement": false,
+          "name": "year_established",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "onUpdate": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "company_profiles_provider_providerAccountId": {
+          "name": "company_profiles_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "company_projects": {
+      "name": "company_projects",
+      "columns": {
+        "company_id": {
+          "autoincrement": false,
+          "name": "company_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "autoincrement": false,
+          "name": "project_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "company_projects_provider_providerAccountId": {
+          "name": "company_projects_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "company_reviews": {
+      "name": "company_reviews",
+      "columns": {
+        "company_id": {
+          "autoincrement": false,
+          "name": "company_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "review_id": {
+          "autoincrement": false,
+          "name": "review_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "company_reviews_provider_providerAccountId": {
+          "name": "company_reviews_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "contract_bids": {
+      "name": "contract_bids",
+      "columns": {
+        "bid_id": {
+          "autoincrement": false,
+          "name": "bid_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contract_id": {
+          "autoincrement": false,
+          "name": "contract_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "contract_bids_provider_providerAccountId": {
+          "name": "contract_bids_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "contract_jobs": {
+      "name": "contract_jobs",
+      "columns": {
+        "contract_id": {
+          "autoincrement": false,
+          "name": "contract_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "autoincrement": false,
+          "name": "job_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "contract_jobs_provider_providerAccountId": {
+          "name": "contract_jobs_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "contracts": {
+      "name": "contracts",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "default": 1,
+          "autoincrement": false,
+          "name": "is_active",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "autoincrement": false,
+          "name": "title",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "autoincrement": false,
+          "name": "description",
+          "type": "varchar(3000)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price": {
+          "autoincrement": false,
+          "name": "price",
+          "type": "decimal(13,4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "onUpdate": true
+        },
+        "end_date": {
+          "autoincrement": false,
+          "name": "end_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "contracts_provider_providerAccountId": {
+          "name": "contracts_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "id": {
+          "name": "id",
+          "columns": [
+            "id"
+          ]
+        }
+      }
+    },
+    "dummy": {
+      "name": "dummy",
+      "columns": {
+        "dfgdf": {
+          "autoincrement": false,
+          "name": "dfgdf",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "dummy_provider_providerAccountId": {
+          "name": "dummy_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "job_bids": {
+      "name": "job_bids",
+      "columns": {
+        "bid_id": {
+          "autoincrement": false,
+          "name": "bid_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "autoincrement": false,
+          "name": "job_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "job_bids_provider_providerAccountId": {
+          "name": "job_bids_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "job_media": {
+      "name": "job_media",
+      "columns": {
+        "media_id": {
+          "autoincrement": false,
+          "name": "media_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "autoincrement": false,
+          "name": "job_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "job_media_provider_providerAccountId": {
+          "name": "job_media_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "jobs": {
+      "name": "jobs",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "industry": {
+          "autoincrement": false,
+          "name": "industry",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "default": 1,
+          "autoincrement": false,
+          "name": "is_active",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_commercial_property": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "is_commercial_property",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "details": {
+          "autoincrement": false,
+          "name": "details",
+          "type": "varchar(3000)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "default": "CURRENT_TIMESTAMP",
+          "autoincrement": false,
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "onUpdate": true
+        },
+        "time_horizon": {
+          "autoincrement": false,
+          "name": "time_horizon",
+          "type": "enum('asap','one-week','two-weeks','one-month','flexible')",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "property_type": {
+          "autoincrement": false,
+          "name": "property_type",
+          "type": "enum('detached','apartment','semi-detached','town-house')",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "jobs_provider_providerAccountId": {
+          "name": "jobs_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "media": {
+      "name": "media",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_url": {
+          "autoincrement": false,
+          "name": "file_url",
+          "type": "varchar(2083)",
           "primaryKey": false,
           "notNull": true
         },
@@ -321,10 +893,11 @@
         }
       },
       "compositePrimaryKeys": {
-        "bundle_media_id": {
-          "name": "bundle_media_id",
+        "media_provider_providerAccountId": {
+          "name": "media_provider_providerAccountId",
           "columns": [
-            "id"
+            "provider",
+            "providerAccountId"
           ]
         }
       },
@@ -332,8 +905,39 @@
       "foreignKeys": {},
       "uniqueConstraints": {}
     },
-    "bundles": {
-      "name": "bundles",
+    "project_media": {
+      "name": "project_media",
+      "columns": {
+        "project_id": {
+          "autoincrement": false,
+          "name": "project_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "media_id": {
+          "autoincrement": false,
+          "name": "media_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "project_media_provider_providerAccountId": {
+          "name": "project_media_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "projects": {
+      "name": "projects",
       "columns": {
         "id": {
           "autoincrement": false,
@@ -342,35 +946,17 @@
           "primaryKey": false,
           "notNull": true
         },
-        "is_active": {
-          "default": 1,
+        "title": {
           "autoincrement": false,
-          "name": "is_active",
-          "type": "tinyint",
+          "name": "title",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
-        "user_id": {
-          "default": "''",
+        "details": {
           "autoincrement": false,
-          "name": "user_id",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "default": "''",
-          "autoincrement": false,
-          "name": "title",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "default": "''",
-          "autoincrement": false,
-          "name": "description",
-          "type": "varchar(750)",
+          "name": "details",
+          "type": "varchar(3000)",
           "primaryKey": false,
           "notNull": false
         },
@@ -380,7 +966,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "default": "CURRENT_TIMESTAMP",
@@ -388,70 +974,56 @@
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "onUpdate": true
-        },
-        "bundle_type": {
-          "default": "'contractor-wanted'",
+        }
+      },
+      "compositePrimaryKeys": {
+        "projects_provider_providerAccountId": {
+          "name": "projects_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "review_media": {
+      "name": "review_media",
+      "columns": {
+        "review_id": {
           "autoincrement": false,
-          "name": "bundle_type",
-          "type": "enum('sub-contract','contractor-wanted')",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "poster_type": {
-          "default": "'property-owner'",
-          "autoincrement": false,
-          "name": "poster_type",
-          "type": "enum('business-owner','property-owner')",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "address_id": {
-          "autoincrement": false,
-          "name": "address_id",
+          "name": "review_id",
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },
-        "show_exact_location": {
-          "default": 0,
+        "media_id": {
           "autoincrement": false,
-          "name": "show_exact_location",
-          "type": "tinyint",
+          "name": "media_id",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         }
       },
       "compositePrimaryKeys": {
-        "bundles_id": {
-          "name": "bundles_id",
+        "review_media_provider_providerAccountId": {
+          "name": "review_media_provider_providerAccountId",
           "columns": [
-            "id"
+            "provider",
+            "providerAccountId"
           ]
         }
       },
-      "indexes": {
-        "user_id": {
-          "name": "user_id",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
-      "uniqueConstraints": {
-        "id": {
-          "name": "id",
-          "columns": [
-            "id"
-          ]
-        }
-      }
+      "uniqueConstraints": {}
     },
-    "jobs": {
-      "name": "jobs",
+    "reviews": {
+      "name": "reviews",
       "columns": {
         "id": {
           "autoincrement": false,
@@ -460,108 +1032,58 @@
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
+        "author_id": {
           "autoincrement": false,
-          "name": "user_id",
+          "name": "author_id",
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },
-        "is_active": {
-          "default": 1,
+        "rating": {
           "autoincrement": false,
-          "name": "is_active",
-          "type": "tinyint",
+          "name": "rating",
+          "type": "decimal(2,1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "default": "now()",
+          "autoincrement": false,
+          "name": "created_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "bundle_id": {
+        "updated_at": {
+          "default": "CURRENT_TIMESTAMP",
           "autoincrement": false,
-          "name": "bundle_id",
-          "type": "varchar(50)",
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "onUpdate": true
+        },
+        "details": {
+          "autoincrement": false,
+          "name": "details",
+          "type": "varchar(1500)",
           "primaryKey": false,
           "notNull": true
         },
-        "industry": {
+        "title": {
           "autoincrement": false,
-          "name": "industry",
+          "name": "title",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
-        },
-        "title": {
-          "autoincrement": false,
-          "name": "title",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "summary": {
-          "autoincrement": false,
-          "name": "summary",
-          "type": "varchar(400)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "budget": {
-          "autoincrement": false,
-          "name": "budget",
-          "type": "decimal(9,2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "currency_type": {
-          "autoincrement": false,
-          "name": "currency_type",
-          "type": "enum('usd','cad','eur')",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "default": "CURRENT_TIMESTAMP",
-          "autoincrement": false,
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "default": "CURRENT_TIMESTAMP",
-          "autoincrement": false,
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "onUpdate": true
-        },
-        "date_from": {
-          "autoincrement": false,
-          "name": "date_from",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "date_to": {
-          "autoincrement": false,
-          "name": "date_to",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "property_type": {
-          "default": "'residential'",
-          "autoincrement": false,
-          "name": "property_type",
-          "type": "enum('residential','commercial')",
-          "primaryKey": false,
-          "notNull": true
         }
       },
       "compositePrimaryKeys": {
-        "jobs_id": {
-          "name": "jobs_id",
+        "reviews_provider_providerAccountId": {
+          "name": "reviews_provider_providerAccountId",
           "columns": [
-            "id"
+            "provider",
+            "providerAccountId"
           ]
         }
       },
@@ -599,7 +1121,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "default": "CURRENT_TIMESTAMP",
@@ -607,15 +1129,47 @@
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "onUpdate": true
         }
       },
       "compositePrimaryKeys": {
-        "sessions_sessionToken": {
-          "name": "sessions_sessionToken",
+        "sessions_provider_providerAccountId": {
+          "name": "sessions_provider_providerAccountId",
           "columns": [
-            "sessionToken"
+            "provider",
+            "providerAccountId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {}
+    },
+    "user_jobs": {
+      "name": "user_jobs",
+      "columns": {
+        "job_id": {
+          "autoincrement": false,
+          "name": "job_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "autoincrement": false,
+          "name": "user_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_jobs_provider_providerAccountId": {
+          "name": "user_jobs_provider_providerAccountId",
+          "columns": [
+            "provider",
+            "providerAccountId"
           ]
         }
       },
@@ -667,7 +1221,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "default": "CURRENT_TIMESTAMP",
@@ -675,15 +1229,16 @@
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "onUpdate": true
         }
       },
       "compositePrimaryKeys": {
-        "users_id": {
-          "name": "users_id",
+        "users_provider_providerAccountId": {
+          "name": "users_provider_providerAccountId",
           "columns": [
-            "id"
+            "provider",
+            "providerAccountId"
           ]
         }
       },
@@ -691,8 +1246,8 @@
       "foreignKeys": {},
       "uniqueConstraints": {}
     },
-    "verificationToken": {
-      "name": "verificationToken",
+    "verificationTokens": {
+      "name": "verificationTokens",
       "columns": {
         "identifier": {
           "autoincrement": false,
@@ -721,7 +1276,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "default": "CURRENT_TIMESTAMP",
@@ -729,16 +1284,16 @@
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "onUpdate": true
         }
       },
       "compositePrimaryKeys": {
-        "verificationToken_identifier_token": {
-          "name": "verificationToken_identifier_token",
+        "verificationTokens_provider_providerAccountId": {
+          "name": "verificationTokens_provider_providerAccountId",
           "columns": [
-            "identifier",
-            "token"
+            "provider",
+            "providerAccountId"
           ]
         }
       },

@@ -56,7 +56,8 @@
     "crypto-random-string": "^5.0.0",
     "date-fns": "^2.30.0",
     "dotenv": "^16.3.1",
-    "drizzle-orm": "^0.27.2",
+    "drizzle-kit": "^0.19.12",
+    "drizzle-orm": "^0.28.6",
     "drizzle-zod": "^0.5.0",
     "eslint": "8.45.0",
     "eslint-config-next": "13.4.12",
@@ -94,7 +95,6 @@
     "@types/bcrypt": "^5.0.0",
     "@types/google.maps": "^3.53.6",
     "@types/mapbox": "^1.6.42",
-    "@types/mapbox-gl": "^2.7.13",
-    "drizzle-kit": "^0.19.12"
+    "@types/mapbox-gl": "^2.7.13"
   }
 }
