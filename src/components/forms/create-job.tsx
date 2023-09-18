@@ -38,6 +38,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import CompanySelect from "../company-select";
 
 interface CreateJobFormProps extends ComponentPropsWithoutRef<typeof Card> {
 	companies?: {
@@ -62,25 +63,7 @@ const CreateJobForm: FC<CreateJobFormProps> = ({
 	const [isCommercial, setIsCommercial] = useState<boolean>(false);
 	const [isFetching, setIsFetching] = useState<boolean>(false);
 
-	const handleNextStep = () => {
-		setFormStep((prevStep) => {
-			if (prevStep < fields.length - 1) {
-				return prevStep + 1;
-			} else {
-				return prevStep;
-			}
-		});
-	};
 
-	const handlePreviousStep = () => {
-		setFormStep((prevStep) => {
-			if (prevStep > 0) {
-				return prevStep - 1;
-			} else {
-				return prevStep;
-			}
-		});
-	};
 
 	const formSchema = insertJobSchema.pick({
 		industry: true,
@@ -216,25 +199,12 @@ const CreateJobForm: FC<CreateJobFormProps> = ({
 						className="max-h-[30vh] min-h-[15vh] overflow-auto"
 						{...form.register("details")}
 					/>
-					{companies && (
-						<Select
-							onValueChange={(value) => setCompany(value)}
-							value={company}
-						>
-							<SelectTrigger className="w-full mt-4">
-								<SelectValue placeholder="Select a company" />
-							</SelectTrigger>
-							<SelectContent>
-								{companies.map((company) => {
-									return (
-										<SelectItem value={company.id} key={company.id}>
-											{company.name}
-										</SelectItem>
-									);
-								})}
-							</SelectContent>
-						</Select>
-					)}
+					{/* //TODO: ptolly a better wawy to do this. Test as i did not */}
+					<CompanySelect
+						value={company}
+						companies={companies}
+						onValueChange={setCompany}
+					/>
 				</div>
 			),
 		},
@@ -242,17 +212,29 @@ const CreateJobForm: FC<CreateJobFormProps> = ({
 
 	const fields = Object.keys(form.getValues());
 
+	const handleNextStep = () => {
+		setFormStep((prevStep) => {
+			if (prevStep < fields.length - 1) {
+				return prevStep + 1;
+			} else {
+				return prevStep;
+			}
+		});
+	};
+
+	const handlePreviousStep = () => {
+		setFormStep((prevStep) => {
+			if (prevStep > 0) {
+				return prevStep - 1;
+			} else {
+				return prevStep;
+			}
+		});
+	};
+	
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsFetching(true);
-console.log({
-	userId,
-	companyId: company || null,
-	industry: values.industry,
-	propertyType: values.propertyType,
-	timeHorizon: values.timeHorizon,
-	details: values.details,
-	isCommercialProperty: isCommercial,
-})
+
 		const res = await fetch("/api/posts/jobs", {
 			method: "POST",
 			headers: {
@@ -272,8 +254,8 @@ console.log({
 
 		const body = await res.json();
 		if (res.status === 201) {
-				toast.success("Job created successfully");
-				router.replace(onSuccessRedirect || "/");
+			toast.success("Job created successfully");
+			router.replace(onSuccessRedirect || "/");
 		} else {
 			toast.error("Failed to create job");
 

@@ -119,6 +119,22 @@ export const companies = mysqlTable(
 	}
 );
 
+export const companyIndustries = mysqlTable(
+	"company_industries",
+	{
+		companyId: varchar("company_id", { length: 50 }).notNull(),
+		industryId: varchar("industry_id", { length: 50 }).notNull(),
+	},
+	(table) => {
+		return {
+			companyIndustriesCompanyIdIndustryId: primaryKey(
+				table.companyId,
+				table.industryId
+			),
+		};
+	}
+);
+
 export const companyJobs = mysqlTable(
 	"company_jobs",
 	{
@@ -240,6 +256,21 @@ export const contracts = mysqlTable(
 		return {
 			id: unique("id").on(table.id),
 			contractsId: primaryKey(table.id),
+		};
+	}
+);
+
+export const industries = mysqlTable(
+	"industries",
+	{
+		id: varchar("id", { length: 50 }).notNull(),
+		label: varchar("label", { length: 100 }).notNull(),
+		value: varchar("value", { length: 100 }).notNull(),
+	},
+	(table) => {
+		return {
+			value: index("value").on(table.value),
+			industriesId: primaryKey(table.id),
 		};
 	}
 );

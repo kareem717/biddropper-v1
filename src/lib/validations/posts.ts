@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { media, contracts, jobs, bids } from "@/db/migrations/schema";
 import * as z from "zod";
 import { industryValues } from "@/config/industries";
+//TODO: seperate out the schemas into seperate files
 export const insertJobSchema = createInsertSchema(jobs, {
 	id: z
 		.string()
