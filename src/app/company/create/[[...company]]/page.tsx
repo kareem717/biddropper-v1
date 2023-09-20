@@ -22,10 +22,6 @@ export const metadata: Metadata = {
 };
 
 export default async function CreateCompanyPage() {
-	// const session = await getServerSession(authOptions);
-	// if (!session) {
-	// 	redirect("/sign-in");
-	// }
 
 	return (
 		<div className="w-full h-screen bg-[url('/images/circles.svg')] bg-cover relative">

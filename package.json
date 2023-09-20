@@ -21,6 +21,7 @@
     "@mapbox/search-js-react": "^1.0.0-beta.17",
     "@mapbox/search-js-web": "^1.0.0-beta.17",
     "@planetscale/database": "^1.8.0",
+    "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-aspect-ratio": "^1.0.3",
     "@radix-ui/react-avatar": "^1.0.3",
     "@radix-ui/react-checkbox": "^1.0.4",
@@ -78,6 +79,7 @@
     "react-hook-form": "^7.45.2",
     "react-query": "^3.39.3",
     "react-select": "^5.7.4",
+    "react-stars": "^2.2.5",
     "recharts": "^2.8.0",
     "resend": "^1.0.0",
     "sonner": "^0.6.2",
@@ -95,6 +97,7 @@
     "@types/bcrypt": "^5.0.0",
     "@types/google.maps": "^3.53.6",
     "@types/mapbox": "^1.6.42",
-    "@types/mapbox-gl": "^2.7.13"
+    "@types/mapbox-gl": "^2.7.13",
+    "@types/react-stars": "^2.2.1"
   }
 }

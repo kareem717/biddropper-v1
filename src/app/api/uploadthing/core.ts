@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs";
 
 const f = createUploadthing();
 
+//TODO: not using real auth method
 const auth = (req: Request) => ({ id: "fakeId" }); // fake auth
 
 // FileRouter for your app, can contain multiple FileRoutes

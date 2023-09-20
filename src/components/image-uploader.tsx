@@ -18,7 +18,13 @@ import { Button } from "./ui/button";
 import { Icons } from "./icons";
 
 export type ImageUploaderRef = {
-	upload: () => void;
+	upload: () => Promise<
+		| {
+				fileUrl: string;
+				fileKey: string;
+		  }[]
+		| undefined
+	>;
 	files: File[];
 };
 
@@ -37,6 +43,7 @@ interface ImageUploaderProps {
 }
 
 // TODO: hide skip button after upload is pressed as it causes bugs
+//TODO: able to upload more files than allowed
 function ImageUploader(
 	{
 		maxFiles,
@@ -78,31 +85,33 @@ function ImageUploader(
 		onUploadError: handleUploadError,
 	});
 
-	useImperativeHandle(ref, () => ({
-		upload: () => {
-			setIsUploading(true);
-			startUpload(files);
-		},
-		files,
-	}));
+	useImperativeHandle(
+		ref,
+		() => ({
+			upload: async () => {
+				setIsUploading(true);
+				const upload = await startUpload(files);
+				return upload;
+			},
+			files,
+		}),
+		[setIsUploading, startUpload, files]
+	);
 
 	return (
 		<>
 			{isUploading && showLoadingState ? (
-				<div className="h-[400px] flex justify-center items-center">
+				<div className="max-h-[40vh] flex justify-center items-center">
 					<Icons.spinner className="animate-spin w-1/2 h-1/2 font-thin stroke-[0.5px] opacity-50" />
 				</div>
 			) : (
 				<>
 					<div {...getRootProps()}>
-						<div className="h-[400px] overflow-scroll flex flex-wrap gap-4 justify-content-center items-center">
-							{Array.from({ length: maxFiles || 12 }, (_, index) => {
+						<div className="max-h-[40vh] overflow-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-content-center items-center">
+							{Array.from({ length: maxFiles || 10 }, (_, index) => {
 								const file = files[index];
 								return (
-									<div
-										key={index}
-										className="w-[200px] flex-grow border-2 rounded-lg"
-									>
+									<div key={index} className="w-full border-2 rounded-lg">
 										<AspectRatio ratio={16 / 9}>
 											{file ? (
 												<Image

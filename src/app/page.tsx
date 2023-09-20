@@ -1,6 +1,7 @@
 import { buttonVariants } from "@/components/ui/button";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import CreateProjectForm from "@/components/forms/create-project";
 
 export default async function Home() {
 	const session = await getServerSession(authOptions);

@@ -38,7 +38,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import CompanySelect from "../company-select";
+import CompanySelect from "../select-company";
 
 interface CreateJobFormProps extends ComponentPropsWithoutRef<typeof Card> {
 	companies?: {
@@ -62,8 +62,6 @@ const CreateJobForm: FC<CreateJobFormProps> = ({
 	const [company, setCompany] = useState<string | undefined>(undefined);
 	const [isCommercial, setIsCommercial] = useState<boolean>(false);
 	const [isFetching, setIsFetching] = useState<boolean>(false);
-
-
 
 	const formSchema = insertJobSchema.pick({
 		industry: true,
@@ -231,7 +229,7 @@ const CreateJobForm: FC<CreateJobFormProps> = ({
 			}
 		});
 	};
-	
+
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsFetching(true);
 
