@@ -43,6 +43,7 @@
     "@react-google-maps/api": "^2.19.2",
     "@t3-oss/env-nextjs": "^0.6.0",
     "@tanstack/react-query": "^4.33.0",
+    "@turf/turf": "^6.5.0",
     "@types/node": "20.4.4",
     "@types/react": "18.2.15",
     "@types/react-dom": "18.2.7",
@@ -88,8 +89,10 @@
     "tailwind-merge": "^1.14.0",
     "tailwindcss": "3.3.3",
     "tailwindcss-animate": "^1.0.6",
+    "turf": "^3.0.14",
     "typescript": "5.1.6",
     "uploadthing": "^5.2.1",
+    "validator": "^13.11.0",
     "zod": "^3.21.4",
     "zustand": "^4.3.9"
   },
@@ -98,6 +101,7 @@
     "@types/google.maps": "^3.53.6",
     "@types/mapbox": "^1.6.42",
     "@types/mapbox-gl": "^2.7.13",
-    "@types/react-stars": "^2.2.1"
+    "@types/react-stars": "^2.2.1",
+    "@types/validator": "^13.11.1"
   }
 }

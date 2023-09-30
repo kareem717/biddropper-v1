@@ -14,6 +14,7 @@ import {
 	smallint,
 	unique,
 	date,
+	double,
 } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 import type { AdapterAccount } from "next-auth/adapters";
@@ -56,16 +57,18 @@ export const addresses = mysqlTable(
 	"addresses",
 	{
 		id: varchar("id", { length: 50 }).notNull(),
-		addressLine1: varchar("address_line_1", { length: 70 }).notNull(),
+		xCoordinate: double("x-coordinate").notNull(),
+		yCoordinate: double("y-coordinate").notNull(),
+		addressLine1: varchar("address_line_1", { length: 70 }),
 		addressLine2: varchar("address_line_2", { length: 70 }),
-		city: varchar("city", { length: 50 }).notNull(),
-		region: varchar("region", { length: 50 }).notNull(),
+		city: varchar("city", { length: 50 }),
+		region: varchar("region", { length: 50 }),
 		postalCode: varchar("postal_code", { length: 10 }).notNull(),
 		country: varchar("country", { length: 60 }).notNull(),
-		createdAt: timestamp("created_at", { mode: "date" }).default(
+		createdAt: timestamp("created_at", { mode: "string" }).default(
 			sql`CURRENT_TIMESTAMP`
 		),
-		updatedAt: timestamp("updated_at", { mode: "date" })
+		updatedAt: timestamp("updated_at", { mode: "string" })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.onUpdateNow(),
 	},

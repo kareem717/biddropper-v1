@@ -2,7 +2,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { companies, companyProfiles } from "@/db/migrations/schema";
 import * as z from "zod";
 import { selectJobSchema } from "./posts";
-
+import validator from "validator";
 export const insertCompanySchema = createInsertSchema(companies, {
 	id: z
 		.string()
@@ -24,6 +24,27 @@ export const insertCompanyProfileSchema = createInsertSchema(companyProfiles, {
 				message: "Date cannot be in the future",
 			});
 		}
+	}),
+	emailAddress: z
+		.string()
+		.email({
+			message: "Email address must be a valid email address",
+		})
+		.max(320, {
+			message: "Email address must be at most 320 characters long",
+		}),
+	websiteUrl: z
+		.string()
+		.url({
+			message: "Website URL must be a valid URL",
+		})
+		.max(2083, {
+			message: "Website URL must be at most 2083 characters long",
+		}),
+	phoneNumber: z.string().max(20, {
+		message: "Phone number must be at most 20 characters long",
+	}).refine((val) => validator.isMobilePhone(val), {
+		message: "Phone number must be a valid phone number",
 	}),
 });
 //TODO: This is not working how i want because im pulling industries from the db now

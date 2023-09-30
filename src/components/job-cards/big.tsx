@@ -21,7 +21,7 @@ const ImageSlider = dynamic(() => import("@/components/image-slider"), {
 	ssr: false,
 });
 //todO: bid button is hard coded atm
-const JobMap = dynamic(() => import("@/components/job-map"), {
+const JobMap = dynamic(() => import("@/components/maps/job-map"), {
 	loading: () => (
 		<Skeleton className="w-full h-[30vh] md:h-full rounded-md border" />
 	),
