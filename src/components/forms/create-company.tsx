@@ -7,6 +7,7 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
+	FormDescription,
 } from "@/components/ui/form";
 import {
 	Popover,
@@ -17,15 +18,15 @@ import {
 	insertCompanySchema,
 	insertCompanyProfileSchema,
 } from "@/lib/validations/companies";
+import ImageUploader, { ImageUploaderRef } from "@/components/image-uploader";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Icons } from "../icons";
-import { toast } from "sonner";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { ComponentPropsWithoutRef, FC, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { Calendar } from "../ui/calendar";
@@ -39,13 +40,19 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { env } from "@/env.mjs";
-import { AddressAutofill } from "@mapbox/search-js-react";
-import type { AddressAutofillRetrieveResponse } from "@mapbox/search-js-core";
-import { insertAddressSchema } from "@/lib/validations/address";
-import RadiusAddress from "../maps/radius-address-map";
-// import { createMultistepFormStore } from "@/hooks/use-multistep-form";
-const formSchema = z.object({
+import {
+	insertAddressSchema,
+	mapResponseToAddress,
+} from "@/lib/validations/address";
+import RadiusAddress, { RadiusAddressRef } from "../maps/radius-address-map";
+import { Textarea } from "../ui/textarea";
+import MultiSelectComboBox, {
+	MultiSelectComboBoxRef,
+} from "../combo-box/multi-select";
+import createMultistepFormStore from "@/hooks/use-multistep-form";
+import { toast } from "sonner";
+
+export const formSchema = z.object({
 	id: insertCompanySchema.shape.id,
 	name: insertCompanySchema.shape.name,
 	yearEstablished: insertCompanyProfileSchema.shape.yearEstablished,
@@ -57,18 +64,51 @@ const formSchema = z.object({
 		createdAt: true,
 		updatedAt: true,
 	}),
+	serviceArea: insertCompanyProfileSchema.shape.serviceArea,
+	products: insertCompanyProfileSchema.shape.products,
+	services: insertCompanyProfileSchema.shape.services,
+	specialties: insertCompanyProfileSchema.shape.specialties,
 });
-type Inputs = z.infer<typeof formSchema>;
 
-export function CreateCompanyForm() {
+export type Inputs = z.infer<typeof formSchema>;
+
+const industryFetcher = (url: string) =>
+	fetch(url, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+		},
+	}).then((res) => res.json());
+
+const useMultistepForm = createMultistepFormStore(4, {
+	0: ["name", "yearEstablished"],
+	1: ["emailAddress", "phoneNumber", "websiteUrl"],
+	2: ["address", "serviceArea"],
+	3: ["products", "services", "specialties"],
+});
+
+const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
+	...props
+}) => {
 	const router = useRouter();
 	const session = useSession();
 	if (!session) {
 		router.replace("/sign-in");
 	}
+	const imageUploaderRef = useRef<ImageUploaderRef>(null);
+	const comboRef = useRef<MultiSelectComboBoxRef>(null);
+	const radiusMapRef = useRef<RadiusAddressRef>(null);
 	const userId = session.data?.user?.id;
 	const [isFetching, setIsFetching] = useState<boolean>(false);
-	const totalSteps = 3;
+
+	const {
+		nextStep,
+		prevStep,
+		step: formStep,
+		isLastStep: isLastFormStep,
+		validateStep,
+	} = useMultistepForm();
+
 	const form = useForm<Inputs>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -78,80 +118,71 @@ export function CreateCompanyForm() {
 			emailAddress: undefined,
 			websiteUrl: undefined,
 			phoneNumber: undefined,
-			address: undefined,
+			address:
+				mapResponseToAddress(radiusMapRef?.current?.address) || undefined,
+			serviceArea: String(radiusMapRef?.current?.radius) || undefined,
+			products: "",
+			services: "",
+			specialties: "",
 		},
 	});
-	const [formStep, setFormStep] = useState<number>(2);
 
-	// todo: maybe abstract this into a hook atp cause ur using it in multiple places
-	const handleNextStep = () => {
-		setFormStep((prevStep) => {
-			if (prevStep < totalSteps - 1) {
-				return prevStep + 1;
-			} else {
-				return prevStep;
-			}
-		});
-	};
-
-	const handlePreviousStep = () => {
-		setFormStep((prevStep) => {
-			if (prevStep > 0) {
-				return prevStep - 1;
-			} else {
-				return prevStep;
-			}
-		});
-	};
-	// const useMultistepForm = createMultistepFormStore(2);
-	// const { prevStep, nextStep, step, ...multistepForm } = useMultistepForm();
-
-	// console.log(step, multistepForm.totalSteps);
 	const onSubmit = async (data: Inputs) => {
 		setIsFetching(true);
 
-		const res = await fetch("/api/companies", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				ownerId: userId,
-				...data,
-			}),
-		});
+		// upload image
+		const uploadSuccess = await imageUploaderRef?.current?.upload();
+		if (!uploadSuccess && imageUploaderRef?.current?.files?.length) {
+			toast.error("Image upload failed", {
+				action: {
+					label: "Retry",
+					onClick: () => {
+						// Retry the upload or continue the onSubmit function
+						form.handleSubmit((data: any) => onSubmit(data as Inputs));
+					},
+				},
+			});
 
-		if (!res.ok) {
 			setIsFetching(false);
-			toast.error("Something went wrong", {
-				description: "Please try again later",
-			});
-		} else {
-			toast.success("Success", {
-				description: "Your company has been created",
-			});
-			router.replace("/");
+			return;
 		}
+
+		// const res = await fetch("/api/companies", {
+		// 	method: "POST",
+		// 	headers: {
+		// 		"Content-Type": "application/json",
+		// 	},
+		// 	body: JSON.stringify(data),
+		// });
 	};
-	console.log(form.getValues());
+
+	const { data: industries, error: industryFetchError } = useSWR(
+		"/api/industries",
+		industryFetcher
+	);
+
+	if (industryFetchError) {
+		return <div>Something went wrong</div>;
+	}
+
+	if (!industries) {
+		return <div>Loading...</div>;
+	}
+
 	return (
-		<Card className="absolute right-1/2 top-1/4 translate-x-1/2 -translate-y-1/4">
-			<CardHeader className="space-y-1">
-				<CardTitle className="text-2xl">Create your company</CardTitle>
-				<CardDescription>
-					Register your company to find future leadsdf
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="grid gap-4">
-				<Form {...form}>
-					<form
-						id="company-form"
-						className="grid gap-4"
-						onSubmit={(...args) => void form.handleSubmit(onSubmit)(...args)}
-					>
+		<div {...props}>
+			<Card>
+				<CardHeader className="space-y-1">
+					<CardTitle className="text-2xl">Create your company</CardTitle>
+					<CardDescription>
+						Register your company to find future leadsdf
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="grid gap-4">
+					<Form {...form}>
 						{/* Step 1 */}
 						{formStep === 0 && (
-							<>
+							<div>
 								<FormField
 									control={form.control}
 									name="name"
@@ -170,7 +201,7 @@ export function CreateCompanyForm() {
 									name="yearEstablished"
 									render={({ field }) => (
 										<FormItem className="flex flex-col gap-1">
-											<FormLabel>Year Established</FormLabel>
+											<FormLabel>Date Established</FormLabel>
 											<FormControl>
 												<Popover>
 													<PopoverTrigger asChild>
@@ -209,7 +240,7 @@ export function CreateCompanyForm() {
 										</FormItem>
 									)}
 								/>
-							</>
+							</div>
 						)}
 
 						{/* Step 2 */}
@@ -259,21 +290,43 @@ export function CreateCompanyForm() {
 						)}
 
 						{/* Step 3 */}
-						{formStep === 2 && (
-							<>
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Company Name</FormLabel>
-											<FormControl>
-												<Input {...field} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+						{/* Have to simply hide image uploader component with css or else not able to upload the images once the component is not rendered */}
+						<div className={cn(formStep !== 2 && "hidden")}>
+							<FormField
+								control={form.control}
+								name="name"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Company Image</FormLabel>
+										<FormControl>
+											<div>
+												{/* //TODO: implement the uploading functionality */}
+												<ImageUploader
+													onClientUploadComplete={(
+														res:
+															| {
+																	fileUrl: string;
+																	fileKey: string;
+															  }[]
+															| undefined
+													) => {
+														console.log(res);
+													}}
+													onUploadError={(err) => {
+														console.log(err);
+													}}
+													ref={imageUploaderRef}
+													maxFiles={1}
+													className="max-h-[20vh] overflow-hidden"
+													spinnerClassName="max-h-[20vh] overflow-hidden"
+												/>
+											</div>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							{formStep === 2 && (
 								<FormField
 									control={form.control}
 									name="address"
@@ -281,7 +334,93 @@ export function CreateCompanyForm() {
 										<FormItem>
 											<FormLabel>Company Address</FormLabel>
 											<FormControl>
-												<RadiusAddress />
+												<RadiusAddress
+													maxRadius={500}
+													onRetrieve={(val) => {
+														const address = mapResponseToAddress(val);
+														if (address) {
+															form.setValue("address", address);
+														} else {
+															form.setError("address", {
+																type: "manual",
+																message:
+																	"An error occurred while retrieving the address.",
+															});
+														}
+													}}
+													onRadiusChange={(val) => {
+														form.setValue("serviceArea", String(val));
+													}}
+													className="h-[40vh]"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
+						</div>
+
+						{/* Step 4 */}
+						{formStep === 3 && (
+							<>
+								<MultiSelectComboBox
+									options={industries}
+									emptyText="Select company industries..."
+									notFoundText="No industries found."
+									ref={comboRef}
+									contentClassName="max-h-[20vh]"
+								/>
+
+								<FormField
+									control={form.control}
+									name="products"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Products</FormLabel>
+											<FormControl>
+												<Textarea
+													{...field}
+													value={field.value || ""}
+													className="max-h-[15vh]"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="services"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Services</FormLabel>
+											<FormControl>
+												<Textarea
+													{...field}
+													value={field.value || ""}
+													className="max-h-[15vh]"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="specialties"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Specialties</FormLabel>
+											<FormDescription>
+												What does your company specialize in?
+											</FormDescription>
+											<FormControl>
+												<Textarea
+													{...field}
+													value={field.value || ""}
+													className="max-h-[15vh]"
+												/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -289,61 +428,59 @@ export function CreateCompanyForm() {
 								/>
 							</>
 						)}
-					</form>
-				</Form>
-			</CardContent>
-			<CardFooter>
-				<div className="flex w-full gap-2">
-					{formStep > 0 && !isFetching && (
-						<Button
-							onClick={handlePreviousStep}
-							className="w-full"
-							variant={"secondary"}
-						>
-							Back
-						</Button>
-					)}
-					{formStep < totalSteps - 1 && (
-						<Button
-							onClick={
-								handleNextStep
-								// 	async () => {
-								// 	//TODO: handle
-								// 	// const currentField = fields[formStep];
-
-								// 	// await form.trigger(currentField as any);
-
-								// 	// const currentStepInvalid = Object.keys(
-								// 	// 	form.formState.errors
-								// 	// ).some((field) => field === currentField);
-
-								// 	// if (!currentStepInvalid) {
-								// 	nextStep();
-								// 	// }
-								// }
-							}
-							className="w-full"
-						>
-							Next
-						</Button>
-					)}
-					{formStep === totalSteps - 1 &&
-						(isFetching ? (
-							<Button disabled={true} type={"button"} className="w-full">
-								<Icons.spinner
-									className="mr-2 h-4 w-4 animate-spin"
-									aria-hidden="true"
-								/>
-								<span className="sr-only">Loading</span>
+					</Form>
+				</CardContent>
+				<CardFooter>
+					<div className="flex w-full gap-2">
+						{formStep > 0 && !isFetching && (
+							<Button
+								onClick={prevStep}
+								className="w-full"
+								variant={"secondary"}
+							>
+								Back
 							</Button>
-						) : (
-							<Button type="submit" form="company-form" className="w-full">
-								<span className="hidden sm:block">Finish and Create</span>
-								<span className="sm:hidden">Done</span>
+						)}
+						{!isLastFormStep() && (
+							<Button
+								onClick={async () => {
+									const step = await validateStep(formStep, form);
+									if (step) {
+										nextStep();
+									}
+								}}
+								className="w-full"
+							>
+								Next
 							</Button>
-						))}
-				</div>
-			</CardFooter>
-		</Card>
+						)}
+						{isLastFormStep() &&
+							(isFetching ? (
+								<Button disabled={true} type={"button"} className="w-full">
+									<Icons.spinner
+										className="mr-2 h-4 w-4 animate-spin"
+										aria-hidden="true"
+									/>
+									<span className="sr-only">Loading</span>
+								</Button>
+							) : (
+								<Button
+									type="submit"
+									form="company-form"
+									className="w-full"
+									onClick={form.handleSubmit((data: any) =>
+										onSubmit(data as Inputs)
+									)}
+								>
+									<span className="hidden sm:block">Finish and Create</span>
+									<span className="sm:hidden">Done</span>
+								</Button>
+							))}
+					</div>
+				</CardFooter>
+			</Card>
+		</div>
 	);
-}
+};
+
+export default CreateCompanyForm;

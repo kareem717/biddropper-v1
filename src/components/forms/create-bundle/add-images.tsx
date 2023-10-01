@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 
 function AddImagesForm() {
-	
 	const { nextStep, addFormData } = useMultistepForm();
 
 	const onClientUploadComplete = (
@@ -34,6 +33,7 @@ function AddImagesForm() {
 			<ImageUploader
 				onClientUploadComplete={onClientUploadComplete}
 				onUploadError={onUploadError}
+				className="overflow-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
 			/>
 			<Button onClick={nextStep} variant={"outline"} className="w-full mt-3">
 				Skip{" "}

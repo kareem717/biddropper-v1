@@ -3,8 +3,9 @@ import { env } from "@/env.mjs";
 import mapboxgl from "mapbox-gl";
 import * as turf from "@turf/turf";
 import { Units } from "@turf/helpers";
+import { cn } from "@/lib/utils";
 
-interface RadiusMapProps {
+interface RadiusMapProps extends React.ComponentPropsWithoutRef<"div"> {
 	coordinates: number[];
 	radius: number;
 	units?: Units;
@@ -75,12 +76,14 @@ const RadiusMap: React.FC<RadiusMapProps> = ({
 	}, [circle]);
 
 	return (
-		<div {...props}>
-			<div
-				className="w-[min(40vw,715px)] h-[min(40vh,615px)]"
-				ref={mapContainer}
-			/>
-		</div>
+		<div
+			className={cn(
+				"map-containerb w-[min(40vw,715px)] h-[min(40vh,615px)]",
+				props.className
+			)}
+			ref={mapContainer}
+			{...props}
+		/>
 	);
 };
 

@@ -1,20 +1,30 @@
 import { create } from "zustand";
 
 interface useComboBoxProps {
-	value: string;
-	label: string;
+	selected: {
+		label: string;
+		value: string;
+	}[];
 	setValues: (label?: string, value?: string) => void;
+	totalSelected: number;
 }
 
-const useComboBox = create<useComboBoxProps>((set) => ({
-	value: "",
-	label: "",
+const useComboBox = create<useComboBoxProps>((set, get) => ({
+	selected: [],
 	setValues: (label?: string, value?: string) => {
 		set((state) => ({
 			...state,
-			value: value !== undefined ? value : state.value,
-			label: label !== undefined ? label : state.label,
+			selected: [
+				...state.selected,
+				{
+					label: label || "",
+					value: value || "",
+				},
+			],
 		}));
+	},
+	get totalSelected() {
+		return get().selected.length;
 	},
 }));
 

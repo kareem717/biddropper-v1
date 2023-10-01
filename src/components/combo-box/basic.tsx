@@ -12,7 +12,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Icons } from "./icons";
+import { Icons } from "../icons";
 import useComboBox from "@/hooks/use-combo-box";
 import { useState } from "react";
 

@@ -35,11 +35,10 @@ export const insertCompanyProfileSchema = createInsertSchema(companyProfiles, {
 		}),
 	websiteUrl: z
 		.string()
-		.url({
-			message: "Website URL must be a valid URL",
-		})
 		.max(2083, {
 			message: "Website URL must be at most 2083 characters long",
+		}).refine((val) => validator.isURL(val), {
+			message: "Website URL must be a valid URL",
 		}),
 	phoneNumber: z.string().max(20, {
 		message: "Phone number must be at most 20 characters long",

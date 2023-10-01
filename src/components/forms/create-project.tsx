@@ -167,7 +167,7 @@ const CreateProjectForm: FC<ComponentPropsWithoutRef<"div">> = ({
 										<FormItem>
 											<FormLabel>Title</FormLabel>
 											<FormControl>
-												<Input placeholder="shadcn" {...field} />
+												<Input {...field} />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -207,6 +207,7 @@ const CreateProjectForm: FC<ComponentPropsWithoutRef<"div">> = ({
 										console.log(err);
 									}}
 									ref={imageUploaderRef}
+									className="overflow-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
 								/>
 							</div>
 						)}

@@ -23,6 +23,7 @@ export type RadiusAddressRef = {
 
 interface RadiusAddressProps extends React.ComponentPropsWithoutRef<"div"> {
 	onRetrieve?: (val: AddressAutofillRetrieveResponse) => void;
+	onRadiusChange?: (val: number) => void;
 	radiusSliderLabel?: string;
 	maxRadius?: number;
 	minRadius?: number;
@@ -36,6 +37,7 @@ function RadiusAddress(
 	{
 		units = "kilometers",
 		radiusSliderLabel = "Select service area radius (km)",
+		onRadiusChange,
 		onRetrieve,
 		maxRadius = 100,
 		minRadius = 1,
@@ -78,6 +80,9 @@ function RadiusAddress(
 	const handleRadiusChange = (numArr: number[]) => {
 		if (!numArr[0]) return;
 		setRadius(numArr[0]);
+		if (onRadiusChange) {
+			onRadiusChange(numArr[0]);
+		}
 	};
 
 	// Initialize map
@@ -179,7 +184,7 @@ function RadiusAddress(
 
 	return (
 		<div {...props}>
-			<div className="flex flex-col mb-6 gap-4">
+			<div className="flex flex-col mb-6 gap-4 h-full w-full">
 				<div className="col grid-rows-auto w-full">
 					{/* @ts-ignore */}
 					<AddressAutofill
@@ -193,15 +198,11 @@ function RadiusAddress(
 						/>
 					</AddressAutofill>
 				</div>
-				<div
-					className="w-[min(40vw,715px)] h-[min(40vh,615px)]"
-					ref={mapContainer}
-				/>
+				<div className="map-containerb h-[70%] w-full" ref={mapContainer} />
 				<div className="flex flex-col gap-4 mt-8">
 					<Label htmlFor="radiusSlider">{radiusSliderLabel}</Label>
 					<div className="flex gap-2 justify-between">
 						<Slider
-							// className="max-w-[90%]"
 							id="radiusSlider"
 							defaultValue={[defaultRadius]}
 							max={maxRadius}

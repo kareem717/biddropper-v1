@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FC, ComponentPropsWithoutRef } from "react";
-import ComboBox from "@/components/combo-box";
+import ComboBox from "@/components/combo-box/basic";
 import { industries } from "@/config/industries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";

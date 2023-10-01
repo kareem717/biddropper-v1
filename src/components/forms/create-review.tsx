@@ -47,12 +47,12 @@ const CreateReview: FC<CreateReviewFormProps> = ({ ...props }) => {
 	const session = useSession();
 	const params = useParams();
 
-	if ( !session) {
-		redirect("/")
+	if (!session) {
+		redirect("/");
 	}
 
-	if ( !params.companyId) {
-		redirect("/")
+	if (!params.companyId) {
+		redirect("/");
 	}
 
 	const companyId = params.companyId;
@@ -78,7 +78,6 @@ const CreateReview: FC<CreateReviewFormProps> = ({ ...props }) => {
 				reviewMedia: files,
 			}),
 		});
-
 	}
 
 	console.log(form.getValues());
@@ -160,6 +159,7 @@ const CreateReview: FC<CreateReviewFormProps> = ({ ...props }) => {
 										onUploadError={(error) => {
 											console.log(error);
 										}}
+										className="overflow-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
 									/>
 								</AccordionContent>
 							</AccordionItem>
@@ -167,7 +167,9 @@ const CreateReview: FC<CreateReviewFormProps> = ({ ...props }) => {
 					</form>
 				</CardContent>
 				<CardFooter>
-					<Button className="w-full" onClick={form.handleSubmit(onSubmit)}>Create</Button>
+					<Button className="w-full" onClick={form.handleSubmit(onSubmit)}>
+						Create
+					</Button>
 				</CardFooter>
 			</Card>
 		</Form>

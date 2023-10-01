@@ -1,6 +1,7 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { addresses } from "@/db/migrations/schema";
 import * as z from "zod";
+import type { AddressAutofillRetrieveResponse } from "@mapbox/search-js-core";
 
 export const insertAddressSchema = createInsertSchema(addresses, {
 	addressLine1: z
@@ -17,7 +18,8 @@ export const insertAddressSchema = createInsertSchema(addresses, {
 		})
 		.transform((value) => {
 			return value.trim();
-		}),
+		})
+		.optional(),
 	addressLine2: z
 		.string()
 		.min(3, {
@@ -47,7 +49,8 @@ export const insertAddressSchema = createInsertSchema(addresses, {
 		})
 		.transform((value) => {
 			return value.trim();
-		}),
+		})
+		.optional(),
 	region: z
 		.string()
 		.min(3, {
@@ -61,7 +64,8 @@ export const insertAddressSchema = createInsertSchema(addresses, {
 		})
 		.transform((value) => {
 			return value.trim();
-		}),
+		})
+		.optional(),
 	postalCode: z
 		.string()
 		.min(3, {
@@ -91,6 +95,47 @@ export const insertAddressSchema = createInsertSchema(addresses, {
 		.transform((value) => {
 			return value.trim();
 		}),
+	xCoordinate: z
+		.number()
+		.min(-180, {
+			message: "X Coordinate must be at least -180",
+		})
+		.max(180, {
+			message: "X Coordinate must be at most 180",
+		}),
+	yCoordinate: z
+		.number()
+		.min(-90, {
+			message: "Y Coordinate must be at least -90",
+		})
+		.max(90, {
+			message: "Y Coordinate must be at most 90",
+		}),
 });
 
 export const selectAddressSchema = createSelectSchema(addresses);
+
+export type DBAddress = z.infer<typeof insertAddressSchema>;
+
+export const mapResponseToAddress = (
+	res: AddressAutofillRetrieveResponse | undefined
+): Omit<DBAddress, "id" | "createdAt" | "updatedAt"> | void => {
+	if (!res) return;
+	const feature = res.features[0];
+	if (!feature) return;
+	const coordinates = feature.geometry.coordinates;
+	if (!coordinates) return;
+
+	const properties = feature.properties;
+
+	return {
+		addressLine1: properties.address_line1,
+		addressLine2: properties.address_line2 || undefined, // if address_line2 is not present, set it as undefined
+		city: properties.address_level2,
+		region: properties.address_level1,
+		postalCode: properties.postcode || "",
+		country: properties.country || "",
+		xCoordinate: feature.geometry.coordinates[0] as number,
+		yCoordinate: feature.geometry.coordinates[1] as number,
+	};
+};

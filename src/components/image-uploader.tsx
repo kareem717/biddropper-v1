@@ -16,6 +16,7 @@ import { AspectRatio } from "./ui/aspect-ratio";
 import { Skeleton } from "./ui/skeleton";
 import { Button } from "./ui/button";
 import { Icons } from "./icons";
+import { cn } from "@/lib/utils";
 
 export type ImageUploaderRef = {
 	upload: () => Promise<
@@ -28,7 +29,7 @@ export type ImageUploaderRef = {
 	files: File[];
 };
 
-interface ImageUploaderProps {
+interface ImageUploaderProps extends React.ComponentPropsWithoutRef<"div"> {
 	maxFiles?: number;
 	showLoadingState?: boolean;
 	onClientUploadComplete: (
@@ -40,6 +41,7 @@ interface ImageUploaderProps {
 			| undefined
 	) => void;
 	onUploadError: (error: Error) => void;
+	spinnerClassName?: string;
 }
 
 // TODO: hide skip button after upload is pressed as it causes bugs
@@ -50,6 +52,9 @@ function ImageUploader(
 		onClientUploadComplete,
 		onUploadError,
 		showLoadingState,
+		className,
+		spinnerClassName,
+		...props
 	}: ImageUploaderProps,
 	ref: Ref<ImageUploaderRef>
 ) {
@@ -89,6 +94,7 @@ function ImageUploader(
 		ref,
 		() => ({
 			upload: async () => {
+				console.log("uploading");
 				setIsUploading(true);
 				const upload = await startUpload(files);
 				return upload;
@@ -99,15 +105,18 @@ function ImageUploader(
 	);
 
 	return (
-		<>
+		<div className={className}>
 			{isUploading && showLoadingState ? (
-				<div className="max-h-[40vh] flex justify-center items-center">
+				<div
+					className={cn(" flex justify-center items-center", spinnerClassName)}
+					{...props}
+				>
 					<Icons.spinner className="animate-spin w-1/2 h-1/2 font-thin stroke-[0.5px] opacity-50" />
 				</div>
 			) : (
-				<>
+				<div>
 					<div {...getRootProps()}>
-						<div className="max-h-[40vh] overflow-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-content-center items-center">
+						<div className={cn("justify-content-center items-center")}>
 							{Array.from({ length: maxFiles || 10 }, (_, index) => {
 								const file = files[index];
 								return (
@@ -129,9 +138,9 @@ function ImageUploader(
 						</div>
 						<input {...getInputProps()} />
 					</div>
-				</>
+				</div>
 			)}
-		</>
+		</div>
 	);
 }
 
