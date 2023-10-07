@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { media, contracts, jobs, bids } from "@/db/migrations/schema";
 import * as z from "zod";
 import { industryValues } from "@/config/industries";
+import { insertIndustrySchema } from "./industries";
 //TODO: seperate out the schemas into seperate files
 export const insertJobSchema = createInsertSchema(jobs, {
 	id: z
@@ -12,9 +13,7 @@ export const insertJobSchema = createInsertSchema(jobs, {
 		.regex(/^job_[A-Za-z0-9\-]+$/, {
 			message: "ID must be in the format of job_[A-Za-z0-9-]+",
 		}),
-	industry: z.string().refine((value) => {
-		return industryValues.includes(value);
-	}, "Please select a valid option"),
+	industry: insertIndustrySchema.shape.value,
 	details: z
 		.string()
 		.min(10, {
@@ -25,7 +24,10 @@ export const insertJobSchema = createInsertSchema(jobs, {
 		}),
 });
 
-export const selectJobSchema = createSelectSchema(jobs);
+export const selectJobSchema = createSelectSchema(jobs, {
+	createdAt: z.coerce.date(),
+	updatedAt: z.coerce.date(),
+});
 export type SelectedJob = z.infer<typeof selectJobSchema>;
 
 export const insertContractSchema = createInsertSchema(contracts, {
@@ -103,5 +105,20 @@ export const selectContractMediaSchema = createSelectSchema(media);
 export const insertBidsSchema = createInsertSchema(bids);
 export const selectBidsSchema = createSelectSchema(bids);
 
-export const insertMediaSchema = createInsertSchema(media);
+export const insertMediaSchema = createInsertSchema(media, {
+	id: z
+		.string()
+		.max(50, {
+			message: "ID must be at most 50 characters long",
+		})
+		.regex(/^media_[A-Za-z0-9\-]+$/, {
+			message: "ID must be in the format of media_[A-Za-z0-9-]+",
+		}),
+	fileUrl: z.string().url({
+		message: "File URL must be a valid URL",
+	}),
+	fileKey: z.string(),
+});
+
+export type InsertMedia = z.infer<typeof insertMediaSchema>;
 export const selectMediaSchema = createSelectSchema(media);

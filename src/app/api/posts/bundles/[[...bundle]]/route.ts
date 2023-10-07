@@ -17,7 +17,7 @@ import * as z from "zod";
 
 //TODO: Refactor for schema update
 export async function POST(req: Request) {
-	const session = getServerSession(authOptions); //TODO: switch to next auth when able\
+	const session = await getServerSession(authOptions); //TODO: switch to next auth when able\
 	if (!session) return new Response("Unauthorized", { status: 401 });
 
 	const ownerId = headers().get("Owner-ID");
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 			id: newID,
 			title: reqBody.title,
 			description: reqBody.description,
-			price: reqBody.price,
+			price: String(reqBody.price),
 			endDate: reqBody.endDate,
 		});
 

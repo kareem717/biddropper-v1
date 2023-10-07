@@ -123,7 +123,7 @@ export default async function ContractPage({
 	return (
 		<div className="w-full h-screen bg-[url('/images/wave.svg')] bg-cover relative xl:bg-bottom">
 			{cleanData &&
-				Object.values(cleanData).map((contract) => (
+				Object.values(cleanData).map((contract: any) => (
 					<ContractCard
 						companies={session.user.ownedCompanies}
 						key={contract.id}

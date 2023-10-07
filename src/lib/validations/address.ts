@@ -116,7 +116,7 @@ export const insertAddressSchema = createInsertSchema(addresses, {
 export const selectAddressSchema = createSelectSchema(addresses);
 
 export type DBAddress = z.infer<typeof insertAddressSchema>;
-
+export type SelectAddress = z.infer<typeof selectAddressSchema>;
 export const mapResponseToAddress = (
 	res: AddressAutofillRetrieveResponse | undefined
 ): Omit<DBAddress, "id" | "createdAt" | "updatedAt"> | void => {
@@ -127,6 +127,7 @@ export const mapResponseToAddress = (
 	if (!coordinates) return;
 
 	const properties = feature.properties;
+//TODO: not geeting postcode correctly
 
 	return {
 		addressLine1: properties.address_line1,

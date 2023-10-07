@@ -14,10 +14,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-	insertCompanySchema,
-	insertCompanyProfileSchema,
-} from "@/lib/validations/companies";
+import { insertCompanySchema } from "@/lib/validations/companies";
 import ImageUploader, { ImageUploaderRef } from "@/components/image-uploader";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,23 +49,22 @@ import MultiSelectComboBox, {
 import createMultistepFormStore from "@/hooks/use-multistep-form";
 import { toast } from "sonner";
 
-export const formSchema = z.object({
-	id: insertCompanySchema.shape.id,
-	name: insertCompanySchema.shape.name,
-	yearEstablished: insertCompanyProfileSchema.shape.yearEstablished,
-	emailAddress: insertCompanyProfileSchema.shape.emailAddress,
-	websiteUrl: insertCompanyProfileSchema.shape.websiteUrl,
-	phoneNumber: insertCompanyProfileSchema.shape.phoneNumber,
-	address: insertAddressSchema.omit({
-		id: true,
+const formSchema = insertCompanySchema
+	.omit({
 		createdAt: true,
 		updatedAt: true,
-	}),
-	serviceArea: insertCompanyProfileSchema.shape.serviceArea,
-	products: insertCompanyProfileSchema.shape.products,
-	services: insertCompanyProfileSchema.shape.services,
-	specialties: insertCompanyProfileSchema.shape.specialties,
-});
+		addressId: true,
+		isVerified: true,
+		imageId: true,
+		ownerId: true,
+	})
+	.extend({
+		address: insertAddressSchema.omit({
+			id: true,
+			createdAt: true,
+			updatedAt: true,
+		}),
+	});
 
 export type Inputs = z.infer<typeof formSchema>;
 
@@ -81,7 +77,7 @@ const industryFetcher = (url: string) =>
 	}).then((res) => res.json());
 
 const useMultistepForm = createMultistepFormStore(4, {
-	0: ["name", "yearEstablished"],
+	0: ["name", "dateEstablished"],
 	1: ["emailAddress", "phoneNumber", "websiteUrl"],
 	2: ["address", "serviceArea"],
 	3: ["products", "services", "specialties"],
@@ -114,7 +110,7 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
 		defaultValues: {
 			id: `comp_${crypto.randomUUID()}`,
 			name: undefined,
-			yearEstablished: new Date(),
+			dateEstablished: new Date(),
 			emailAddress: undefined,
 			websiteUrl: undefined,
 			phoneNumber: undefined,
@@ -147,13 +143,28 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
 			return;
 		}
 
-		// const res = await fetch("/api/companies", {
-		// 	method: "POST",
-		// 	headers: {
-		// 		"Content-Type": "application/json",
-		// 	},
-		// 	body: JSON.stringify(data),
-		// });
+		const reqBody = {
+			...data,
+			ownerId: userId,
+			industries: comboRef?.current?.selected,
+			image: uploadSuccess?.[0] || undefined,
+		};
+
+		console.log(reqBody);
+		const res = await fetch("/api/companies", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(reqBody),
+		});
+
+		if (res.ok) {
+			toast.success("Company created successfully");
+			router.push(`/company/${reqBody.id}`);
+		} else {
+			toast.error("Company creation failed");
+		}
 	};
 
 	const { data: industries, error: industryFetchError } = useSWR(
@@ -182,7 +193,7 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
 					<Form {...form}>
 						{/* Step 1 */}
 						{formStep === 0 && (
-							<div>
+							<>
 								<FormField
 									control={form.control}
 									name="name"
@@ -198,7 +209,7 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
 								/>
 								<FormField
 									control={form.control}
-									name="yearEstablished"
+									name="dateEstablished"
 									render={({ field }) => (
 										<FormItem className="flex flex-col gap-1">
 											<FormLabel>Date Established</FormLabel>
@@ -240,7 +251,7 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
 										</FormItem>
 									)}
 								/>
-							</div>
+							</>
 						)}
 
 						{/* Step 2 */}

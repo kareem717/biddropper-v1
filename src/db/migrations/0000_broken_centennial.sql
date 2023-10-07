@@ -21,14 +21,16 @@ CREATE TABLE `accounts` (
 --> statement-breakpoint
 CREATE TABLE `addresses` (
 	`id` varchar(50) NOT NULL,
-	`address_line_1` varchar(70) NOT NULL,
+	`address_line_1` varchar(70),
 	`address_line_2` varchar(70),
-	`city` varchar(50) NOT NULL,
-	`region` varchar(50) NOT NULL,
+	`city` varchar(50),
+	`region` varchar(50),
 	`postal_code` varchar(10) NOT NULL,
 	`country` varchar(60) NOT NULL,
 	`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
 	`updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	`x-coordinate` double NOT NULL,
+	`y-coordinate` double NOT NULL,
 	CONSTRAINT `addresses_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
 );
 --> statement-breakpoint
@@ -48,32 +50,30 @@ CREATE TABLE `companies` (
 	`owner_id` varchar(50) NOT NULL,
 	`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
 	`updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-	CONSTRAINT `companies_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
-);
---> statement-breakpoint
-CREATE TABLE `company_jobs` (
-	`company_id` varchar(50) NOT NULL,
-	`job_id` varchar(50) NOT NULL,
-	CONSTRAINT `company_jobs_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
-);
---> statement-breakpoint
-CREATE TABLE `company_profiles` (
-	`id` varchar(50) NOT NULL,
-	`company_id` varchar(50) NOT NULL,
 	`address_id` varchar(50),
 	`service_area` decimal(7,3),
 	`email_address` varchar(320) NOT NULL,
-	`phone_number_id` varchar(50) NOT NULL,
 	`phone_number` varchar(20) NOT NULL,
 	`website_url` varchar(2048),
 	`products` varchar(300),
 	`is_verified` tinyint DEFAULT 0,
 	`specialties` varchar(400),
 	`services` varchar(400),
-	`year_established` smallint,
-	`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
-	`updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-	CONSTRAINT `company_profiles_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
+	`image_id` varchar(50),
+	`date_established` timestamp NOT NULL,
+	CONSTRAINT `companies_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
+);
+--> statement-breakpoint
+CREATE TABLE `company_industries` (
+	`company_id` varchar(50) NOT NULL,
+	`industry_id` varchar(50) NOT NULL,
+	CONSTRAINT `company_industries_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
+);
+--> statement-breakpoint
+CREATE TABLE `company_jobs` (
+	`company_id` varchar(50) NOT NULL,
+	`job_id` varchar(50) NOT NULL,
+	CONSTRAINT `company_jobs_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
 );
 --> statement-breakpoint
 CREATE TABLE `company_projects` (
@@ -113,9 +113,13 @@ CREATE TABLE `contracts` (
 	CONSTRAINT `id` UNIQUE(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `dummy` (
-	`dfgdf` int NOT NULL,
-	CONSTRAINT `dummy_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
+CREATE TABLE `industries` (
+	`id` varchar(50) NOT NULL,
+	`label` varchar(100) NOT NULL,
+	`value` varchar(100) NOT NULL,
+	CONSTRAINT `industries_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`),
+	CONSTRAINT `label` UNIQUE(`label`),
+	CONSTRAINT `value_2` UNIQUE(`value`)
 );
 --> statement-breakpoint
 CREATE TABLE `job_bids` (
@@ -158,8 +162,8 @@ CREATE TABLE `project_media` (
 --> statement-breakpoint
 CREATE TABLE `projects` (
 	`id` varchar(50) NOT NULL,
-	`title` varchar(255),
-	`details` varchar(3000),
+	`title` varchar(255) NOT NULL,
+	`details` varchar(3000) NOT NULL,
 	`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
 	`updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `projects_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
@@ -217,5 +221,6 @@ CREATE TABLE `verificationTokens` (
 	CONSTRAINT `verificationTokens_provider_providerAccountId` PRIMARY KEY(`provider`,`providerAccountId`)
 );
 --> statement-breakpoint
-CREATE INDEX `company_id` ON `bids` (`company_id`);
+CREATE INDEX `company_id` ON `bids` (`company_id`);--> statement-breakpoint
+CREATE INDEX `value` ON `industries` (`value`);
 */

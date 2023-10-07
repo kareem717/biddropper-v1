@@ -2,7 +2,7 @@
 
 import { useState, FC, ComponentPropsWithoutRef } from "react";
 import ComboBox from "@/components/combo-box/basic";
-import { industries } from "@/config/industries";
+import useIndustries from "@/hooks/use-industries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { insertJobSchema } from "@/lib/validations/posts";
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
 import CustomRadioButtons from "@/components/custom-radio-buttons";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import {
 	Select,
 	SelectContent,
@@ -39,22 +39,27 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import CompanySelect from "../select-company";
-
+import { useSession } from "next-auth/react";
 interface CreateJobFormProps extends ComponentPropsWithoutRef<typeof Card> {
-	companies?: {
-		name: string;
-		id: string;
-	}[];
-	userId: string;
 	onSuccessRedirect?: string;
 }
 
 const CreateJobForm: FC<CreateJobFormProps> = ({
-	companies,
-	userId,
 	onSuccessRedirect,
 	...props
 }) => {
+	const session = useSession();
+
+	if (!session) {
+		redirect("/sign-in");
+	}
+
+	const userId = session?.data?.user.id;
+	const companies = session?.data?.user.ownedCompanies.map((company) => ({
+		name: company.name,
+		id: company.id,
+	}));
+
 	const totalSteps = 4;
 	const router = useRouter();
 
@@ -86,7 +91,15 @@ const CreateJobForm: FC<CreateJobFormProps> = ({
 		description?: string;
 		component: React.ReactNode;
 	}
+	const { industries, isLoading, isError } = useIndustries();
+	
+	if (isLoading) {
+		return <div>Loading...</div>;
+	}
 
+	if (isError) {
+		return <div>Error loading industries</div>;
+	}
 	const steps: Step[] = [
 		{
 			fieldName: "industry",
@@ -246,7 +259,7 @@ const CreateJobForm: FC<CreateJobFormProps> = ({
 				propertyType: values.propertyType,
 				timeHorizon: values.timeHorizon,
 				details: values.details,
-				isCommercialProperty: isCommercial,
+				isCommercialProperty: isCommercial ? 1 : 0,
 			}),
 		});
 

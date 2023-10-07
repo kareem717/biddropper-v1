@@ -9,11 +9,19 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import Link from "next/link";
+import { buttonVariants } from "./ui/button";
+import { cn } from "@/lib/utils";
 interface RatingSummaryProps extends ComponentPropsWithoutRef<typeof Card> {
 	reviews: SelectReview[];
+	companyId: string;
 }
 
-const RatingSummary: FC<RatingSummaryProps> = ({ reviews, ...props }) => {
+const RatingSummary: FC<RatingSummaryProps> = ({
+	reviews,
+	companyId,
+	...props
+}) => {
 	const totalReviews = reviews.length;
 	const sortedReviewCount = reviews.reduce(
 		(acc, review) => {
@@ -42,9 +50,9 @@ const RatingSummary: FC<RatingSummaryProps> = ({ reviews, ...props }) => {
 					<StarRating
 						edit={false}
 						className="space-x-4"
-						color1="black"
+						color1="primary"
 						count={5}
-						value={averageRating} // TODO: replace with calculated value
+						value={averageRating}
 						size={35}
 						color2={"#16a34a"}
 					/>
@@ -69,6 +77,14 @@ const RatingSummary: FC<RatingSummaryProps> = ({ reviews, ...props }) => {
 							);
 						})}
 					</TooltipProvider>
+				</div>
+				<div className="w-full px-6 mx-auto">
+					<Link
+						className={cn(buttonVariants(), "w-full")}
+						href={`/reviews/create/${companyId}`}
+					>
+						Create a review
+					</Link>
 				</div>
 			</div>
 		</Card>

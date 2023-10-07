@@ -109,6 +109,17 @@ export const companies = mysqlTable(
 		id: varchar("id", { length: 50 }).notNull(),
 		name: varchar("name", { length: 50 }).notNull(),
 		ownerId: varchar("owner_id", { length: 50 }).notNull(),
+		addressId: varchar("address_id", { length: 50 }),
+		serviceArea: decimal("service_area", { precision: 7, scale: 3 }),
+		emailAddress: varchar("email_address", { length: 320 }).notNull(),
+		phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
+		websiteUrl: varchar("website_url", { length: 2048 }),
+		products: varchar("products", { length: 300 }),
+		isVerified: tinyint("is_verified").default(0),
+		specialties: varchar("specialties", { length: 400 }),
+		services: varchar("services", { length: 400 }),
+		dateEstablished: timestamp("date_established", { mode: "date" }).notNull(),
+		imageId: varchar("image_id", { length: 50 }),
 		createdAt: timestamp("created_at", { mode: "date" }).default(
 			sql`CURRENT_TIMESTAMP`
 		),
@@ -148,36 +159,6 @@ export const companyJobs = mysqlTable(
 	(table) => {
 		return {
 			companyJobsCompanyIdJobId: primaryKey(table.companyId, table.jobId),
-		};
-	}
-);
-
-export const companyProfiles = mysqlTable(
-	"company_profiles",
-	{
-		id: varchar("id", { length: 50 }).notNull(),
-		companyId: varchar("company_id", { length: 50 }).notNull(),
-		addressId: varchar("address_id", { length: 50 }),
-		serviceArea: decimal("service_area", { precision: 7, scale: 3 }),
-		emailAddress: varchar("email_address", { length: 320 }).notNull(),
-		phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
-		websiteUrl: varchar("website_url", { length: 2048 }),
-		products: varchar("products", { length: 300 }),
-		isVerified: tinyint("is_verified").default(0),
-		specialties: varchar("specialties", { length: 400 }),
-		services: varchar("services", { length: 400 }),
-		yearEstablished: timestamp("year_established", { mode: "date" }).notNull(),
-		createdAt: timestamp("created_at", { mode: "date" }).default(
-			sql`CURRENT_TIMESTAMP`
-		),
-		updatedAt: timestamp("updated_at", { mode: "date" })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.onUpdateNow(),
-		imageId: varchar("image_id", { length: 50 }),
-	},
-	(table) => {
-		return {
-			companyProfilesId: primaryKey(table.id),
 		};
 	}
 );

@@ -76,19 +76,14 @@ function AddAddressForm() {
 			});
 
 			// const responseBody = await res.json();
-			console.log(res.status)
+			console.log(res.status);
 			if (res.status === 200) {
 				toast.success("Success!", {
 					description: "Your bundle has been created",
 				});
-			
-			 router.replace(`/contracts`);
+
+				router.replace(`/contracts`);
 			}
-
-
-
-
-
 		} catch (err) {
 			console.error(err);
 			toast.error("There was an error creating your bundle", {

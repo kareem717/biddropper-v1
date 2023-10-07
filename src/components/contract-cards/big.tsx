@@ -43,6 +43,8 @@ interface ContractCardProps extends ComponentPropsWithoutRef<typeof Card> {
 		| string;
 }
 
+// Todo: times are not being fetched properly
+
 const ContractCard: FC<ContractCardProps> = ({
 	id,
 	title,
@@ -81,6 +83,8 @@ const ContractCard: FC<ContractCardProps> = ({
 			return `${years} year${suffix}`;
 		}
 	};
+
+	console.log(id)
 	return (
 		<Card
 			{...props}
@@ -205,51 +209,7 @@ const ContractCard: FC<ContractCardProps> = ({
 					className="rounded-md border p-4 h-[20vh] overflow-auto mt-2"
 					id="contract-description"
 				>
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vitae
-					ligula pulvinar velit lacinia gravida vitae quis orci. Vestibulum
-					sollicitudin, felis eget dignissim mollis, ex sapien suscipit nunc,
-					feugiat auctor nulla libero sit amet massa. Sed at nunc et tortor
-					iaculis ornare quis vitae sapien. Sed vel pharetra enim. In vel
-					tincidunt lorem. Mauris vel magna id arcu congue finibus. Proin
-					pellentesque, lacus at pharetra luctus, tortor odio accumsan massa,
-					vitae dictum dui ex sit amet mauris. Curabitur justo dui, volutpat
-					vitae risus ultrices, eleifend varius turpis. Sed laoreet dolor vel ex
-					posuere aliquam. Nulla facilisi. Quisque pulvinar imperdiet tellus at
-					sagittis. Ut mattis aliquam lacus. In at accumsan augue, ut efficitur
-					turpis. Fusce pharetra blandit quam sit amet interdum. Nunc porttitor
-					sem quis tortor sollicitudin condimentum. Quisque aliquam nisi eros,
-					ac blandit lectus congue sed. Nulla elementum molestie purus, vel
-					rutrum nulla auctor quis. Aliquam dolor dolor, laoreet vel tortor in,
-					consequat tempor urna. Nullam eget magna hendrerit, fermentum erat
-					vel, consectetur eros. Donec a consectetur velit. Proin non diam
-					efficitur, bibendum orci ac, accumsan massa. Quisque accumsan purus
-					ipsum, in lacinia velit pellentesque vitae. In fermentum orci nec enim
-					venenatis vulputate. Vestibulum finibus scelerisque urna, imperdiet
-					feugiat tellus hendrerit vel. Nulla nec tristique turpis, id laoreet
-					elit. Sed vehicula odio eu sapien ullamcorper, ac sagittis ipsum
-					dignissim. Mauris ac lacus sed sapien vehicula efficitur. In maximus,
-					felis quis euismod sollicitudin, felis dolor rhoncus nibh, a tempor
-					augue nulla sed libero. Suspendisse lorem sapien, lacinia sit amet
-					egestas vitae, porttitor nec lacus. In et felis egestas, rutrum nulla
-					ut, ullamcorper turpis. Ut ex ligula, blandit at tristique quis,
-					efficitur eu magna. Phasellus sit amet tellus ut urna condimentum
-					mattis. Morbi ullamcorper et odio eget dignissim. Pellentesque
-					habitant morbi tristique senectus et netus et malesuada fames ac
-					turpis egestas. Vivamus vel aliquam ligula, quis pretium quam.
-					Curabitur egestas nulla neque, ut viverra risus venenatis et. Praesent
-					est turpis, fermentum eu fermentum vel, mattis in metus. Quisque
-					facilisis ultricies nibh, at lobortis arcu porttitor feugiat. Nullam
-					venenatis, ex sed hendrerit ultricies, magna libero sagittis felis, a
-					eleifend massa libero et nibh. Donec nunc ipsum, maximus accumsan sem
-					in, placerat ultricies turpis. Vivamus a lorem lectus. Donec a quam ac
-					nunc malesuada semper quis quis mi. Curabitur convallis sagittis eros,
-					id lobortis massa eleifend sed. Nulla ultrices fermentum est, vitae
-					laoreet tellus tincidunt a. Donec porttitor porta ultricies. Sed
-					laoreet diam vel nunc maximus pellentesque. Vivamus nec nisl in ex
-					vulputate rutrum sed eu felis. Proin in tortor justo. Sed ac erat
-					scelerisque, venenatis dui non, maximus turpis. Proin eu finibus
-					risus, vel venenatis odio. Maecenas dignissim fermentum rhoncus. Donec
-					vehicula auctor orci aliquam.
+					{description}
 				</div>
 			</CardContent>
 

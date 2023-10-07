@@ -8,11 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import {
-	createContractSchema,
-	insertContractSchema,
-	selectJobSchema,
-} from "@/lib/validations/posts";
+import { createContractSchema } from "@/lib/validations/posts";
 import { Icons } from "@/components/icons";
 import { redirect, useRouter } from "next/navigation";
 import {
@@ -36,8 +32,6 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
 import { Input } from "../ui/input";
 import type { SelectedCompanyJobs } from "@/lib/validations/companies";
 import JobCard from "../job-cards/small";
@@ -45,6 +39,9 @@ import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
 import { Calendar } from "../ui/calendar";
 import { env } from "@/env.mjs";
+import { format } from "date-fns";
+import { QueryClientProvider } from "react-query";
+import { toast } from "sonner";
 
 interface CreateContractFormProps
 	extends ComponentPropsWithoutRef<typeof Card> {
@@ -96,12 +93,14 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			endDate: null,
 		},
 	});
+
 	interface Step {
 		fieldName: string;
 		title?: string;
 		description?: string;
 		component: React.ReactNode;
 	}
+
 	const steps: Step[] = [
 		{
 			fieldName: "title",
@@ -112,7 +111,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 					<Input
 						placeholder="ABC Inc. Plumbing Contract"
 						{...form.register("title")}
-						/>
+					/>
 				</div>
 			),
 		},
@@ -120,7 +119,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			fieldName: "description",
 			title: "Basic Details",
 			description:
-			"Explain the ins and outs of the contract you want to create",
+				"Explain the ins and outs of the contract you want to create",
 			component: (
 				<div className="space-y-8">
 					<Textarea
@@ -135,8 +134,8 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			title: "Select Jobs",
 			description:
 				"Select the jobs you want to include in this contract or create new ones",
-				component: (
-					<ScrollArea className="flex flex-col max-h-[50vh]">
+			component: (
+				<ScrollArea className="flex flex-col max-h-[50vh]">
 					{Object.values(jobs).map((company, index) => {
 						return (
 							<div key={index} className="mb-8">
@@ -148,31 +147,31 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 												<Checkbox
 													defaultChecked={
 														form.getValues("jobs").find((j) => j.id === job.id)
-														? true
-														: false
+															? true
+															: false
 													}
 													onCheckedChange={() => {
 														const currentJobs = form.getValues("jobs");
 														const isInArray = currentJobs.find(
 															(j) => j.id === job.id
+														);
+														if (isInArray) {
+															const updatedJobs = currentJobs.filter(
+																(j) => j.id !== job.id
 															);
-															if (isInArray) {
-																const updatedJobs = currentJobs.filter(
-																	(j) => j.id !== job.id
-																	);
-																	form.setValue("jobs", updatedJobs);
+															form.setValue("jobs", updatedJobs);
 														} else {
 															const updatedJobs = [...currentJobs, job];
 															form.setValue("jobs", updatedJobs);
 														}
 													}}
-													/>
+												/>
 												<JobCard
 													id={job.id}
 													industry={job.industry}
 													propertyType={job.propertyType}
 													timeHorizon={job.timeHorizon}
-													/>
+												/>
 											</div>
 										);
 									})}
@@ -186,8 +185,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 		{
 			fieldName: "payment",
 			title: "Payment",
-			description:
-			"Set the minimum bidding price for your contract",
+			description: "Set the minimum bidding price for your contract",
 			component: (
 				<div>
 					{/* <Card>
@@ -199,34 +197,34 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 						</CardDescription>
 						</CardHeader>
 					<CardContent className="space-y-2"> */}
-							{/* //TODO: Maybe implement currency-input? */}
-							<div className="space-y-1">
-								{/* <Label htmlFor="price">Price</Label> */}
-								<div className="flex items-center gap-2">
-									<Icons.dollarSign />
-									<Input
-										id="price"
-										type="number"
-										className="w-1/2"
-										onChange={(val) => {
-											form.setValue(
-												"price",
-												Number(parseFloat(val.target.value).toFixed(2))
-												);
-											}}
-											/>
-								</div>
-							</div>
-						{/* </CardContent>
+					{/* //TODO: Maybe implement currency-input? */}
+					<div className="space-y-1">
+						{/* <Label htmlFor="price">Price</Label> */}
+						<div className="flex items-center gap-2">
+							<Icons.dollarSign />
+							<Input
+								id="price"
+								type="number"
+								className="w-1/2"
+								onChange={(val) => {
+									form.setValue(
+										"price",
+										Number(parseFloat(val.target.value).toFixed(2))
+									);
+								}}
+							/>
+						</div>
+					</div>
+					{/* </CardContent>
 					</Card>*/}
-				</div> 
+				</div>
 			),
 		},
 		{
 			fieldName: "endDate",
 			title: "End Date",
 			description:
-			"Set the date when this contract will no longer be active for trading",
+				"Set the date when this contract will no longer be active for trading",
 			component: (
 				<div>
 					<Popover>
@@ -237,8 +235,8 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 									className={cn(
 										"w-full justify-start font-normal",
 										!date && "text-muted-foreground"
-										)}
-										>
+									)}
+								>
 									<div className="flex justify-center w-full">
 										<Icons.calendar className="mr-2 h-4 w-4" />
 										{date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -255,7 +253,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 									}}
 									disabled={(date) => date < new Date()}
 									initialFocus
-									/>
+								/>
 							</PopoverContent>
 						</div>
 					</Popover>
@@ -263,9 +261,9 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			),
 		},
 	];
-	
+
 	const fields = Object.keys(form.getValues());
-	console.log(formStep, fields.length - 1)
+	console.log(formStep, fields.length - 1);
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsFetching(true);
@@ -279,6 +277,13 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 			},
 			body: JSON.stringify(values),
 		});
+
+		if (res.status !== 201) {
+			toast.error("Something went wrong");
+			setIsFetching(false);
+			return;
+		}
+
 		const data = await res.json();
 		console.log(data, res.status);
 
@@ -356,7 +361,7 @@ const CreateContractForm: FC<CreateContractFormProps> = ({
 							Next
 						</Button>
 					)}
-					{formStep === fields.length -1 &&
+					{formStep === fields.length - 1 &&
 						(isFetching ? (
 							<Button disabled={true} type={"button"} className="w-full">
 								<Icons.spinner

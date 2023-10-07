@@ -69,8 +69,8 @@ const MultiSelectComboBox = (
 						"justify-between",
 						buttonClassName,
 						!totalSelected && "text-muted-foreground"
-						)}
-						>
+					)}
+				>
 					{/* //TODO: Label is not working as intended, only shows epty text */}
 					<span className="truncate">
 						{totalSelected

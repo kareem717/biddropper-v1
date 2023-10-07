@@ -1,19 +1,12 @@
 "use client";
 import "mapbox-gl/dist/mapbox-gl.css";
 import React from "react";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import dynamic from "next/dynamic";
 import useSWR from "swr";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import BidButton from "@/components/job-bid-button";
+
 import { selectJobSchema, selectMediaSchema } from "@/lib/validations/posts";
 import * as z from "zod";
-import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
-import BadgeTooltip from "@/components/badge-tooltip";
+
 import { timeHorizons } from "@/config/time-horizons";
 import { propertyTypes } from "@/config/property-types";
 import { industries } from "@/config/industries";

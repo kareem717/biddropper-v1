@@ -14,7 +14,9 @@ import { insertMediaSchema } from "@/lib/validations/posts";
 import { insertProjectSchema } from "@/lib/validations/projects";
 import { insertReviewSchema } from "@/lib/validations/reviews";
 import { randomUUID } from "crypto";
+import { and, eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
+import { headers } from "next/headers";
 import * as z from "zod";
 
 //TODO: test this route
@@ -76,7 +78,23 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-	const payload = await db.select().from(reviews);
+	const headerList = headers();
+	const companyId = headerList.get("Company-Id") as string;
+
+	const payload = await db
+		.select({ reviews })
+		.from(reviews)
+		.innerJoin(
+			companyReviews,
+			and(
+				eq(companyReviews.reviewId, reviews.id),
+				eq(companyReviews.companyId, companyId)
+			)
+		);
+
+	if (!payload) {
+		return new Response("Company not found", { status: 404 });
+	}
 
 	return new Response(JSON.stringify(payload), { status: 200 });
 }
