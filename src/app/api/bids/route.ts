@@ -1,14 +1,15 @@
 import { db } from "@/db";
-import {
-	bids,
-	jobBids,
-} from "@/db/migrations/schema";
-import * as z from "zod";
-import { insertBidsSchema } from "@/lib/validations/posts";
-import { headers } from "next/headers";
+import { bids, companyJobs, jobBids } from "@/db/migrations/schema";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { contractBids } from "@/db/migrations/last_working_schema";
+import { and, eq, inArray, ne } from "drizzle-orm";
+import { parse } from "url";
+import {
+	fetchBidsSchema,
+	createBidSchema,
+} from "@/lib/validations/api/api-bids";
+import { companyContractsView } from "@/db/views/company-contracts";
 
 export async function POST(req: Request) {
 	const session = await getServerSession(authOptions);
@@ -16,89 +17,134 @@ export async function POST(req: Request) {
 	if (!session || !session.user.ownedCompanies)
 		return new Response("Unauthorized", { status: 401 });
 
+	const ownedCompanyIds = session.user.ownedCompanies.map(
+		(company) => company.id
+	);
+
 	const body = await req.json();
-	const bidType = headers().get("Bid-Type");
+	let safeParseResult = createBidSchema.safeParse(body);
 
-	const safeParse =
-		bidType === "contract"
-			? insertBidsSchema
-					.omit({ id: true })
-					.extend({
-						companyId: z
-							.string()
-							.max(50, {
-								message: "Company ID must be at most 50 characters long",
-							})
-							.regex(/^comp_[A-Za-z0-9\-]+$/, {
-								message:
-									"Company ID must be in the format of comp_[A-Za-z0-9-]+",
-							}),
-						contractId: z
-							.string()
-							.max(50, {
-								message: "Contract ID must be at most 50 characters long",
-							})
-							.regex(/^cntr_[A-Za-z0-9\-]+$/, {
-								message:
-									"Contract ID must be in the format of cntr_[A-Za-z0-9-]+",
-							}),
-					})
-					.safeParse(body)
-			: insertBidsSchema
-					.omit({ id: true })
-					.extend({
-						companyId: z
-							.string()
-							.max(50, {
-								message: "Company ID must be at most 50 characters long",
-							})
-							.regex(/^comp_[A-Za-z0-9\-]+$/, {
-								message:
-									"Company ID must be in the format of comp_[A-Za-z0-9-]+",
-							}),
-
-						jobId: z
-							.string()
-							.max(50, {
-								message: "Job ID must be at most 50 characters long",
-							})
-							.regex(/^job_[A-Za-z0-9\-]+$/, {
-								message: "Job ID must be in the format of job_[A-Za-z0-9-]+",
-							}),
-					})
-					.safeParse(body);
-
-	if (!safeParse.success) {
-		return new Response(safeParse.error.message, { status: 400 });
+	if (!safeParseResult.success) {
+		return new Response(safeParseResult.error.message, { status: 400 });
 	}
 
-	const data = safeParse.data;
-
+	const data = safeParseResult.data;
 	const newId = `bid_${crypto.randomUUID()}`;
-	// TODO: price should not be optional
-	const query = await db.transaction(async (tx) => {
-		await tx.insert(bids).values({
-			id: newId,
-			price: data.price,
-			companyId: data.companyId,
+
+	let targetTable: any, targetId: string;
+
+	if (data.jobId) {
+		targetTable = companyJobs;
+		targetId = data.jobId;
+	} else if (data.contractId) {
+		targetTable = companyContractsView;
+		targetId = data.contractId;
+	} else {
+		return new Response("Neither 'jobId' nor 'contractId' provided", {
+			status: 400,
+		});
+	}
+
+	let userOwnsPostingQuery = db
+		.select()
+		.from(targetTable)
+		.where(
+			and(
+				eq(
+					targetTable === companyJobs
+						? targetTable.jobId
+						: targetTable.contractId,
+					targetId
+				),
+				inArray(targetTable.companyId, ownedCompanyIds)
+			)
+		)
+		.limit(1);
+
+	let userOwnsPosting = await userOwnsPostingQuery;
+
+	if (userOwnsPosting.length > 0) {
+		return new Response("User cannot bid on their own job or contract.", {
+			status: 400,
+		});
+	}
+
+	try {
+		await db.transaction(async (tx) => {
+			await tx.insert(bids).values({
+				id: newId,
+				price: data.price,
+				companyId: data.companyId,
+			});
+
+			let bidInsertionTable = data.jobId ? jobBids : contractBids;
+			let bidInsertionData = {
+				bidId: newId,
+				[data.jobId ? "jobId" : "contractId"]: targetId,
+			};
+
+			await tx.insert(bidInsertionTable).values(bidInsertionData);
 		});
 
-		if (bidType === "contract") {
-			await tx.insert(contractBids).values({
-				bidId: newId,
-				// @ts-ignore
-				contractId: data.contractId,
-			});
-		}
+		return new Response("Bid created.", { status: 201 });
+	} catch (err) {
+		console.log("POST /api/bids Error:", err);
+		return new Response("Error creating bid.", { status: 500 });
+	}
+}
 
-		if (bidType === "job") {
-			await tx.insert(jobBids).values({
-				bidId: newId,
-				// @ts-ignore
-				jobId: data.jobId,
-			});
-		}
-	});
+export async function GET(req: Request) {
+	const { query } = parse(req.url, true);
+	const validParameters = fetchBidsSchema.safeParse(query);
 
-	return new Response("Bid created", { status: 201 });
+	if (!validParameters.success) {
+		console.log("/api/bids Error:", validParameters.error);
+		return new Response("Invalid query parameters.", { status: 400 });
+	}
+
+	let queryBuilder;
+
+	if (query.bidType === "job") {
+		queryBuilder = db
+			.select({
+				id: bids.id,
+				price: bids.price,
+				status: bids.status,
+				companyId: bids.companyId,
+				createdAt: bids.createdAt,
+				updatedAt: bids.updatedAt,
+			})
+			.from(bids)
+			.innerJoin(jobBids, eq(jobBids.bidId, bids.id));
+	} else if (query.bidType === "contract") {
+		queryBuilder = db
+			.select({
+				id: bids.id,
+				price: bids.price,
+				status: bids.status,
+				companyId: bids.companyId,
+				createdAt: bids.createdAt,
+				updatedAt: bids.updatedAt,
+			})
+			.from(bids)
+			.innerJoin(contractBids, eq(contractBids.bidId, bids.id));
+	} else {
+		queryBuilder = db.select().from(bids);
+	}
+
+	if (!validParameters.data.getInactive) {
+		queryBuilder = queryBuilder.where(ne(bids.status, "pending"));
+	}
+
+	try {
+		const queryResult = await queryBuilder.limit(validParameters.data.limit);
+
+		if (!queryResult.length)
+			return new Response("No bids found.", { status: 404 });
+
+		return new Response(JSON.stringify(queryResult), { status: 200 });
+	} catch (err) {
+		console.log("GET /api/bids Error:", err);
+		return new Response("Error getting bids.", { status: 500 });
+	}
 }

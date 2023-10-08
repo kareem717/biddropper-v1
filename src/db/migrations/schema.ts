@@ -15,8 +15,10 @@ import {
 	unique,
 	date,
 	double,
+	mysqlView,
+	QueryBuilder,
 } from "drizzle-orm/mysql-core";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { AdapterAccount } from "next-auth/adapters";
 
 export const accounts = mysqlTable(
@@ -84,7 +86,12 @@ export const bids = mysqlTable(
 	{
 		id: varchar("id", { length: 50 }).notNull(),
 		price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-		status: mysqlEnum("status", ["pending", "accepted", "declined"])
+		status: mysqlEnum("status", [
+			"pending",
+			"accepted",
+			"declined",
+			"retracted",
+		])
 			.default("pending")
 			.notNull(),
 		createdAt: timestamp("created_at", { mode: "date" }).default(
