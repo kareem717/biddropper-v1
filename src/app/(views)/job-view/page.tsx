@@ -1,6 +1,6 @@
 "use client";
 import JobCard from "@/components/job-cards/small";
-import { selectJobSchema } from "@/lib/validations/posts";
+import { selectJobSchema } from "@/lib/validations/posts/posts";
 import React from "react";
 import useSWR from "swr";
 import { TypeOf } from "zod";

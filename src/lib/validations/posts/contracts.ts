@@ -1,35 +1,10 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { media, contracts, jobs, bids } from "@/db/migrations/schema";
+import { media, contracts } from "@/db/migrations/schema";
 import * as z from "zod";
-import { industryValues } from "@/config/industries";
-import { insertIndustrySchema } from "./industries";
-//TODO: seperate out the schemas into seperate files
-export const insertJobSchema = createInsertSchema(jobs, {
-	id: z
-		.string()
-		.max(50, {
-			message: "ID must be at most 50 characters long",
-		})
-		.regex(/^job_[A-Za-z0-9\-]+$/, {
-			message: "ID must be in the format of job_[A-Za-z0-9-]+",
-		}),
-	industry: insertIndustrySchema.shape.value,
-	details: z
-		.string()
-		.min(10, {
-			message: "Details must be at least 10 characters long",
-		})
-		.max(3000, {
-			message: "Details must be at most 3000 characters long",
-		}),
-});
+import { selectJobSchema } from "./jobs";
 
-export const selectJobSchema = createSelectSchema(jobs, {
-	createdAt: z.coerce.date(),
-	updatedAt: z.coerce.date(),
-});
-export type SelectedJob = z.infer<typeof selectJobSchema>;
-
+export const selectContractSchema = createSelectSchema(contracts);
+export const selectContractMediaSchema = createSelectSchema(media);
 export const insertContractSchema = createInsertSchema(contracts, {
 	id: z
 		.string()
@@ -60,7 +35,6 @@ export const insertContractSchema = createInsertSchema(contracts, {
 			message: "Description must be at most 3000 characters long",
 		}),
 });
-export const selectContractSchema = createSelectSchema(contracts);
 export const createContractSchema = z.object({
 	title: insertContractSchema.shape.title,
 	description: insertContractSchema.shape.description,
@@ -107,26 +81,3 @@ export const createContractSchema = z.object({
 		)
 		.nullable(),
 });
-
-export const selectContractMediaSchema = createSelectSchema(media);
-
-export const insertBidsSchema = createInsertSchema(bids);
-export const selectBidsSchema = createSelectSchema(bids);
-
-export const insertMediaSchema = createInsertSchema(media, {
-	id: z
-		.string()
-		.max(50, {
-			message: "ID must be at most 50 characters long",
-		})
-		.regex(/^media_[A-Za-z0-9\-]+$/, {
-			message: "ID must be in the format of media_[A-Za-z0-9-]+",
-		}),
-	fileUrl: z.string().url({
-		message: "File URL must be a valid URL",
-	}),
-	fileKey: z.string(),
-});
-
-export type InsertMedia = z.infer<typeof insertMediaSchema>;
-export const selectMediaSchema = createSelectSchema(media);

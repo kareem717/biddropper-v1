@@ -1,4 +1,4 @@
-import { SelectReview } from "@/lib/validations/reviews";
+import { SelectReview } from "@/lib/validations/posts/reviews";
 import StarRating from "react-stars";
 import {
 	Card,

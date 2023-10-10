@@ -1,6 +1,4 @@
-import {
-	APIFetchBidsSchema,
-} from "@/lib/validations/api/api-bids";
+import { APIFetchBidsSchema } from "@/lib/validations/api/api-bid";
 import { useMutation } from "react-query";
 
 export const useFetchBids = () => {

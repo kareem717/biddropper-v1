@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import BidButton from "@/components/bid-button";
 import * as z from "zod";
-import { selectJobSchema } from "@/lib/validations/posts";
+import { selectJobSchema } from "@/lib/validations/posts/posts";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
@@ -84,11 +84,9 @@ const ContractCard: FC<ContractCardProps> = ({
 		}
 	};
 
-	console.log(id)
+	console.log(id);
 	return (
-		<Card
-			{...props}
-		>
+		<Card {...props}>
 			<CardHeader>
 				<CardTitle>{title}</CardTitle>
 				<div className="flex flex-wrap gap-2">
@@ -170,16 +168,9 @@ const ContractCard: FC<ContractCardProps> = ({
 			<CardContent className="">
 				<div className="flex flex-grow mb-4 flex-shrink flex-wrap max-h-[50vh] justify-between flex-grow-1 overflow-auto">
 					{companyStakes.length > 1 && (
-						<div 
-						className="w-full h-[min(400px,30vh)] hidden sm:block"
-						>
-							<PieChart
-							data={companyStakes}
-							width="100%"
-							height="100%"
-						/>
+						<div className="w-full h-[min(400px,30vh)] hidden sm:block">
+							<PieChart data={companyStakes} width="100%" height="100%" />
 						</div>
-						
 					)}
 					<div className="w-full">
 						<Label htmlFor="jobs">Jobs</Label>

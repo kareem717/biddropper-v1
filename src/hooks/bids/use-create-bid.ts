@@ -1,6 +1,4 @@
-import {
-	APICreateBidSchema,
-} from "@/lib/validations/api/api-bids";
+import { APICreateBidSchema } from "@/lib/validations/api/api-bid";
 import { useMutation } from "react-query";
 
 export const useCreateBid = () => {
@@ -14,4 +12,3 @@ export const useCreateBid = () => {
 		});
 	});
 };
-

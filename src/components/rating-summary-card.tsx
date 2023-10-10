@@ -1,7 +1,7 @@
 import { ComponentPropsWithoutRef, FC } from "react";
 import StarRating from "react-stars";
 import { Progress } from "./ui/progress";
-import { SelectReview } from "@/lib/validations/reviews";
+import { SelectReview } from "@/lib/validations/posts/reviews";
 import { Card } from "./ui/card";
 import {
 	Tooltip,

@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/button";
-import { insertReviewSchema } from "@/lib/validations/reviews";
+import { insertReviewSchema } from "@/lib/validations/posts/reviews";
 import { insertCompanySchema } from "@/lib/validations/companies";
 import {
 	Accordion,

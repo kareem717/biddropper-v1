@@ -1,4 +1,4 @@
-import { APIUpdateBidSchema } from "@/lib/validations/api/api-bids";
+import { APIUpdateBidSchema } from "@/lib/validations/api/api-bid";
 import { useMutation } from "react-query";
 
 export const useFetchSingleBid = () => {

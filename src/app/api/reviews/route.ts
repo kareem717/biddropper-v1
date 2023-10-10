@@ -10,9 +10,9 @@ import {
 } from "@/db/migrations/schema";
 import { authOptions } from "@/lib/auth";
 import { insertCompanySchema } from "@/lib/validations/companies";
-import { insertMediaSchema } from "@/lib/validations/posts";
-import { insertProjectSchema } from "@/lib/validations/projects";
-import { insertReviewSchema } from "@/lib/validations/reviews";
+import { insertMediaSchema } from "@/lib/validations/posts/posts";
+import { insertProjectSchema } from "@/lib/validations/posts/projects";
+import { insertReviewSchema } from "@/lib/validations/posts/reviews";
 import { randomUUID } from "crypto";
 import { and, eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";

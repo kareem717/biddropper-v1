@@ -9,7 +9,10 @@ import ContactCard from "./contact-card";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import ReviewCard from "./review-card";
-import { SelectReview, selectReviewSchema } from "@/lib/validations/reviews";
+import {
+	SelectReview,
+	selectReviewSchema,
+} from "@/lib/validations/posts/reviews";
 import RadiusMap from "./maps/radius-map";
 const fetcher = (url: string, headers?: any) =>
 	fetch(url, headers ? { headers } : undefined).then((res) => res.json());

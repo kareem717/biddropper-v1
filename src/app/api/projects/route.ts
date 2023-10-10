@@ -6,8 +6,8 @@ import {
 	projects,
 } from "@/db/migrations/schema";
 import { authOptions } from "@/lib/auth";
-import { insertMediaSchema } from "@/lib/validations/posts";
-import { insertProjectSchema } from "@/lib/validations/projects";
+import { insertMediaSchema } from "@/lib/validations/posts/posts";
+import { insertProjectSchema } from "@/lib/validations/posts/projects";
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";

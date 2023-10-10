@@ -8,7 +8,7 @@ import {
 	companies,
 	users,
 } from "@/db/migrations/schema";
-import { insertJobSchema } from "@/lib/validations/posts";
+import { insertJobSchema } from "@/lib/validations/posts/posts";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import * as z from "zod";
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
 			}
 		});
 	} catch (err) {
-		console.error(err);
+		console.log(err);
 		return new Response(JSON.stringify(err), {
 			headers: {
 				"content-type": "application/json",

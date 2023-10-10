@@ -15,7 +15,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { insertAddressSchema } from "@/lib/validations/address";
+import { insertAddressSchema } from "@/lib/validations/misc/address";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";

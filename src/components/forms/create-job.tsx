@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { insertJobSchema } from "@/lib/validations/posts";
+import { insertJobSchema } from "@/lib/validations/posts/posts";
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
 import CustomRadioButtons from "@/components/custom-radio-buttons";
@@ -92,7 +92,7 @@ const CreateJobForm: FC<CreateJobFormProps> = ({
 		component: React.ReactNode;
 	}
 	const { industries, isLoading, isError } = useIndustries();
-	
+
 	if (isLoading) {
 		return <div>Loading...</div>;
 	}

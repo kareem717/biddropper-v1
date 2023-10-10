@@ -4,7 +4,7 @@ import { Card } from "./ui/card";
 import { Icons } from "./icons";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { SelectAddress } from "@/lib/validations/address";
+import { SelectAddress } from "@/lib/validations/misc/address";
 
 interface ContactCardProps extends ComponentPropsWithoutRef<typeof Card> {
 	website: string;
@@ -41,7 +41,7 @@ const ContactCard: FC<ContactCardProps> = ({ className, ...props }) => {
 						<Icons.pin className="w-6 h-6" />
 						<p className="max-w-[200px] truncate">
 							{props.address.addressLine1}
-							{props.address.addressLine2 && (<br />)}
+							{props.address.addressLine2 && <br />}
 							{props.address.addressLine2}
 							<br />
 							{props.address.city}, {props.address.region}

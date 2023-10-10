@@ -8,11 +8,11 @@ import {
 } from "@/db/migrations/schema";
 import { insertCompanySchema } from "@/lib/validations/companies";
 import { z } from "zod";
-import { insertIndustrySchema } from "@/lib/validations/industries";
-import { insertMediaSchema } from "@/lib/validations/posts";
+import { insertIndustrySchema } from "@/lib/validations/misc/industries";
+import { insertMediaSchema } from "@/lib/validations/posts/posts";
 import { randomUUID } from "crypto";
 import { inArray, eq } from "drizzle-orm";
-import { insertAddressSchema } from "@/lib/validations/address";
+import { insertAddressSchema } from "@/lib/validations/misc/address";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 import { headers } from "next/headers";

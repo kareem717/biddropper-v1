@@ -4,14 +4,14 @@ import { authOptions } from "@/lib/auth";
 import {
 	acceptBidQuerySchema,
 	updateBidSchema,
-} from "@/lib/validations/api/api-bids";
+} from "@/lib/validations/api/api-bid";
 import { and, eq, exists, ne } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { contracts } from "@/db/migrations/schema";
 import { contractBids } from "@/db/migrations/last_working_schema";
 import { inArray } from "drizzle-orm";
 import { parse } from "url";
-import { companyContractsView } from "@/db/views/company-contracts";
+import companyContractsView from "@/db/views/company-contracts";
 
 export async function GET(
 	_req: Request,
@@ -55,7 +55,7 @@ export async function PATCH(
 	});
 
 	if (!attemptBodyParse.success) {
-		console.log("/api/bids/[bidId] Error:", attemptBodyParse.error);
+		console.log("PATCH /api/bids/[bidId] Error:", attemptBodyParse.error);
 		return new Response("Error parsing request body.", { status: 400 });
 	}
 
@@ -112,10 +112,7 @@ export async function PUT(
 	});
 
 	if (!attemptBodyParse.success) {
-		console.log(
-			"/api/bids/[bidId]/[contractId] Error:",
-			attemptBodyParse.error
-		);
+		console.log("PUT /api/bids/[bidId] Error:", attemptBodyParse.error);
 		return new Response("Error parsing request body.", { status: 400 });
 	}
 

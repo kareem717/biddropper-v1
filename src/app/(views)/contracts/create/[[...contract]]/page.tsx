@@ -3,7 +3,7 @@ import CreateContractForm from "@/components/forms/create-contract";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { env } from "@/env.mjs";
-import { selectJobSchema } from "@/lib/validations/posts";
+import { selectJobSchema } from "@/lib/validations/posts/posts";
 import { z } from "zod";
 import { selectCompananyJobsSchema } from "@/lib/validations/companies";
 

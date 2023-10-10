@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { insertBidsSchema } from "@/lib/validations/posts/bids";
-import { insertContractSchema, insertJobSchema } from "../posts";
+import { insertContractSchema } from "../posts/contracts";
+import { insertJobSchema } from "../posts/jobs";
 
 export const updateBidSchema = z.object({
 	id: insertBidsSchema.shape.id,

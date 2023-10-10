@@ -1,5 +1,5 @@
 "use client";
-import { selectBidsSchema } from "@/lib/validations/posts";
+import { selectBidsSchema } from "@/lib/validations/posts/posts";
 import { InferModel } from "drizzle-orm";
 import { FC } from "react";
 import useSWR from "swr";
@@ -59,12 +59,10 @@ const BidCard: FC<BidCardProps> = ({
 			return `${years} year${suffix}`;
 		}
 	};
-console.log(
-	{
+	console.log({
 		acceptedBidId: id,
 		contractId,
-	}
-)
+	});
 	const handleAcceptedBid = async () => {
 		const res = await fetch("/api/posts/bids/accept", {
 			method: "PUT",

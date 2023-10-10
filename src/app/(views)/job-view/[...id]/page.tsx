@@ -4,7 +4,10 @@ import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import useSWR from "swr";
 
-import { selectJobSchema, selectMediaSchema } from "@/lib/validations/posts";
+import {
+	selectJobSchema,
+	selectMediaSchema,
+} from "@/lib/validations/posts/posts";
 import * as z from "zod";
 
 import { timeHorizons } from "@/config/time-horizons";

@@ -8,8 +8,8 @@ import { parse } from "url";
 import {
 	fetchBidsSchema,
 	createBidSchema,
-} from "@/lib/validations/api/api-bids";
-import { companyContractsView } from "@/db/views/company-contracts";
+} from "@/lib/validations/api/api-bid";
+import companyContractsView from "@/db/views/company-contracts";
 
 export async function POST(req: Request) {
 	const session = await getServerSession(authOptions);
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
 	const validParameters = fetchBidsSchema.safeParse(query);
 
 	if (!validParameters.success) {
-		console.log("/api/bids Error:", validParameters.error);
+		console.log("GET /api/bids Error:", validParameters.error);
 		return new Response("Invalid query parameters.", { status: 400 });
 	}
 

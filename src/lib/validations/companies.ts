@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { companies } from "@/db/migrations/schema";
 import * as z from "zod";
-import { selectJobSchema } from "./posts";
+import { selectJobSchema } from "./posts/jobs";
 import validator from "validator";
 export const insertCompanySchema = createInsertSchema(companies, {
 	id: z

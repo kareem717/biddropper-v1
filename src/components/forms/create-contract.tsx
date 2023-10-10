@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { createContractSchema } from "@/lib/validations/posts";
+import { createContractSchema } from "@/lib/validations/posts/posts";
 import { Icons } from "@/components/icons";
 import { redirect, useRouter } from "next/navigation";
 import {

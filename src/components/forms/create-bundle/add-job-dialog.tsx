@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { insertJobSchema } from "@/lib/validations/posts";
+import { insertJobSchema } from "@/lib/validations/posts/posts";
 import CurrencyInput from "@/components/currency-input";
 import useMultistepForm from "@/hooks/use-multistep-form";
 import { toast } from "sonner";

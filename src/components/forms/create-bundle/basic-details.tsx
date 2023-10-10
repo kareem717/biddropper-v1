@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertBundleSchema } from "@/lib/validations/posts";
+import { insertBundleSchema } from "@/lib/validations/posts/posts";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Icons } from "@/components/icons";
 

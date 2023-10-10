@@ -10,7 +10,7 @@ import { eq, sql } from "drizzle-orm";
 
 const qb = new QueryBuilder();
 
-export const companyContractsView = mysqlView("company_contracts_view").as(
+const companyContractsView = mysqlView("company_contracts_view").as(
 	qb
 		.select({
 			contractId: sql`contract_id`.as("contract_id"),
@@ -23,3 +23,5 @@ export const companyContractsView = mysqlView("company_contracts_view").as(
 		.innerJoin(contracts, eq(contracts.id, contractJobs.contractId))
 		.groupBy(contracts.id, companies.id)
 );
+
+export default companyContractsView;

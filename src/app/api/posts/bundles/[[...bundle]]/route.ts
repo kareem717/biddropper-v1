@@ -3,9 +3,9 @@ import { db } from "@/db";
 import {
 	createContractSchema,
 	insertContractSchema,
-} from "@/lib/validations/posts";
+} from "@/lib/validations/posts/posts";
 import { authOptions } from "@/lib/auth";
-import { insertAddressSchema } from "@/lib/validations/address";
+import { insertAddressSchema } from "@/lib/validations/misc/address";
 import { auth } from "@clerk/nextjs";
 // import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
@@ -56,17 +56,19 @@ export async function POST(req: Request) {
 				price: Number(reqBody.price),
 				endDate: reqBody.endDate,
 			} as any);
-	
+
 			// Insert contract jobs
 			await tx.insert(contractJobs).values(contractJobValues);
+		});
 
-		});
-		
-		return new Response(JSON.stringify({
-			id: newID,
-		}), {
-			status: 201,
-		});
+		return new Response(
+			JSON.stringify({
+				id: newID,
+			}),
+			{
+				status: 201,
+			}
+		);
 	} catch (err) {
 		return new Response(JSON.stringify(err), {
 			status: 400,

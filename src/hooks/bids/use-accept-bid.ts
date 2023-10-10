@@ -1,4 +1,4 @@
-import { APIAcceptBidQuerySchema } from "@/lib/validations/api/api-bids";
+import { APIAcceptBidQuerySchema } from "@/lib/validations/api/api-bid";
 import { useMutation } from "react-query";
 
 export const useAcceptBid = () => {
