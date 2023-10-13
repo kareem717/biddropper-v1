@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { jobs } from "@/db/migrations/schema";
 import * as z from "zod";
-import { insertIndustrySchema } from "../misc/industries";
+import { insertIndustrySchema } from "../references/industries";
 
 export const insertJobSchema = createInsertSchema(jobs, {
 	id: z

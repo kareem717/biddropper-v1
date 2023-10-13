@@ -4,7 +4,7 @@ import { Card } from "./ui/card";
 import { Icons } from "./icons";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { SelectAddress } from "@/lib/validations/misc/address";
+import { SelectAddress } from "@/lib/validations/references/address";
 
 interface ContactCardProps extends ComponentPropsWithoutRef<typeof Card> {
 	website: string;

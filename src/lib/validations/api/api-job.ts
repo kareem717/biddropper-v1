@@ -1,9 +1,9 @@
 import * as z from "zod";
 import { insertJobSchema } from "../posts/jobs";
-import { insertCompanySchema } from "../companies";
-import { insertMediaSchema } from "../posts/media";
+import { insertCompanySchema } from "@/lib/validations/entities/companies";
+import { insertMediaSchema } from "../references/media";
 import { fetchBidsSchema } from "./api-bid";
-import { insertUserSchema } from "../user";
+import { insertUserSchema } from "../entities/user";
 
 export const createJobSchema = z.object({
 	companyId: insertCompanySchema.shape.id.optional(),
@@ -32,18 +32,31 @@ export const fetchJobsQuerySchema = z
 		getInactive: fetchBidsSchema.shape.getInactive.optional(),
 	})
 	.superRefine((data, ctx) => {
-		console.log(data.fetchType, data.getInactive)
+		console.log(data.fetchType, data.getInactive);
 		if (data.fetchType === "minimal" && data.getInactive === true) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
-				message: "'getInactive' can only be included if 'fetchType' is either 'deep' or 'simple'",
+				message:
+					"'getInactive' can only be included if 'fetchType' is either 'deep' or 'simple'",
 			});
 		}
 
 		if (data.companyId !== undefined && data.userId !== undefined) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
-				message: "Only either 'companyId' or 'userId' can be passed, but not both",
+				message:
+					"Only either 'companyId' or 'userId' can be passed, but not both",
 			});
 		}
 	});
+
+export const updateJobSchema = insertJobSchema
+	.omit({ createdAt: true, updatedAt: true })
+	.extend({
+		newMedia: z.array(insertMediaSchema.omit({ id: true })).optional(),
+		removedMedia: z.array(z.string()).optional(),
+	});
+
+export const deleteJobQuerySchema = z.object({
+	jobId: insertJobSchema.shape.id,
+});

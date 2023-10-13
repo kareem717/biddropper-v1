@@ -2,14 +2,18 @@ import { db } from "@/db";
 import { insertContractSchema } from "@/lib/validations/posts/contracts";
 import {
 	createContractSchema,
+	deleteContractQuerySchema,
 	fetchContractsQuerySchema,
 	updateContractSchema,
 } from "@/lib/validations/api/api-contract";
 import { authOptions } from "@/lib/auth";
 import {
+	bids,
 	companies,
+	contractBids,
 	contractJobs,
 	contracts,
+	jobMedia,
 	jobs,
 	media,
 } from "@/db/migrations/schema";
@@ -198,15 +202,20 @@ export async function PATCH(req: Request) {
 	const { id, removedJobs, newJobs, ...updateValues } = attemptBodyParse.data;
 
 	//Make sure user owns the contract
-	const userOwnsContract = await db
-		.select()
-		.from(companyContractsView)
-		.where(eq(contracts.id, id))
-		.innerJoin(companies, eq(companies.ownerId, session.user.id))
-		.limit(1);
+	try {
+		const userOwnsContract = await db
+			.select()
+			.from(companyContractsView)
+			.where(eq(contracts.id, id))
+			.innerJoin(companies, eq(companies.ownerId, session.user.id))
+			.limit(1);
 
-	if (userOwnsContract.length < 1) {
-		return new Response("User does not own the contract.", { status: 401 });
+		if (userOwnsContract.length < 1) {
+			return new Response("User does not own the contract.", { status: 401 });
+		}
+	} catch (err) {
+		console.log("PATCH /api/contracts Error:", err);
+		return new Response("Error verifying contract ownership.", { status: 500 });
 	}
 
 	// Delete jobs
@@ -236,6 +245,8 @@ export async function PATCH(req: Request) {
 					jobId,
 				}))
 			);
+
+
 		} catch (err) {
 			console.log("PATCH /api/contracts Error:", err);
 			return new Response("An error occured while inserting new jobs.", {
@@ -253,4 +264,26 @@ export async function PATCH(req: Request) {
 	}
 
 	return new Response("Contract updated successfully.", { status: 200 });
+}
+
+export async function DELETE(req: Request) {
+	const { query } = parse(req.url, true);
+	const validParameters = deleteContractQuerySchema.safeParse(query);
+
+	if (!validParameters.success) {
+		console.log("DELETE /api/contracts Error:", validParameters.error);
+		return new Response("Invalid query parameters.", { status: 400 });
+	}
+
+	const { contractId } = validParameters.data;
+
+	try {
+		// Start a transaction
+		await db.update(contracts).set({ isActive: 0 }).where(eq(contracts.id, contractId));
+	} catch (err) {
+		console.log("DELETE /api/contracts Error:", err);
+		return new Response("Error deleting contract.", { status: 500 });
+	}
+
+	return new Response("Contract deleted successfully.", { status: 200 });
 }

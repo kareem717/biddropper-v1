@@ -40,7 +40,7 @@ import {
 import {
 	insertAddressSchema,
 	mapResponseToAddress,
-} from "@/lib/validations/misc/address";
+} from "@/lib/validations/references/address";
 import RadiusAddress, { RadiusAddressRef } from "../maps/radius-address-map";
 import { Textarea } from "../ui/textarea";
 import MultiSelectComboBox, {

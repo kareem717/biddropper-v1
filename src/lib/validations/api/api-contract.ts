@@ -3,7 +3,8 @@ import * as z from "zod";
 import { fetchBidsSchema } from "./api-bid";
 import { selectJobSchema } from "../posts/jobs";
 import { insertJobSchema } from "../posts/jobs";
-import { insertCompanySchema } from "../companies";
+import { insertCompanySchema } from "@/lib/validations/entities/companies";
+
 export const createContractSchema = z.object({
 	title: insertContractSchema.shape.title,
 	description: insertContractSchema.shape.description,
@@ -70,5 +71,10 @@ export const updateContractSchema = z.object({
 	description: createContractSchema.shape.description.optional(),
 });
 
+export const deleteContractQuerySchema = z.object({
+	contractId: insertContractSchema.shape.id,
+});
+
 export type APICreateContract = z.infer<typeof createContractSchema>;
 export type APIFetchContractsQuery = z.infer<typeof fetchContractsQuerySchema>;
+

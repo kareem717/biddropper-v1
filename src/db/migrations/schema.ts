@@ -101,6 +101,7 @@ export const bids = mysqlTable(
 			.default(sql`CURRENT_TIMESTAMP`)
 			.onUpdateNow(),
 		companyId: varchar("company_id", { length: 50 }).notNull(),
+		isActive: tinyint("is_active").default(1),
 	},
 	(table) => {
 		return {
@@ -133,6 +134,7 @@ export const companies = mysqlTable(
 		updatedAt: timestamp("updated_at", { mode: "date" })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.onUpdateNow(),
+		isActive: tinyint("is_active").default(1),
 	},
 	(table) => {
 		return {
@@ -166,38 +168,6 @@ export const companyJobs = mysqlTable(
 	(table) => {
 		return {
 			companyJobsCompanyIdJobId: primaryKey(table.companyId, table.jobId),
-		};
-	}
-);
-
-export const companyProjects = mysqlTable(
-	"company_projects",
-	{
-		companyId: varchar("company_id", { length: 50 }).notNull(),
-		projectId: varchar("project_id", { length: 50 }).notNull(),
-	},
-	(table) => {
-		return {
-			companyProjectsCompanyIdProjectId: primaryKey(
-				table.companyId,
-				table.projectId
-			),
-		};
-	}
-);
-
-export const companyReviews = mysqlTable(
-	"company_reviews",
-	{
-		companyId: varchar("company_id", { length: 50 }).notNull(),
-		reviewId: varchar("review_id", { length: 50 }).notNull(),
-	},
-	(table) => {
-		return {
-			companyReviewsCompanyIdReviewId: primaryKey(
-				table.companyId,
-				table.reviewId
-			),
 		};
 	}
 );
@@ -371,6 +341,8 @@ export const projects = mysqlTable(
 		updatedAt: timestamp("updated_at", { mode: "date" })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.onUpdateNow(),
+		companyId: varchar("company_id", { length: 50 }).notNull(),
+		isActive: tinyint("is_active").default(1),
 	},
 	(table) => {
 		return {
@@ -404,6 +376,8 @@ export const reviews = mysqlTable(
 			.onUpdateNow(),
 		details: varchar("details", { length: 1500 }).notNull(),
 		title: varchar("title", { length: 255 }).notNull(),
+		companyId: varchar("company_id", { length: 50 }).notNull(),
+		isActive: tinyint("is_active").default(1),
 	},
 	(table) => {
 		return {

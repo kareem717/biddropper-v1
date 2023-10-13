@@ -1,7 +1,10 @@
 import { db } from "@/db";
 import { authOptions } from "@/lib/auth";
 import {
+	bids,
 	companyJobs,
+	contractJobs,
+	jobBids,
 	jobMedia,
 	jobs,
 	media,
@@ -11,13 +14,15 @@ import { getServerSession } from "next-auth";
 import { parse } from "url";
 import {
 	createJobSchema,
+	deleteJobQuerySchema,
 	fetchJobsQuerySchema,
+	updateJobSchema,
 } from "@/lib/validations/api/api-job";
 import { industries } from "@/db/migrations/schema";
 import { InsertJob } from "@/lib/validations/posts/jobs";
-import { InsertMedia } from "@/lib/validations/posts/media";
+import { InsertMedia } from "@/lib/validations/references/media";
 import fullJobView from "@/db/views/full-job";
-import { eq, and, sql, exists } from "drizzle-orm";
+import { eq, and, sql, exists, or, inArray } from "drizzle-orm";
 
 // TODO: Test all endpoints
 export async function POST(req: Request) {
@@ -30,7 +35,7 @@ export async function POST(req: Request) {
 	let reqBody = await req.json();
 	const attemptBodyParse = createJobSchema.safeParse({
 		companyId: query.companyId,
-		jobs: reqBody.jobs,
+		jobs: reqBody.jobData,
 	});
 
 	if (!attemptBodyParse.success) {
@@ -42,14 +47,20 @@ export async function POST(req: Request) {
 
 	const { companyId, jobs: jobData } = attemptBodyParse.data;
 
-	// Get valid industry values
-	const industryValues = await db
-		.select({ value: industries.value })
-		.from(industries);
-
+	let industryValues: { value: string }[];
 	let newJobIds: string[] = [];
 	let newJobs: InsertJob[] = [];
 	let newMedia: Record<string, InsertMedia[]> = {};
+
+	try {
+		// Get valid industry values
+		industryValues = await db
+			.select({ value: industries.value })
+			.from(industries);
+	} catch (err) {
+		console.log("POST /api/jobs Error:", err);
+		return new Response("Error fetching industry values.", { status: 500 });
+	}
 
 	try {
 		const validIndustryValues = new Set(
@@ -64,7 +75,7 @@ export async function POST(req: Request) {
 		}
 
 		newJobs = jobData.map((job) => {
-			var newId = `job_${crypto.randomUUID()}`;
+			const newId = `job_${crypto.randomUUID()}`;
 
 			newJobIds.push(newId);
 
@@ -146,9 +157,8 @@ export async function GET(req: Request) {
 
 	let queryBuilder;
 
-	//TODO: implemnt job and company filteration
 	switch (fetchType) {
-		// Simple fetch obly gets the job data
+		// Simple fetch only gets the job data
 		case "simple":
 			queryBuilder = db
 				.select()
@@ -157,7 +167,7 @@ export async function GET(req: Request) {
 
 			break;
 
-		// Deep fetch gets the  job data, and media data
+		// Deep fetch gets the job data, and media data
 		case "deep":
 			queryBuilder = db
 				.select()
@@ -183,7 +193,6 @@ export async function GET(req: Request) {
 		if (!getInactive) {
 			queryBuilder = queryBuilder.where(eq(jobs.isActive, 1));
 		}
-
 	}
 
 	if (companyId && !userId) {
@@ -232,7 +241,7 @@ export async function GET(req: Request) {
 	}
 
 	if (jobId) {
-		queryBuilder = queryBuilder.where(eq(jobs.id, jobId));
+		queryBuilder = queryBuilder.where(eq(fullJobView.jobId, jobId));
 	}
 
 	try {
@@ -246,4 +255,182 @@ export async function GET(req: Request) {
 			status: 500,
 		});
 	}
+}
+
+export async function PATCH(req: Request) {
+	const { query } = parse(req.url, true);
+
+	const session = await getServerSession(authOptions);
+	if (!session) {
+		return new Response("Unauthorized", { status: 401 });
+	}
+
+	const reqBody = await req.json();
+
+	const attemptBodyParse = updateJobSchema.safeParse({
+		id: query.id,
+		...reqBody,
+	});
+
+	if (!attemptBodyParse.success) {
+		console.log("PATCH /api/jobs Error:", attemptBodyParse.error);
+		return new Response("Error parsing request body or query parameters.", {
+			status: 400,
+		});
+	}
+
+	const { id, removedMedia, newMedia, ...updateValues } = attemptBodyParse.data;
+
+	//Make sure user or company owns the contract
+	//TODO test this
+	try {
+		const userOwnsJob = await db
+			.select()
+			.from(jobs)
+			.where(
+				or(
+					exists(
+						db
+							.select()
+							.from(userJobs)
+							.where(
+								and(
+									eq(userJobs.userId, session.user.id),
+									eq(userJobs.jobId, id)
+								)
+							)
+					),
+					exists(
+						db
+							.select()
+							.from(companyJobs)
+							.where(
+								and(
+									inArray(
+										companyJobs.companyId,
+										session.user.ownedCompanies.map((company) => company.id)
+									),
+									eq(companyJobs.jobId, id)
+								)
+							)
+					)
+				)
+			)
+			.limit(1);
+
+		if (userOwnsJob.length < 1) {
+			return new Response(
+				"The user or their companies don't not own the job.",
+				{
+					status: 401,
+				}
+			);
+		}
+	} catch (err) {
+		console.log("PATCH /api/jobs Error:", err);
+		return new Response("An error occured while checking job ownership.", {
+			status: 500,
+		});
+	}
+
+	// Delete media
+	if (removedMedia) {
+		try {
+			await db.transaction(async (tx) => {
+				tx.delete(jobMedia).where(inArray(jobMedia.mediaId, removedMedia));
+			});
+		} catch (err) {
+			console.log("PATCH /api/jobs Error:", err);
+			return new Response("Error deleting job media.", { status: 500 });
+		}
+	}
+
+	// Insert media
+	if (newMedia) {
+		try {
+			let newMediaIds: string[];
+
+			await db.transaction(async (tx) => {
+				// insert new media
+				tx.insert(media).values(
+					newMedia.map((media) => {
+						const newId = `media_${crypto.randomUUID()}`;
+
+						newMediaIds.push(newId);
+
+						return {
+							...media,
+							id: newId,
+						};
+					})
+				);
+
+				// Link  new media to job
+				tx.insert(jobMedia).values(
+					newMediaIds.map((mediaId) => ({
+						jobId: id,
+						mediaId,
+					}))
+				);
+			});
+		} catch (err) {
+			console.log("PATCH /api/jobs Error:", err);
+			return new Response("An error occured while inserting new media.", {
+				status: 400,
+			});
+		}
+	}
+
+	// Update contract
+	try {
+		await db.update(jobs).set(updateValues).where(eq(jobs.id, id));
+	} catch (err) {
+		console.log("PATCH /api/jobs Error:", err);
+		return new Response("Error updating job.", { status: 500 });
+	}
+
+	return new Response("Job updated successfully.", { status: 200 });
+}
+
+export async function DELETE(req: Request) {
+	const { query } = parse(req.url, true);
+
+	const session = await getServerSession(authOptions);
+	if (!session) {
+		return new Response("Unauthorized", { status: 401 });
+	}
+
+	const validParams = deleteJobQuerySchema.safeParse(query);
+	if (!validParams.success) {
+		return new Response("Invalid parameters.", { status: 400 });
+	}
+
+	const jobId = validParams.data.jobId;
+
+	try {
+		const userOwnsJob = await db
+			.select()
+			.from(userJobs)
+			.where(eq(userJobs.jobId, jobId));
+		const companyOwnsJob = await db
+			.select()
+			.from(companyJobs)
+			.where(eq(companyJobs.jobId, jobId));
+
+		if (!userOwnsJob.length && !companyOwnsJob.length) {
+			return new Response("Unauthorized", { status: 400 });
+		}
+	} catch (err) {
+		console.log("DELETE /api/jobs Error:", err);
+		return new Response("Error fetching job ownership.", { status: 500 });
+	}
+
+	try {
+		await db.update(jobs).set({ isActive: 0 }).where(eq(jobs.id, jobId));
+	} catch (err) {
+		console.log("DELETE /api/jobs Error:", err);
+		return new Response("Error deleting job.", { status: 500 });
+	}
+
+	return new Response("Job deleted successfully.", { status: 200 });
 }

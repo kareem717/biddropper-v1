@@ -1,6 +1,7 @@
 import { reviews } from "@/db/migrations/schema";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import * as z from "zod";
+import { insertUserSchema } from "../entities/user";
 
 export const insertReviewSchema = createInsertSchema(reviews, {
 	id: z
@@ -11,6 +12,7 @@ export const insertReviewSchema = createInsertSchema(reviews, {
 		.regex(/^rev_[A-Za-z0-9\-]+$/, {
 			message: "ID must be in the format of rev_[A-Za-z0-9-]+",
 		}),
+	authorId: insertUserSchema.shape.id,
 });
 
 export const selectReviewSchema = createSelectSchema(reviews);

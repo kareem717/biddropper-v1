@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { industries as dbIndustries } from "@/db/migrations/schema";
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
 	console.log("GET /api/industries");
 	const industries = await db
 		.select({

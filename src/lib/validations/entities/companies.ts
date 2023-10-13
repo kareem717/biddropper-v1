@@ -1,8 +1,9 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { companies } from "@/db/migrations/schema";
 import * as z from "zod";
-import { selectJobSchema } from "./posts/jobs";
+import { selectJobSchema } from "../posts/jobs";
 import validator from "validator";
+import { insertMediaSchema } from "../references/media";
 export const insertCompanySchema = createInsertSchema(companies, {
 	id: z
 		.string()
@@ -44,6 +45,8 @@ export const insertCompanySchema = createInsertSchema(companies, {
 		.refine((val) => validator.isMobilePhone(val), {
 			message: "Phone number must be a valid phone number",
 		}),
+	imageId: insertMediaSchema.shape.id.optional(),
+
 });
 
 export const selectCompanySchema = createSelectSchema(companies, {

@@ -65,6 +65,10 @@ export const fetchBidsSchema = z.object({
 			message: "The 'getInactive' parameter must be a boolean",
 		})
 		.transform((value) => value === "true"),
+	bidId: insertBidsSchema.shape.id.optional(),
+	companyId: insertBidsSchema.shape.companyId.optional(),
+	contractId: insertContractSchema.shape.id.optional(),
+	jobId: insertJobSchema.shape.id.optional(),
 });
 
 export const createBidSchema = insertBidsSchema
@@ -83,6 +87,10 @@ export const createBidSchema = insertBidsSchema
 			path: ["jobId", "contractId"], // specify the path to the fields in the data object
 		}
 	);
+
+export const deleteBidQuerySchema = z.object({
+	bidId: insertBidsSchema.shape.id,
+});
 
 export type APIUpdateBidSchema = z.infer<typeof updateBidSchema>;
 export type APIAcceptBidQuerySchema = z.infer<typeof acceptBidQuerySchema>;

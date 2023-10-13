@@ -9,7 +9,7 @@ export const insertProjectSchema = createInsertSchema(projects, {
 			message: "ID must be at most 50 characters long",
 		})
 		.regex(/^proj_[A-Za-z0-9\-]+$/, {
-			message: "ID must be in the format of project_[A-Za-z0-9-]+",
+			message: "ID must be in the format of proj_[A-Za-z0-9-]+",
 		}),
 	title: z
 		.string()

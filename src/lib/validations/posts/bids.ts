@@ -1,6 +1,6 @@
 import { createInsertSchema } from "drizzle-zod";
 import { bids } from "@/db/migrations/schema";
-import { insertCompanySchema } from "../companies";
+import { insertCompanySchema } from "@/lib/validations/entities/companies";
 import * as z from "zod";
 
 export const insertBidsSchema = createInsertSchema(bids, {

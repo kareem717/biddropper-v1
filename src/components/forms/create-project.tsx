@@ -34,7 +34,7 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { toast } from "sonner";
-import { insertUserSchema } from "@/lib/validations/user";
+import { insertUserSchema } from "@/lib/validations/entities/user";
 
 const formSchema = z.object({
 	title: insertProjectSchema.shape.title,
