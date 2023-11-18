@@ -1,6 +1,6 @@
 "use client";
 import { ComponentPropsWithoutRef, useState } from "react";
-import { Button, buttonVariants } from "./ui/button";
+import { Button, buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
 import {
 	Dialog,
@@ -11,7 +11,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Icons } from "./icons";
+import { Icons } from "../icons";
 import { toast } from "sonner";
 import { env } from "@/env.mjs";
 import {

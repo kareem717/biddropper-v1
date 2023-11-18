@@ -14,7 +14,7 @@ import { timeHorizons } from "@/config/time-horizons";
 import { propertyTypes } from "@/config/property-types";
 import { industries } from "@/config/industries";
 import { toast } from "sonner";
-import BigJobCard from "@/components/job-cards/big";
+import BigJobCard from "@/components/cards/job-cards/big";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 const fetcher = (url: string, id: string) =>

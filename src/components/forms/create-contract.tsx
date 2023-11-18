@@ -34,7 +34,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "../ui/input";
 import type { SelectedCompanyJobs } from "@/lib/validations/companies";
-import JobCard from "../job-cards/small";
+import JobCard from "../cards/job-cards/small";
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "../ui/scroll-area";
 import { Calendar } from "../ui/calendar";

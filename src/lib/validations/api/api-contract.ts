@@ -54,10 +54,11 @@ export const fetchContractsQuerySchema = z
 					"The 'fetchType' parameter must be either 'deep', 'simple', 'minimal",
 			}),
 		getInactive: fetchBidsSchema.shape.getInactive.optional(),
+		cursor: insertContractSchema.shape.id.optional(),
 	})
-	.refine((data) => data.fetchType === "minimal" && data.getInactive === true, {
+	.refine((data) => !(data.cursor && (data.companyId || data.contractId)), {
 		message:
-			"'getInactive' can only be included if 'fetchType' is either 'deep' or 'simple'",
+			"If 'cursor' is passed, then 'companyId' and 'contractId' can't be passed",
 	});
 
 export const updateContractSchema = z.object({
@@ -75,6 +76,6 @@ export const deleteContractQuerySchema = z.object({
 	contractId: insertContractSchema.shape.id,
 });
 
+
 export type APICreateContract = z.infer<typeof createContractSchema>;
 export type APIFetchContractsQuery = z.infer<typeof fetchContractsQuerySchema>;
-

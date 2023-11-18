@@ -1,1 +1,3 @@
 uodate all get endpoints to account for soft delete conversion
+
+encrypt query params

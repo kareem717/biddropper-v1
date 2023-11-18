@@ -1,4 +1,4 @@
-import BidCard from "@/components/bid-cards";
+import BidCard from "@/components/cards/bid-cards/bid-cards";
 import { db } from "@/db";
 import {
 	companies,
@@ -81,14 +81,9 @@ export default async function Dashboard() {
 	const allContracts = Object.values(contractBidsClean).map((company) => {
 		// console.log(company.contracts);
 		company.contracts.map((contract: any) => {
-      console.log(contract.bids);
+			console.log(contract.bids);
 		});
 	});
 	console.log(allContracts);
-	return (
-		<>
-
-			sdsd
-		</>
-	);
+	return <>sdsd</>;
 }

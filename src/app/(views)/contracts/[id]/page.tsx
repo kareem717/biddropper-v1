@@ -10,12 +10,12 @@ import {
 	companyJobs,
 	jobs,
 	contractBids,
-	bids
+	bids,
 } from "@/db/migrations/schema";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import ContractCard from "@/components/contract-cards/big";
+import ContractCard from "@/components/cards/contract-cards/big";
 
 //todo: idk if this is the best way to do this, but i think it is
 export const revalidate = 5;
@@ -118,7 +118,6 @@ export default async function ContractPage({
 		.innerJoin(bids, eq(bids.id, contractBids.bidId));
 
 	console.log(allContractBids);
-
 
 	return (
 		<div className="w-full h-screen bg-[url('/images/wave.svg')] bg-cover relative xl:bg-bottom">

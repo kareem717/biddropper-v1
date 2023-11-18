@@ -10,6 +10,7 @@ import { authOptions } from "@/lib/auth";
 import {
 	bids,
 	companies,
+	companyJobs,
 	contractBids,
 	contractJobs,
 	contracts,
@@ -17,7 +18,17 @@ import {
 	jobs,
 	media,
 } from "@/db/migrations/schema";
-import { and, eq, inArray, exists, sql } from "drizzle-orm";
+import {
+	and,
+	eq,
+	inArray,
+	exists,
+	sql,
+	gt,
+	gte,
+	or,
+	isNull,
+} from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { parse } from "url";
 import fullContractView from "@/db/views/full-contract";
@@ -90,7 +101,7 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
-
+	console.log(query);
 	const attemptBodyParse = fetchContractsQuerySchema.safeParse(query);
 
 	if (!attemptBodyParse.success) {
@@ -98,7 +109,7 @@ export async function GET(req: Request) {
 		return new Response("Error parsing request body.", { status: 400 });
 	}
 
-	const { companyId, contractId, fetchType, getInactive, limit } =
+	const { companyId, contractId, fetchType, getInactive, limit, cursor } =
 		attemptBodyParse.data;
 
 	let queryBuilder;
@@ -107,26 +118,51 @@ export async function GET(req: Request) {
 		// Simple fetch obly gets the contract data
 		case "simple":
 			queryBuilder = db
-				.select({ contracts })
+				.selectDistinct({
+					contracts,
+					bidCount: sql`COUNT(distinct ${contractBids.bidId})`,
+					jobCount: sql`COUNT(distinct ${contractJobs.jobId})`,
+					companyCount: sql`COUNT(distinct ${companyJobs.companyId})`,
+				})
 				.from(fullContractView)
-				.innerJoin(contracts, eq(contracts.id, fullContractView.contractId));
+				.innerJoin(contracts, eq(contracts.id, fullContractView.contractId))
+				.leftJoin(contractBids, eq(contractBids.contractId, contracts.id))
+				.innerJoin(contractJobs, eq(contractJobs.contractId, contracts.id))
+				.innerJoin(companyJobs, eq(companyJobs.jobId, contractJobs.jobId))
+				.orderBy(contracts.id)
+				.groupBy(contracts.id);
 
 			break;
 
 		// Deep fetch gets the contract data, job data, and media data
 		case "deep":
 			queryBuilder = db
-				.select()
+				.select({
+					contracts,
+					jobs,
+					media,
+					bids,
+				})
 				.from(fullContractView)
 				.innerJoin(contracts, eq(contracts.id, fullContractView.contractId))
 				.innerJoin(jobs, eq(jobs.id, fullContractView.jobId))
-				.leftJoin(media, eq(media.id, fullContractView.mediaId));
+				.leftJoin(media, eq(media.id, fullContractView.mediaId))
+				.leftJoin(contractBids, eq(contractBids.contractId, contracts.id))
+				.leftJoin(bids, eq(bids.id, contractBids.bidId))
+				.orderBy(contracts.id);
 
 			break;
 
 		// Minimal fetch only gets the data provided by the view
 		case "minimal":
-			queryBuilder = db.select().from(fullContractView);
+			queryBuilder = db
+				.select({
+					contracts: { id: fullContractView.contractId },
+					jobs: fullContractView.jobId,
+					media: fullContractView.mediaId,
+				})
+				.from(fullContractView)
+				.orderBy(contracts.id);
 			break;
 	}
 
@@ -137,7 +173,12 @@ export async function GET(req: Request) {
 	// Apply filtering to query if needed
 	if (fetchType !== "minimal") {
 		if (!getInactive) {
-			queryBuilder = queryBuilder.where(eq(contracts.isActive, 1));
+			queryBuilder = queryBuilder.where(
+				and(
+					eq(contracts.isActive, 1),
+					or(gt(contracts.endDate, sql`NOW()`), isNull(contracts.endDate))
+				)
+			);
 		}
 
 		if (contractId) {
@@ -164,11 +205,70 @@ export async function GET(req: Request) {
 		);
 	}
 
-	try {
-		// Limit the number of results (defaults to 25)
-		const res = await queryBuilder.limit(contractId ? 1 : limit);
+	if (cursor) {
+		queryBuilder = queryBuilder.where(gte(contracts.id, cursor));
+	}
 
-		return new Response(JSON.stringify(res), { status: 200 });
+	try {
+		console.log(queryBuilder.limit(contractId ? 1 : limit + 1).toSQL());
+		// Limit the number of results (defaults to 25)
+
+		let dbQuery = await queryBuilder.limit(contractId ? 1 : limit + 1);
+		let nextCursor = null;
+
+		if (!contractId) {
+			if (dbQuery.length > limit) {
+				console.log(limit, dbQuery.length);
+				nextCursor = dbQuery[dbQuery.length - 1]?.contracts.id;
+				dbQuery = dbQuery.slice(0, -1);
+			}
+		}
+
+		console.log(dbQuery);
+
+		// @ts-ignore
+		const res = dbQuery.reduce((acc: any, curr: any) => {
+			console.log(acc, curr);
+
+			// If the contract doesn't exist, create it
+			if (!acc.find((contract: any) => contract.id === curr.contracts.id)) {
+				// console.log("Creating contract");
+				acc.push({
+					...curr.contracts,
+					...curr,
+					jobs: curr.jobs ? [curr.jobs] : [],
+					media: curr.media ? [curr.media] : [],
+					bids: curr.bids ? [curr.bids] : [],
+				});
+			} else {
+				// If the contract exists, add the job and media
+				const contractIndex = acc.findIndex(
+					(contract: any) => contract.id === curr.contracts.id
+				);
+
+				if (curr.jobs) {
+					acc[contractIndex].jobs.push(curr.jobs);
+				}
+
+				if (curr.media) {
+					acc[contractIndex].media.push(curr.media);
+				}
+
+				if (curr.bids) {
+					acc[contractIndex].bids.push(curr.bids);
+				}
+			}
+
+			return acc;
+		}, []);
+
+		return new Response(
+			JSON.stringify({
+				data: res,
+				nextCursor,
+			}),
+			{ status: 200 }
+		);
 	} catch (err) {
 		console.log("GET /api/contracts Error:", err);
 		return new Response("An error occured fetching the contract(s)", {
@@ -245,8 +345,6 @@ export async function PATCH(req: Request) {
 					jobId,
 				}))
 			);
-
-
 		} catch (err) {
 			console.log("PATCH /api/contracts Error:", err);
 			return new Response("An error occured while inserting new jobs.", {
@@ -279,7 +377,10 @@ export async function DELETE(req: Request) {
 
 	try {
 		// Start a transaction
-		await db.update(contracts).set({ isActive: 0 }).where(eq(contracts.id, contractId));
+		await db
+			.update(contracts)
+			.set({ isActive: 0 })
+			.where(eq(contracts.id, contractId));
 	} catch (err) {
 		console.log("DELETE /api/contracts Error:", err);
 		return new Response("Error deleting contract.", { status: 500 });

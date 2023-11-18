@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { format } from "date-fns";
 import BadgeTooltip from "@/components/badge-tooltip";
-import { Button, buttonVariants } from "./ui/button";
+import { Button, buttonVariants } from "../../ui/button";
 import Link from "next/link";
 import { toast } from "sonner";
 interface BidCardProps {

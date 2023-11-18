@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
 import { QueryClient, QueryClientProvider } from "react-query";
-import AuthSessionProvider from "@/components/auth-session-provider";
+import AuthSessionProvider from "@/components/providers/auth-session-provider";
 export default function CreateJob() {
 	const queryClient = new QueryClient();
 

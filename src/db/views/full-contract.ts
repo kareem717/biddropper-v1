@@ -12,7 +12,7 @@ const fullContractView = mysqlView("full_contract_view").as(
 	qb
 		.select({
 			contractId: sql`contract_id`.as("contract_id"),
-			jobId: sql`job_id`.as("jobId"),
+			jobId: sql`job_id`.as("job_id"),
 			mediaId: sql`media_id`.as("media_id"),
 		})
 		.from(fullJobView)

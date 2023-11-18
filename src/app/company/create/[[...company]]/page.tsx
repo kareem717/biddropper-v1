@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 import { env } from "@/env.mjs";
-import AuthSessionProvider from "@/components/auth-session-provider";
+import AuthSessionProvider from "@/components/providers/auth-session-provider";
 
 import CreateCompanyForm from "@/components/forms/create-company";
 

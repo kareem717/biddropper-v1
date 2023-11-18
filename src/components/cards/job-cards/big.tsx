@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import BidButton from "@/components/bid-button";
+import BidButton from "@/components/bid-buttons";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";

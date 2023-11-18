@@ -8,17 +8,17 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import BidButton from "@/components/bid-button";
+import BidButton from "@/components/bid-buttons";
 import * as z from "zod";
-import { selectJobSchema } from "@/lib/validations/posts/posts";
-import { Button } from "../ui/button";
+import { selectJobSchema } from "@/lib/validations/posts/jobs";
+import { Button } from "../../ui/button";
 import { toast } from "sonner";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { Label } from "../ui/label";
-import PieChart from "../pie-chart";
+import { Label } from "../../ui/label";
+import PieChart from "../../pie-chart";
 import { format } from "date-fns";
 import JobCard from "../job-cards/small";
-import BadgeTooltip from "../badge-tooltip";
+import BadgeTooltip from "../../badge-tooltip";
 
 //TODO: idk why scroll areas dont work, implement and get rid of the overflow-auto scroll bars!!
 interface ContractCardProps extends ComponentPropsWithoutRef<typeof Card> {

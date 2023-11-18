@@ -15,8 +15,8 @@ import {
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import ContractCard from "@/components/contract-cards/big";
-import BidCard from "@/components/bid-cards";
+import ContractCard from "@/components/cards/contract-cards/big";
+import BidCard from "@/components/cards/bid-cards/bid-cards";
 
 //todo: idk if this is the best way to do this, but i think it is
 export const revalidate = 5;
@@ -84,7 +84,7 @@ export default async function ContractPage({
 	return (
 		<div className="w-full h-screen bg-[url('/images/wave.svg')] bg-cover relative xl:bg-bottom">
 			{allContractBids.map((bidObj) => {
-        const bid = bidObj.bids;
+				const bid = bidObj.bids;
 				return (
 					<BidCard
 						key={bid.id}
@@ -93,7 +93,7 @@ export default async function ContractPage({
 						status={bid.status}
 						createdAt={bid.createdAt as any}
 						biddingCompanyId={bid.companyId}
-            contractId={params.id}
+						contractId={params.id}
 					/>
 				);
 			})}

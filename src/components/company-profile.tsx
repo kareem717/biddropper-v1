@@ -3,12 +3,12 @@ import { FC } from "react";
 import { Button, buttonVariants } from "./ui/button";
 import Link from "next/link";
 import { AspectRatio } from "./ui/aspect-ratio";
-import RatingSummary from "./rating-summary-card";
+import RatingSummary from "./cards/rating-summary-card";
 import useSWR from "swr";
-import ContactCard from "./contact-card";
+import ContactCard from "./cards/contact-card";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import ReviewCard from "./review-card";
+import ReviewCard from "./cards/review-card";
 import {
 	SelectReview,
 	selectReviewSchema,

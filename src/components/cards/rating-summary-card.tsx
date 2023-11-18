@@ -1,8 +1,8 @@
 import { ComponentPropsWithoutRef, FC } from "react";
 import StarRating from "react-stars";
-import { Progress } from "./ui/progress";
+import { Progress } from "../ui/progress";
 import { SelectReview } from "@/lib/validations/posts/reviews";
-import { Card } from "./ui/card";
+import { Card } from "../ui/card";
 import {
 	Tooltip,
 	TooltipContent,
@@ -10,7 +10,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Link from "next/link";
-import { buttonVariants } from "./ui/button";
+import { buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
 interface RatingSummaryProps extends ComponentPropsWithoutRef<typeof Card> {
 	reviews: SelectReview[];

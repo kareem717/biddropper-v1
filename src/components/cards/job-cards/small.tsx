@@ -2,15 +2,11 @@
 import { useTheme } from "next-themes";
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer } from "recharts";
 
-import { useConfig } from "@/hooks/use-config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { themes } from "@/components/themes";
 import { FC } from "react";
-// import { industries } from "@/config/industries";
-import BadgeTooltip from "../badge-tooltip";
+import BadgeTooltip from "../../badge-tooltip";
 import { timeHorizons } from "@/config/time-horizons";
 import { propertyTypes } from "@/config/property-types";
-import { Icons } from "../icons";
 import Link from "next/link";
 import useIndustries from "@/hooks/use-industries";
 
@@ -37,7 +33,7 @@ const JobCard: FC<JobCardProps> = ({
 	);
 
 	const { industries, isLoading, isError } = useIndustries();
-	
+
 	if (isLoading) {
 		return <div>Loading...</div>;
 	}

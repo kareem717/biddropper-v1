@@ -1,7 +1,9 @@
+'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FC } from "react";
-import BadgeTooltip from "../badge-tooltip";
+import BadgeTooltip from "../../badge-tooltip";
 import Link from "next/link";
+import { useFetchContracts } from "@/hooks/api/contracts/use-fetch-contracts";
 
 interface ContractCardProps {
 	id: string;
@@ -15,7 +17,7 @@ interface ContractCardProps {
 	companiesInContract: number;
 }
 
-const ContractCard: FC<ContractCardProps> = async ({
+const ContractCard: FC<ContractCardProps> = ({
 	id,
 	title,
 	isActive,
@@ -31,17 +33,23 @@ const ContractCard: FC<ContractCardProps> = async ({
 		maximumFractionDigits: 4,
 	});
 
+	
+	const contractQuery = useFetchContracts({
+		limit:3, fetchType: "simple"
+	})
+
+
 	const formattedContractAge = (createdAt: Date) => {
-		const contractAge = Math.floor(
-			(new Date().getTime() - new Date(createdAt).getTime()) /
-				1000 /
-				60 /
-				60 /
-				24
+		const contractAgeHours = Math.floor(
+			(new Date().getTime() - new Date(createdAt).getTime()) / 1000 / 60 / 60
 		);
+		const contractAge = Math.floor(contractAgeHours / 24);
+
 		const suffix = contractAge > 1 ? "s" : "";
 		if (contractAge < 1) {
-			return "<1 day";
+			return contractAgeHours < 1
+				? "less than an hour"
+				: `${contractAgeHours} hour${contractAgeHours > 1 ? "s" : ""}`;
 		} else if (contractAge < 7) {
 			return `${contractAge} day${suffix}`;
 		} else if (contractAge < 30) {
@@ -65,9 +73,7 @@ const ContractCard: FC<ContractCardProps> = async ({
 					</Link>
 				</CardTitle>
 			</CardHeader>
-			<CardContent
-				className="mt-4 flex justify-between min-h-[80px]"
-			>
+			<CardContent className="mt-4 flex justify-between min-h-[80px]">
 				<div className="flex flex-wrap gap-2">
 					<BadgeTooltip
 						className="hover:-translate-y-0.5 duration-300"
