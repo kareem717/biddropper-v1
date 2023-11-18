@@ -1,12 +1,22 @@
-'use client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	CardFooter,
+} from "@/components/ui/card";
 import { FC } from "react";
-import BadgeTooltip from "../../badge-tooltip";
 import Link from "next/link";
 import { useFetchContracts } from "@/hooks/api/contracts/use-fetch-contracts";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface ContractCardProps {
 	id: string;
+	details: string;
 	isActive: boolean;
 	createdAt: Date;
 	title: string;
@@ -22,22 +32,26 @@ const ContractCard: FC<ContractCardProps> = ({
 	title,
 	isActive,
 	price,
+	details,
 	endDate,
 	totalJobs,
 	totalBids,
 	createdAt,
-	companiesInContract,
 }) => {
-	const formattedPrice = Number(price).toLocaleString(undefined, {
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 4,
-	});
+	const formattedPrice = Number(price)
+		.toLocaleString(undefined, {
+			style: "currency",
+			minimumFractionDigits: 0,
+			maximumFractionDigits: 4,
+			currency: "CAD",
 
-	
+		})
+		.replace(/,/g, " ");
+
 	const contractQuery = useFetchContracts({
-		limit:3, fetchType: "simple"
-	})
-
+		limit: 3,
+		fetchType: "simple",
+	});
 
 	const formattedContractAge = (createdAt: Date) => {
 		const contractAgeHours = Math.floor(
@@ -45,136 +59,90 @@ const ContractCard: FC<ContractCardProps> = ({
 		);
 		const contractAge = Math.floor(contractAgeHours / 24);
 
-		const suffix = contractAge > 1 ? "s" : "";
-		if (contractAge < 1) {
-			return contractAgeHours < 1
-				? "less than an hour"
-				: `${contractAgeHours} hour${contractAgeHours > 1 ? "s" : ""}`;
-		} else if (contractAge < 7) {
-			return `${contractAge} day${suffix}`;
-		} else if (contractAge < 30) {
-			const weeks = Math.floor(contractAge / 7);
-			return `${weeks} week${suffix}`;
-		} else if (contractAge < 365) {
-			const months = Math.floor(contractAge / 30);
-			return `${months} month${suffix}`;
-		} else {
-			const years = Math.floor(contractAge / 365);
-			return `${years} year${suffix}`;
+		switch (true) {
+			case contractAge < 1:
+				return contractAgeHours < 1
+					? "less than an hour"
+					: `${contractAgeHours} hour${contractAgeHours > 1 ? "s" : ""}`;
+			case contractAge < 7:
+				var suffix = contractAge > 1 ? "s" : "";
+				return `${contractAge} day${suffix}`;
+			case contractAge < 30:
+				const weeks = Math.floor(contractAge / 7);
+				var suffix = weeks > 1 ? "s" : "";
+
+				return `${weeks} week${suffix}`;
+			case contractAge < 365:
+				const months = Math.floor(contractAge / 30);
+				var suffix = months > 1 ? "s" : "";
+
+				return `${months} month${suffix}`;
+			default:
+				const years = Math.floor(contractAge / 365);
+				var suffix = years > 1 ? "s" : "";
+
+				return `${years} year${suffix}`;
 		}
 	};
 
 	return (
-		<Card className="group hover:bg-gray-700 hover:bg-opacity-10 ease-in-out w-full">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-base font-bold hover:opacity-80 duration-200 ease-in-out cursor-pointer ">
-					<Link href={`/contracts/${id}`} className="capitalize">
-						{title}
-					</Link>
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="mt-4 flex justify-between min-h-[80px]">
-				<div className="flex flex-wrap gap-2">
-					<BadgeTooltip
-						className="hover:-translate-y-0.5 duration-300"
-						tooltipProps={{
-							delayDuration: 300,
-						}}
-						label={isActive ? "Active" : "Inactive"}
-						tooltipContent={
-							<p>
-								{isActive
-									? "This listing is active"
-									: "This listing is no longer active"}
-							</p>
-						}
-					/>
-
-					<BadgeTooltip
-						className="hover:-translate-y-0.5 duration-300"
-						tooltipProps={{
-							delayDuration: 300,
-						}}
-						label={`$${formattedPrice}`}
-						tooltipContent={
-							<p>
-								{`This listing has a minimum bid price of $${formattedPrice}`}
-							</p>
-						}
-					/>
-
-					<BadgeTooltip
-						className="hover:-translate-y-0.5 duration-300"
-						tooltipProps={{
-							delayDuration: 300,
-						}}
-						label={`${formattedContractAge(createdAt)} ago`}
-						tooltipContent={
-							<p>
-								This listing was created {formattedContractAge(createdAt)} ago
-							</p>
-						}
-					/>
+		<div className="flex flex-col md:flex-row justify-center items-center">
+			<Card className="w-full max-w-md mx-2 md:mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-md border-2 border-gray-200 hover:border-gray-400 hover:shadow-lg transition-all duration-500 ease-in-out">
+				<CardHeader className="m-4">
+					<CardTitle className="text-xl font-semibold">
+						<Link href={`/contracts/${id}`} className="capitalize">
+							{title}
+						</Link>
+					</CardTitle>
+				</CardHeader>
+				<CardContent className="m-4">
+					<p className="text-sm text-gray-500 overflow-ellipsis overflow-hidden">
+						{details}
+					</p>
+					<div className="flex items-center mt-2 text-sm text-gray-500">
+						<Icons.calendar className="h-5 w-5 mr-2 text-gray-400" />
+						<p>Created {formattedContractAge(createdAt)} ago</p>
+					</div>
 
 					{endDate && (
-						<BadgeTooltip
-							className="hover:-translate-y-0.5 duration-300"
-							tooltipProps={{
-								delayDuration: 300,
-							}}
-							label={`Ends in ${formattedContractAge(endDate)}`}
-							tooltipContent={
-								<p>
-									This listing will expire in {formattedContractAge(endDate)}
-								</p>
-							}
-						/>
+						<div className="flex items-center mt-2 text-sm text-gray-500">
+							<Icons.calendarX className="h-5 w-5 mr-2 text-gray-400" />
+							<p>Expires on {format(new Date(endDate), 'MM/dd/yyyy')}</p>
+						</div>
 					)}
 
-					<BadgeTooltip
-						className="hover:-translate-y-0.5 duration-300"
-						tooltipProps={{
-							delayDuration: 300,
-						}}
-						label={`${totalJobs} Job${totalJobs > 1 ? "s" : ""}`}
-						tooltipContent={
-							<p>
-								This listing includes {totalJobs} job{totalJobs > 1 ? "s" : ""}
-							</p>
-						}
-					/>
+					<div className="flex items-center mt-2 text-sm text-gray-500">
+						<Icons.briefcase className="h-5 w-5 mr-2 text-gray-400" />
+						<p>Job count: {totalJobs}</p>
+					</div>
 
-					{totalBids > 0 && (
-						<BadgeTooltip
-							className="hover:-translate-y-0.5 duration-300"
-							tooltipProps={{
-								delayDuration: 300,
-							}}
-							label={`${totalBids} Bid${totalBids > 1 ? "s" : ""}`}
-							tooltipContent={
-								<p>
-									This listing already has {totalBids} bid
-									{totalBids > 1 ? "s" : ""}
-								</p>
-							}
-						/>
-					)}
+					<div className="flex items-center mt-2 text-sm text-gray-500">
+						<Icons.gavel className="h-5 w-5 mr-2 text-gray-400" />
+						<p>Job bids: {totalBids}</p>
+					</div>
 
-					{companiesInContract > 1 && (
-						<BadgeTooltip
-							className="hover:-translate-y-0.5 duration-300"
-							tooltipProps={{
-								delayDuration: 300,
-							}}
-							label={`${companiesInContract} Companies`}
-							tooltipContent={
-								<p>This listing involves {companiesInContract} companies</p>
-							}
+					<div className="flex items-center mt-2 text-sm text-gray-500">
+						<Icons.bankNote className="h-5 w-5 mr-2 text-gray-400" />
+						<p>Minimum Bid Price: {formattedPrice}</p>
+					</div>
+
+					<div className="flex items-center mt-2 text-sm text-gray-500">
+						<Icons.checkCircle
+							className={cn(
+								"h-5 w-5 mr-2",
+								isActive ? "text-green-600" : "text-red-600"
+							)}
 						/>
-					)}
-				</div>
-			</CardContent>
-		</Card>
+						<p>Contract Active Status: {isActive ? "Active" : "Inactive"}</p>
+					</div>
+				</CardContent>
+				<CardFooter className="m-4">
+					<Button className="w-full" variant="secondary">
+						View Contract
+					</Button>
+				</CardFooter>
+			</Card>
+		</div>
 	);
 };
 

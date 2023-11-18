@@ -142,15 +142,19 @@ export async function GET(req: Request) {
 					jobs,
 					media,
 					bids,
+					companyCount: sql`COUNT(distinct ${companyJobs.companyId})`,
+					companyName: companies.name, // Add this line
 				})
 				.from(fullContractView)
 				.innerJoin(contracts, eq(contracts.id, fullContractView.contractId))
 				.innerJoin(jobs, eq(jobs.id, fullContractView.jobId))
+				.innerJoin(companyJobs, eq(companyJobs.jobId, jobs.id))
+				.innerJoin(companies, eq(companies.id, companyJobs.companyId)) // Add this line
 				.leftJoin(media, eq(media.id, fullContractView.mediaId))
 				.leftJoin(contractBids, eq(contractBids.contractId, contracts.id))
 				.leftJoin(bids, eq(bids.id, contractBids.bidId))
-				.orderBy(contracts.id);
-
+				.orderBy(contracts.id)
+				.groupBy(contracts.id, companies.name); // Add companies.name here
 			break;
 
 		// Minimal fetch only gets the data provided by the view
@@ -235,7 +239,9 @@ export async function GET(req: Request) {
 				// console.log("Creating contract");
 				acc.push({
 					...curr.contracts,
-					...curr,
+					jobCount: curr.jobCount,
+					companyCount: curr.companyCount,
+					bidCount: curr.bidCount,
 					jobs: curr.jobs ? [curr.jobs] : [],
 					media: curr.media ? [curr.media] : [],
 					bids: curr.bids ? [curr.bids] : [],

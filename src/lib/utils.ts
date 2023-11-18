@@ -28,66 +28,23 @@ export function catchClerkError(err: unknown) {
 	}
 }
 
-// export async function verifyAPIRequest(
-// 	req?: Request,
-// 	url?: string,
-// 	parseSchema?: z.ZodObject<any>,
-// 	options?: {
-// 		unauthorizedMessage?: string;
-// 		badRequestMessage?: string;
-// 		endpointIdentifier?: string;
-// 	}
-// ): Promise<{ error?: Response; data?: Object }> {
-// 	const { unauthorizedMessage, badRequestMessage, endpointIdentifier } =
-// 		options ?? {
-// 			unauthorizedMessage: undefined,
-// 			badRequestMessage: undefined,
-// 			endpointIdentifier: undefined,
-// 		};
-
-// 	if (unauthorizedMessage) {
-// 		const session = await getServerSession(authOptions);
-
-// 		if (!session) {
-// 			return {
-// 				error: new Response(unauthorizedMessage || "Unauthorized request.", {
-// 					status: 401,
-// 				}),
-// 			};
-// 		}
-// 	}
-
-// 	if (!req && !url && parseSchema) {
-// 		return {
-// 			error: new Response("Bad request.", {
-// 				status: 400,
-// 			}),
-// 		};
-// 	} else if (parseSchema && (url || req)) {
-// 		let query;
-
-// 		if (url) {
-// 			query = { ...parse(url, true).query };
-// 		}
-
-// 		if (req) {
-// 			query = { ...query, ...(await req.json()) };
-// 		}
-
-// 		const attmeptParse = parseSchema.safeParse(query);
-
-// 		if (!attmeptParse.success) {
-// 			console.log(`${endpointIdentifier} Error:`, attmeptParse.error);
-// 			return {
-// 				error: new Response(
-// 					badRequestMessage || "Error parsing query parameters.",
-// 					{ status: 400 }
-// 				),
-// 			};
-// 		}
-
-// 		return { data: attmeptParse.data };
-// 	}
-
-// 	return { data: undefined };
-// }
+export const formatDate = (createdAt: Date): string => {
+	const contractAge = Math.floor(
+		(new Date().getTime() - new Date(createdAt).getTime()) / 1000 / 60 / 60 / 24
+	);
+	const suffix = contractAge > 1 ? "s" : "";
+	if (contractAge < 1) {
+		return "<1 day";
+	} else if (contractAge < 7) {
+		return `${contractAge} day${suffix}`;
+	} else if (contractAge < 30) {
+		const weeks = Math.floor(contractAge / 7);
+		return `${weeks} week${suffix}`;
+	} else if (contractAge < 365) {
+		const months = Math.floor(contractAge / 30);
+		return `${months} month${suffix}`;
+	} else {
+		const years = Math.floor(contractAge / 365);
+		return `${years} year${suffix}`;
+	}
+};
