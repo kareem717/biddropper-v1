@@ -15,7 +15,7 @@ import {
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import ContractCard from "@/components/cards/contract-cards/big";
+import ContractCard from "@/components/cards/contract-cards/big-contract-card";
 
 //todo: idk if this is the best way to do this, but i think it is
 export const revalidate = 5;

@@ -154,7 +154,7 @@ export async function GET(req: Request) {
 				.leftJoin(contractBids, eq(contractBids.contractId, contracts.id))
 				.leftJoin(bids, eq(bids.id, contractBids.bidId))
 				.orderBy(contracts.id)
-				.groupBy(contracts.id, companies.name); // Add companies.name here
+				.groupBy(contracts.id, companies.name, jobs.id, media.id, bids.id); // Add companies.name here
 			break;
 
 		// Minimal fetch only gets the data provided by the view

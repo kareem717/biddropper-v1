@@ -14,7 +14,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { insertCompanySchema } from "@/lib/validations/companies";
+import { insertCompanySchema } from "@/lib/validations/entities/companies";
 import ImageUploader, { ImageUploaderRef } from "@/components/image-uploader";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

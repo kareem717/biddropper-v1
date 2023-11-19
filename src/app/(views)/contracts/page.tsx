@@ -3,13 +3,14 @@
 import { redirect } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useFetchContracts } from "@/hooks/api/contracts/use-fetch-contracts";
-import SmallContractCard from "@/components/cards/contract-cards/small";
-import BigContractCard from "@/components/cards/contract-cards/big";
+import SmallContractCard from "@/components/cards/contract-cards/small-contract-card";
+import BigContractCard from "@/components/cards/contract-cards/big-contract-card";
 import { useEffect, useState } from "react";
+import useContractList from "@/hooks/use-contract-list";
 
 export const ContractPage = () => {
 	const session = useSession();
-	const [selectedContractId, selectContractId] = useState("");
+	const { selected, select } = useContractList();
 
 	if (!session) {
 		redirect("/");
@@ -38,9 +39,9 @@ export const ContractPage = () => {
 
 	useEffect(() => {
 		if (contracts?.pages[0]?.data[0]?.id) {
-			selectContractId(contracts.pages[0].data[0].id);
+			select(contracts.pages[0].data[0].id);
 		}
-	}, [contracts]);
+	}, [contracts, select]);
 
 	if (isLoading) {
 		return <div>Loading...</div>;
@@ -52,28 +53,30 @@ export const ContractPage = () => {
 
 	return (
 		<div className="grid grid-rows-1 grid-cols-2">
-			<div>
-				{contracts?.pages.map((page, _index) => {
-					return page.data.map((contract) => {
-						console.log(contract);
-						return (
-							<div key={contract.id}>
-								<SmallContractCard
-									id={contract.id}
-									details={contract.description}
-									title={contract.title}
-									isActive={contract.isActive}
-									price={contract.price}
-									endDate={contract.endDate}
-									createdAt={new Date(Date.parse(contract.createdAt))}
-									totalJobs={contract.jobCount}
-									totalBids={contract.bidCount}
-									companiesInContract={contract.companyCount}
-								/>
-							</div>
-						);
-					});
-				})}
+			<div className="flex flex-col gap-2">
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+					{contracts?.pages.map((page, _index) => {
+						return page.data.map((contract) => {
+							console.log(contract);
+							return (
+								<div key={contract.id}>
+									<SmallContractCard
+										id={contract.id}
+										details={contract.description}
+										title={contract.title}
+										isActive={contract.isActive}
+										price={contract.price}
+										endDate={contract.endDate}
+										createdAt={new Date(Date.parse(contract.createdAt))}
+										totalJobs={contract.jobCount}
+										totalBids={contract.bidCount}
+										companiesInContract={contract.companyCount}
+									/>
+								</div>
+							);
+						});
+					})}
+				</div>
 				<button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
 					{isFetchingNextPage
 						? "Loading more..."
@@ -82,11 +85,7 @@ export const ContractPage = () => {
 						: "Nothing to load"}
 				</button>
 			</div>
-			<div>
-				<BigContractCard 
-					id={selectedContractId}
-				/>
-			</div>
+			<div>{<BigContractCard id={selected} />}</div>
 		</div>
 	);
 };

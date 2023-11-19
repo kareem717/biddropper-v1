@@ -1,7 +1,7 @@
-import useSWR from 'swr';
+import { useQuery } from 'react-query';
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url, {
+const fetchIndustries = async () => {
+  const res = await fetch('/api/industries', {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -14,12 +14,12 @@ const fetcher = async (url: string) => {
 };
 
 const useIndustries = () => {
-  const { data, error } = useSWR('/api/industries', fetcher);
+  const { data, isLoading, isError } = useQuery('industries', fetchIndustries);
 
   return {
     industries: data,
-    isLoading: !error && !data,
-    isError: error
+    isLoading,
+    isError
   }
 };
 
