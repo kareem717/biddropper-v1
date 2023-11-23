@@ -377,7 +377,6 @@ export const reviews = mysqlTable(
 		details: varchar("details", { length: 1500 }).notNull(),
 		title: varchar("title", { length: 255 }).notNull(),
 		companyId: varchar("company_id", { length: 50 }).notNull(),
-		isActive: tinyint("is_active").default(1),
 	},
 	(table) => {
 		return {

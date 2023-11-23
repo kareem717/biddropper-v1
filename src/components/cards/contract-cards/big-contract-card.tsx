@@ -98,7 +98,6 @@ const ContractCard: FC<ContractCardProps> = ({ id, ...props }) => {
 		})
 		.replace(/,/g, " ");
 
-	console.log(contract);
 
 	return (
 		<Card key="1">
@@ -126,7 +125,6 @@ const ContractCard: FC<ContractCardProps> = ({ id, ...props }) => {
 					<ImageSlider images={contract.media.map((img) => img.fileUrl)} />
 				)}
 				<div>
-					<CardTitle>Description</CardTitle>
 					<p className="text-sm">{contract.description}</p>
 				</div>
 				<div

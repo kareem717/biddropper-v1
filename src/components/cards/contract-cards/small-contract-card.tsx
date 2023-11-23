@@ -1,15 +1,7 @@
 "use client";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-	CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FC } from "react";
 import Link from "next/link";
-import { useFetchContracts } from "@/hooks/api/contracts/use-fetch-contracts";
-import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -39,7 +31,7 @@ const ContractCard: FC<ContractCardProps> = ({
 	totalBids,
 	createdAt,
 }) => {
-	const { select } = useContractList();
+	const { select, selected } = useContractList();
 
 	const formattedPrice = Number(price)
 		.toLocaleString(undefined, {
@@ -49,7 +41,6 @@ const ContractCard: FC<ContractCardProps> = ({
 			currency: "CAD",
 		})
 		.replace(/,/g, " ");
-
 
 	const formattedContractAge = (createdAt: Date) => {
 		const contractAgeHours = Math.floor(
@@ -85,7 +76,13 @@ const ContractCard: FC<ContractCardProps> = ({
 
 	return (
 		<div className="w-full h-full">
-			<Card className="w-full h-full mx-2 md:mx-auto rounded-xl shadow-md overflow-hidden border-2 border-gray-200 hover:border-gray-400 hover:shadow-lg transition-all duration-500 ease-in-out">
+			<Card
+				onClick={() => select(id)}
+				className={cn(
+					"w-full h-full mx-2 md:mx-auto rounded-xl shadow-md overflow-hidden border-2 border-gray-200 hover:shadow-lg transition-all duration-500 ease-in-out",
+					selected === id && "border-gray-400"
+				)}
+			>
 				<CardHeader className="m-4">
 					<CardTitle className="text-xl font-semibold">
 						<Link href={`/contracts/${id}`} className="capitalize">
@@ -96,55 +93,54 @@ const ContractCard: FC<ContractCardProps> = ({
 						{details}
 					</p>
 				</CardHeader>
-				<CardContent className="m-4">
-					<div className="flex items-center mt-2 text-sm text-gray-500">
-						<Icons.calendar className="h-5 w-5 mr-2 text-gray-400" />
-						<p>Created {formattedContractAge(createdAt)} ago</p>
+				<CardContent className="flex justify-between m-4">
+					<div>
+						<div className="flex items-center mt-2 text-sm text-gray-500">
+							<Icons.calendar className="h-5 w-5 mr-2 text-gray-400" />
+							<p>Created {formattedContractAge(createdAt)} ago</p>
+						</div>
+
+						<div className="flex items-center mt-2 text-sm text-gray-500">
+							<Icons.briefcase className="h-5 w-5 mr-2 text-gray-400" />
+							<p>
+								{totalJobs} Job{totalJobs != 1 && "s"}
+							</p>
+						</div>
+
+						<div className="flex items-center mt-2 text-sm text-gray-500">
+							<Icons.bankNote className="h-5 w-5 mr-2 text-gray-400" />
+							<p>{formattedPrice}</p>
+						</div>
 					</div>
 
-					<div className="flex items-center mt-2 text-sm text-gray-500">
-						<Icons.calendarX className="h-5 w-5 mr-2 text-gray-400" />
-						<p>
-							{endDate
-								? `Expires on ${format(new Date(endDate), "MM/dd/yyyy")}`
-								: "No expiry date"}
-						</p>
-					</div>
+					<div>
+						<div className="flex items-center mt-2 text-sm text-gray-500">
+							<Icons.calendarX className="h-5 w-5 mr-2 text-gray-400" />
+							<p>
+								{endDate
+									? `Expires on ${format(new Date(endDate), "MM/dd/yyyy")}`
+									: "No expiry date"}
+							</p>
+						</div>
 
-					<div className="flex items-center mt-2 text-sm text-gray-500">
-						<Icons.briefcase className="h-5 w-5 mr-2 text-gray-400" />
-						<p>Job count: {totalJobs}</p>
-					</div>
+						<div className="flex items-center mt-2 text-sm text-gray-500">
+							<Icons.gavel className="h-5 w-5 mr-2 text-gray-400" />
+							<p>
+								{totalBids} Bid{totalBids != 1 && "s"}
+							</p>
+						</div>
 
-					<div className="flex items-center mt-2 text-sm text-gray-500">
-						<Icons.gavel className="h-5 w-5 mr-2 text-gray-400" />
-						<p>Total bids: {totalBids}</p>
-					</div>
-
-					<div className="flex items-center mt-2 text-sm text-gray-500">
-						<Icons.bankNote className="h-5 w-5 mr-2 text-gray-400" />
-						<p>Minimum Bid: {formattedPrice}</p>
-					</div>
-
-					<div className="flex items-center mt-2 text-sm text-gray-500">
-						<Icons.checkCircle
-							className={cn(
-								"h-5 w-5 mr-2",
-								isActive ? "text-green-600" : "text-red-600"
-							)}
-						/>
-						<p>{isActive ? "Active" : "Inactive"}</p>
+						<div className="flex items-center mt-2 text-sm text-gray-500">
+							<Icons.checkCircle
+								className={cn(
+									"h-5 w-5 mr-2",
+									isActive ? "text-green-600" : "text-red-600"
+								)}
+							/>
+							<p>{isActive ? "Active" : "Inactive"}</p>
+						</div>
 					</div>
 				</CardContent>
-				<CardFooter className="m-4">
-					<Button
-						className="w-full"
-						variant="secondary"
-						onClick={() => select(id)}
-					>
-						View Contract
-					</Button>
-				</CardFooter>
 			</Card>
 		</div>
 	);

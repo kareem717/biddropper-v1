@@ -60,3 +60,5 @@ export const updateJobSchema = insertJobSchema
 export const deleteJobQuerySchema = z.object({
 	jobId: insertJobSchema.shape.id,
 });
+
+export type APICreateJobSchema = z.infer<typeof createJobSchema>;

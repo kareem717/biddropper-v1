@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { insertJobSchema } from "@/lib/validations/posts/posts";
+import { insertJobSchema } from "@/lib/validations/posts/jobs";
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
 import CustomRadioButtons from "@/components/custom-radio-buttons";
