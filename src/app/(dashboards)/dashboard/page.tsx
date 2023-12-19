@@ -1,5 +1,5 @@
 import BidCard from "@/components/cards/bid-cards/bid-cards";
-import { db } from "@/db";
+import { db } from "@/db/client";
 import {
 	companies,
 	companyJobs,

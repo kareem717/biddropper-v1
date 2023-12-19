@@ -8,7 +8,7 @@ import { Clerk } from "@clerk/backend";
 import { parse } from "url";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./auth";
-
+import { init } from "@paralleldrive/cuid2";
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
@@ -47,4 +47,16 @@ export const formatDate = (createdAt: Date): string => {
 		const years = Math.floor(contractAge / 365);
 		return `${years} year${suffix}`;
 	}
+};
+
+export const customId = (prefix: string): string => {
+	if (prefix.length > 18) {
+		throw new Error("Prefix must be 18 or less characters.");
+	}
+
+	const createId = init({
+		length: 32,
+	});
+
+	return `${prefix}_${createId()}`;
 };

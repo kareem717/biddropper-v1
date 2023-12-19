@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { db } from "@/db/client";
 import fullContractView from "@/db/views/full-contract";
 import fullJobView from "@/db/views/full-job";
 import fullReviewView from "@/db/views/full-review";

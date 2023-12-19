@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { db } from "@/db/client";
 import { insertContractSchema } from "@/lib/validations/posts/contracts";
 import {
 	createContractSchema,

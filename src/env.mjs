@@ -24,6 +24,8 @@ export const env = createEnv({
 		RESEND_API_KEY: z.string().min(1),
 		GOOGLE_CLIENT_SECRET: z.string().min(1),
 		NEXTAUTH_URL: z.string().url(),
+		NEON_DATABASE_URL: z.string().url(),
+		SUPABASE_DATABASE_URL: z.string().url(),
 	},
 
 	client: {
@@ -37,6 +39,8 @@ export const env = createEnv({
 	},
 
 	runtimeEnv: {
+		SUPABASE_DATABASE_URL: process.env.SUPABASE_DATABASE_URL,
+		NEON_DATABASE_URL: process.env.NEON_DATABASE_URL,
 		NEXTAUTH_URL: process.env.NEXTAUTH_URL,
 		NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:
 			process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,

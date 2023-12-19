@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { db } from "@/db/client";
 import { industries as dbIndustries } from "@/db/migrations/schema";
 
 export async function GET(_req: Request) {

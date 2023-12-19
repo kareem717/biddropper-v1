@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { db } from "@/db/client";
 import {
 	companies,
 	addresses,
@@ -354,8 +354,6 @@ export async function DELETE(req: Request) {
 		if (userOwnsCompany.length < 1) {
 			return new Response("User does not own the company.", { status: 401 });
 		}
-
-
 	} catch (err) {
 		console.log("DELETE /api/companies Error:", err);
 		return new Response("An error occured while checking company ownership.", {
@@ -364,7 +362,10 @@ export async function DELETE(req: Request) {
 	}
 
 	try {
-		await db.update(companies).set({ isActive: 0 }).where(eq(companies.id, companyId));
+		await db
+			.update(companies)
+			.set({ isActive: 0 })
+			.where(eq(companies.id, companyId));
 	} catch (err) {
 		console.log("DELETE /api/companies Error:", err);
 		return new Response("An error occured while deleting the company.", {
@@ -373,5 +374,4 @@ export async function DELETE(req: Request) {
 	}
 
 	return new Response("Company deleted", { status: 200 });
-
 }

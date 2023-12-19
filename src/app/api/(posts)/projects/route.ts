@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { db } from "@/db/client";
 import { media, projectMedia, projects } from "@/db/migrations/schema";
 import fullProjectView from "@/db/views/full-project";
 import { authOptions } from "@/lib/auth";

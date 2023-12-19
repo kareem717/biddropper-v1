@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { db } from "@/db/client";
 import { users } from "@/db/migrations/schema";
 import { authOptions } from "@/lib/auth";
 import { updateUserSchema } from "@/lib/validations/api/api-user";
@@ -54,5 +54,5 @@ export async function PATCH(req: Request) {
 		return new Response("Error updating profile.", { status: 500 });
 	}
 
-  return new Response("Profile updated.", { status: 200 });
+	return new Response("Profile updated.", { status: 200 });
 }

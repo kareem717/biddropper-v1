@@ -6,12 +6,13 @@ import {
 } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
-import { db } from "@/db";
-import { PlanetScaleAdapter } from "@/lib/auth/planet-scale-adapter";
+import { db } from "@/db/client";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { Adapter } from "next-auth/adapters";
 import { env } from "@/env.mjs";
-import { companies } from "@/db/migrations/schema";
+// import { companies } from "@/db/migrations/schema";
 import { eq } from "drizzle-orm";
+import { customId } from "../utils";
 
 declare module "next-auth" {
 	interface Session extends DefaultSession {
@@ -26,7 +27,6 @@ declare module "next-auth" {
 				id: string;
 				name: string;
 				ownerId: string;
-
 			}>;
 		};
 	}
@@ -39,11 +39,11 @@ export const authOptions: NextAuthOptions = {
 		maxAge: 7 * 24 * 60 * 60,
 		updateAge: 0,
 		generateSessionToken: () => {
-			return `sess_${crypto.randomUUID()}`;
+			return customId("sess");
 		},
 	},
 	// @ts-ignore
-	adapter: PlanetScaleAdapter(db),
+	adapter: DrizzleAdapter(db),
 	providers: [
 		GoogleProvider({
 			clientId: env["GOOGLE_CLIENT_ID"],
@@ -69,16 +69,16 @@ export const authOptions: NextAuthOptions = {
 	debug: env["NODE_ENV"] === "development",
 	callbacks: {
 		async session({ session, user }) {
-			const companyList = await db
-				.select()
-				.from(companies)
-				.where(eq(companies.ownerId, user.id));
+			// const companyList = await db
+			// 	.select()
+			// 	.from(companies)
+			// 	.where(eq(companies.ownerId, user.id));
 
 			return {
 				...session,
 				user: {
 					...user,
-					ownedCompanies: companyList,
+					// ownedCompanies: companyList,
 				},
 			};
 		},

@@ -6,7 +6,7 @@ import {
 	sessions,
 	verificationTokens,
 } from "@/db/migrations/schema";
-import { DBClient } from "@/db";
+import { DBClient } from "@/db/client";
 import type {
 	Adapter,
 	AdapterSession,
