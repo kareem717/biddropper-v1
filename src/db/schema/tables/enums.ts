@@ -1,10 +1,5 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
-export const enumJobsStatus = pgEnum("enum_jobs_status", [
-	"removed",
-	"inactive",
-	"active",
-]);
 export const enumBidStatus = pgEnum("bid_status", [
 	"retracted",
 	"declined",

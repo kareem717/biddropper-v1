@@ -50,8 +50,8 @@ export const formatDate = (createdAt: Date): string => {
 };
 
 export const customId = (prefix: string): string => {
-	if (prefix.length > 18) {
-		throw new Error("Prefix must be 18 or less characters.");
+	if (prefix.length > 17) {
+		throw new Error("Prefix must be 17 or less characters.");
 	}
 
 	const createId = init({

@@ -52,6 +52,8 @@ export const user = pgTable("user", {
 	email: text("email").notNull(),
 	emailVerified: timestamp("emailVerified", { mode: "date" }),
 	image: text("image"),
+	createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export const verificationToken = pgTable(

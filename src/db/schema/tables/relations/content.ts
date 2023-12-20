@@ -8,6 +8,7 @@ import {
 import {
 	bids,
 	companies,
+	contracts,
 	industries,
 	jobs,
 	media,
@@ -93,7 +94,7 @@ export const bidsRelationships = pgTable(
 			.references(() => bids.id),
 		jobId: varchar("job_id", { length: 50 }).references(() => jobs.id),
 		contractId: varchar("contract_id", { length: 50 }).references(
-			() => companies.id
+			() => contracts.id
 		),
 	},
 	(table) => ({

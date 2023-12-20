@@ -19,7 +19,7 @@ import {
 	deleteBidQuerySchema,
 } from "@/lib/validations/api/api-bid";
 import companyContractsView from "@/db/views/company-contracts";
-
+import { avg, count, max, min, sql } from 'drizzle-orm';
 //TODO: maybe re-write this and the dynamic route into a single endpoint
 export async function POST(req: Request) {
 	const session = await getServerSession(authOptions);
