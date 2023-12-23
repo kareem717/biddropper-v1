@@ -10,7 +10,7 @@ import { db } from "@/db/client";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { Adapter } from "next-auth/adapters";
 import { env } from "@/env.mjs";
-// import { companies } from "@/db/migrations/schema";
+import { companies } from "@/db/schema/tables/content";
 import { eq } from "drizzle-orm";
 import { customId } from "../utils";
 
@@ -37,12 +37,11 @@ export const authOptions: NextAuthOptions = {
 	session: {
 		strategy: "database",
 		maxAge: 7 * 24 * 60 * 60,
-		updateAge: 0,
+		updateAge: 24 * 60 * 60,
 		generateSessionToken: () => {
 			return customId("sess");
 		},
 	},
-	// @ts-ignore
 	adapter: DrizzleAdapter(db),
 	providers: [
 		GoogleProvider({
@@ -69,16 +68,16 @@ export const authOptions: NextAuthOptions = {
 	debug: env["NODE_ENV"] === "development",
 	callbacks: {
 		async session({ session, user }) {
-			// const companyList = await db
-			// 	.select()
-			// 	.from(companies)
-			// 	.where(eq(companies.ownerId, user.id));
+			const companyList = await db
+				.select()
+				.from(companies)
+				.where(eq(companies.ownerId, user.id));
 
 			return {
 				...session,
 				user: {
 					...user,
-					// ownedCompanies: companyList,
+					ownedCompanies: companyList,
 				},
 			};
 		},

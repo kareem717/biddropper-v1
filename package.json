@@ -72,6 +72,7 @@
     "eslint-config-next": "^14.0.3",
     "ink": "^4.4.1",
     "jotai": "^2.4.0",
+    "jsonwebtoken": "^9.0.2",
     "keen-slider": "^6.8.6",
     "lucide-react": "^0.263.1",
     "mapbox-gl": "^2.15.0",
@@ -110,6 +111,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
     "@types/google.maps": "^3.53.6",
+    "@types/jsonwebtoken": "^9.0.5",
     "@types/mapbox": "^1.6.42",
     "@types/mapbox-gl": "^2.7.13",
     "@types/pg": "^8.10.9",
