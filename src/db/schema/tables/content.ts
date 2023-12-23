@@ -182,7 +182,7 @@ export const contracts = pgTable("contracts", {
 	isActive: boolean("is_active").default(true),
 	title: varchar("title", { length: 100 }).notNull(),
 	description: varchar("description", { length: 3000 }).notNull(),
-	price: numeric("price", { precision: 13, scale: 4 }).notNull(),
+	price: numeric("price", { precision: 10, scale: 2 }).notNull(),
 	createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 	endDate: timestamp("end_date", { mode: "date" }),

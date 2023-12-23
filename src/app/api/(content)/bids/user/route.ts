@@ -9,6 +9,7 @@ import {
 import { queryParamSchema } from "@/lib/validations/api/bids/user/request";
 import { createFilterConditions } from "@/lib/utils";
 
+//TODO: add next-auth to this
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
 

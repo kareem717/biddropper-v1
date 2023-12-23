@@ -57,4 +57,50 @@ const getQueryParams = z
 		}
 	);
 
-export const queryParamSchema = { GET: getQueryParams };
+const postQueryParams = z
+	.object({
+		jobId: z
+			.string({
+				required_error: "Missing identifier.",
+			})
+			.max(50, {
+				message: "Invalid identifier.",
+			})
+			.refine((id) => /^job_[a-zA-Z0-9\-]{1,36}$/.test(id), {
+				message: "Invalid identifier.",
+			})
+			.optional(),
+		contractId: z
+			.string({
+				required_error: "Missing identifier.",
+			})
+			.max(50, {
+				message: "Invalid identifier.",
+			})
+			.refine((id) => /^cntr_[a-zA-Z0-9\-]{1,36}$/.test(id), {
+				message: "Invalid identifier.",
+			})
+			.optional(),
+		companyId: z
+			.string({
+				required_error: "Missing identifier.",
+			})
+			.max(50, {
+				message: "Invalid identifier.",
+			})
+			.refine((id) => /^comp_[a-zA-Z0-9\-]{1,36}$/.test(id), {
+				message: "Invalid identifier.",
+			}),
+		price: z.coerce
+			.number({
+				required_error: "Missing price.",
+			})
+			.nonnegative({
+				message: "Invalid price.",
+			})
+			.transform((val) => String(val)),
+	})
+	.refine((data) => Boolean(data.jobId) !== Boolean(data.contractId), {
+		message: "At least one, and only one, identifier should be provided.",
+	});
+export const queryParamSchema = { GET: getQueryParams, POST: postQueryParams };

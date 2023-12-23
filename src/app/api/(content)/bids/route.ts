@@ -1,19 +1,18 @@
 import { db } from "@/db/client";
-import { bids } from "@/db/schema/tables/content";
-import { and, eq } from "drizzle-orm";
+import { bids, contracts } from "@/db/schema/tables/content";
+import { and, eq, inArray } from "drizzle-orm";
 import { parse } from "url";
 import { avg, max, min, sql } from "drizzle-orm";
-import { bidsRelationships } from "@/db/schema/tables/relations/content";
-import { createFilterConditions } from "@/lib/utils";
-
+import {
+	bidsRelationships,
+	jobsRelationships,
+} from "@/db/schema/tables/relations/content";
+import { createFilterConditions, customId } from "@/lib/utils";
 import { queryParamSchema } from "@/lib/validations/api/bids/request";
-// import {
-// 	createBidSchema,
-// 	updateBidSchema,
-// 	acceptBidQuerySchema,
-// 	deleteBidQuerySchema,
-// } from "@/lib/validations/api/api-bid";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
+//TODO: add next-auth to this
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
 
@@ -95,87 +94,106 @@ export async function GET(req: Request) {
 		{ status: 200 }
 	);
 }
-// export async function POST(req: Request) {
-// 	const session = await getServerSession(authOptions);
 
-// 	if (!session || !session.user.ownedCompanies)
-// 		return new Response("Unauthorized", { status: 401 });
+export async function POST(req: Request) {
+	const session = await getServerSession(authOptions);
 
-// 	const ownedCompanyIds = session.user.ownedCompanies.map(
-// 		(company) => company.id
-// 	);
+	if (!session || !session.user.ownedCompanies) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
 
-// 	const body = await req.json();
-// 	let safeParseResult = createBidSchema.safeParse(body);
+	const ownedCompanyIds = session.user.ownedCompanies.map(
+		(company) => company.id
+	);
 
-// 	if (!safeParseResult.success) {
-// 		return new Response(safeParseResult.error.message, { status: 400 });
-// 	}
+	const { query } = parse(req.url, true);
 
-// 	const data = safeParseResult.data;
-// 	const newId = `bid_${crypto.randomUUID()}`;
+	let params = queryParamSchema.POST.safeParse(query);
 
-// 	let targetTable: any, targetId: string;
+	if (!params.success) {
+		return new Response(
+			JSON.stringify({ error: params.error.issues[0]?.message }),
+			{ status: 400 }
+		);
+	}
 
-// 	if (data.jobId) {
-// 		targetTable = companyJobs;
-// 		targetId = data.jobId;
-// 	} else if (data.contractId) {
-// 		targetTable = companyContractsView;
-// 		targetId = data.contractId;
-// 	} else {
-// 		return new Response("Neither 'jobId' nor 'contractId' provided", {
-// 			status: 400,
-// 		});
-// 	}
+	const { data } = params;
+	const newId = customId("bid");
+	const targetCondition: any = data.jobId
+		? eq(jobsRelationships.jobId, data.jobId)
+		: eq(jobsRelationships.contractId, data.contractId!);
 
-// 	let userOwnsPostingQuery = db
-// 		.select()
-// 		.from(targetTable)
-// 		.where(
-// 			and(
-// 				eq(
-// 					targetTable === companyJobs
-// 						? targetTable.jobId
-// 						: targetTable.contractId,
-// 					targetId
-// 				),
-// 				inArray(targetTable.companyId, ownedCompanyIds)
-// 			)
-// 		)
-// 		.limit(1);
+	try {
+		await db.transaction(async (tx) => {
+			const usersCompaniesOwnPosting = await tx
+				.select()
+				.from(jobsRelationships)
+				.where(
+					and(
+						targetCondition,
+						inArray(jobsRelationships.companyId, ownedCompanyIds)
+					)
+				)
+				.limit(1);
 
-// 	let userOwnsPosting = await userOwnsPostingQuery;
+			if (usersCompaniesOwnPosting.length) {
+				throw new Error(
+					"User cannot bid on their own companies jobs or contracts."
+				);
+			}
 
-// 	if (userOwnsPosting.length > 0) {
-// 		return new Response("User cannot bid on their own job or contract.", {
-// 			status: 400,
-// 		});
-// 	}
+			if (data.contractId) {
+				const minPrice = await tx
+					.select({ price: contracts.price })
+					.from(contracts)
+					.where(eq(contracts.id, data.contractId))
+					.limit(1);
 
-// 	try {
-// 		await db.transaction(async (tx) => {
-// 			await tx.insert(bids).values({
-// 				id: newId,
-// 				price: data.price,
-// 				companyId: data.companyId,
-// 			});
+				if (minPrice[0] && Number(minPrice[0].price) > Number(data.price)) {
+					throw new Error(
+						"Bid price cannot be lower than the contract's minimum bid price."
+					);
+				}
+			}
 
-// 			let bidInsertionTable = data.jobId ? jobBids : contractBids;
-// 			let bidInsertionData = {
-// 				bidId: newId,
-// 				[data.jobId ? "jobId" : "contractId"]: targetId,
-// 			};
+			await tx
+				.insert(bids)
+				.values({
+					id: newId,
+					price: data.price,
+					companyId: data.companyId,
+				})
+				.returning({ insertedId: bids.id });
 
-// 			await tx.insert(bidInsertionTable).values(bidInsertionData);
-// 		});
+			await tx.insert(bidsRelationships).values({
+				bidId: newId,
+				[data.jobId ? "jobId" : "contractId"]: data.jobId || data.contractId,
+			});
 
-// 		return new Response("Bid created.", { status: 201 });
-// 	} catch (err) {
-// 		console.log("POST /api/bids Error:", err);
-// 		return new Response("Error creating bid.", { status: 500 });
-// 	}
-// }
+			console.log("Bid created. ID: ", newId);
+		});
+
+		return new Response(
+			JSON.stringify({
+				message: "Bid created.",
+			}),
+			{ status: 201 }
+		);
+	} catch (err) {
+		const message = (err as Error).message || "Error creating bid.";
+		return new Response(
+			JSON.stringify({
+				error: message,
+			}),
+			{ status: 500 }
+		);
+	}
+}
 // export async function PATCH(req: Request) {
 // 	const { query } = parse(req.url, true);
 
