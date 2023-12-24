@@ -47,6 +47,8 @@ export const bids = pgTable(
 				onUpdate: "cascade",
 			}),
 		isActive: boolean("is_active").default(true).notNull(),
+		deletedAt: timestamp("deleted_at", { mode: "date" }),
+		isDeleted: boolean("is_deleted").default(false).notNull(),
 		status: enumBidStatus("status").default("pending").notNull(),
 	},
 	(table) => {
@@ -120,6 +122,9 @@ export const jobs = pgTable("jobs", {
 	startDate: timestamp("start_date", { mode: "date" }),
 	startDateFlag: enumStartDateFlag("start_date_flag").default("none").notNull(),
 	propertyType: enumPropertyType("property_type").notNull(),
+	winningBidId: varchar("winning_bid_id", { length: 50 }).references(
+		() => bids.id
+	),
 });
 
 export const media = pgTable("media", {

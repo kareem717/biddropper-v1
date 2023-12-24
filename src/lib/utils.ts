@@ -4,7 +4,7 @@ import { isClerkAPIResponseError } from "@clerk/nextjs";
 import { toast } from "sonner";
 import * as z from "zod";
 import { init } from "@paralleldrive/cuid2";
-import {  gte, inArray, lte } from "drizzle-orm";
+import { gte, inArray, lte } from "drizzle-orm";
 
 // Used for merging tailwind classes
 export function cn(...inputs: ClassValue[]) {
@@ -63,23 +63,33 @@ export const customId = (prefix: string): string => {
 
 // Genenralized function foe the bids API endpoints, doubt I'll use this anywhere other than there
 export const createFilterConditions = (params: any, bids: any) => {
-  const { data } = params;
-  const conditions = [
-    inArray(bids.status, data.status),
-    inArray(bids.isActive, data.includeInactive),
-  ];
+	const { data } = params;
+	const conditions = [
+		inArray(bids.status, data.status),
+		inArray(bids.isActive, data.includeInactive),
+	];
 
-  const addCondition = (conditionFn: Function, field: any, value: any) => {
-    if (value) {
-      conditions.push(conditionFn(field, value));
-    }
-  };
+	const addCondition = (conditionFn: Function, field: any, value: any) => {
+		if (value) {
+			conditions.push(conditionFn(field, value));
+		}
+	};
 
-  addCondition(gte, bids.price, data.minPrice);
-  addCondition(lte, bids.price, data.maxPrice);
-  addCondition(gte, bids.createdAt, data.minCreatedAt);
-  addCondition(lte, bids.createdAt, data.maxCreatedAt);
-  addCondition(gte, bids.id, data.cursor);
+	addCondition(gte, bids.price, data.minPrice);
+	addCondition(lte, bids.price, data.maxPrice);
+	addCondition(gte, bids.createdAt, data.minCreatedAt);
+	addCondition(lte, bids.createdAt, data.maxCreatedAt);
+	addCondition(gte, bids.id, data.cursor);
 
-  return conditions;
+	return conditions;
 };
+
+export class CustomError extends Error {
+	status?: number;
+
+	constructor(message?: string, status?: number) {
+		super(message);
+		this.name = "CustomError";
+		this.status = status;
+	}
+}

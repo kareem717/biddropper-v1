@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { bids, companies, contracts, jobs } from "@/db/schema/tables/content";
-import { and, eq,  inArray,  } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { parse } from "url";
 import {
 	bidsRelationships,
@@ -8,9 +8,21 @@ import {
 } from "@/db/schema/tables/relations/content";
 import { queryParamSchema } from "@/lib/validations/api/bids/user/request";
 import { createFilterConditions } from "@/lib/utils";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth/next";
 
-//TODO: add next-auth to this
 export async function GET(req: Request) {
+	const session = await getServerSession(authOptions);
+
+	if (!session) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
+
 	const { query } = parse(req.url, true);
 
 	const params = queryParamSchema.GET.safeParse(query);
@@ -22,9 +34,19 @@ export async function GET(req: Request) {
 		);
 	}
 
+	const { data } = params;
+
+	if (data.id !== session.user.id) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
+
 	// Create query conditions based on filters from the query params
 	const filterConditions = (params: any, bids: any) => {
-		const { data } = params;
 		const conditions = createFilterConditions(params, bids);
 
 		const companyOwnedByUser = db

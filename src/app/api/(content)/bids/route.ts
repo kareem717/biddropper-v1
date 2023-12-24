@@ -1,5 +1,5 @@
 import { db } from "@/db/client";
-import { bids, contracts } from "@/db/schema/tables/content";
+import { bids, contracts, jobs } from "@/db/schema/tables/content";
 import { and, eq, inArray } from "drizzle-orm";
 import { parse } from "url";
 import { avg, max, min, sql } from "drizzle-orm";
@@ -11,8 +11,8 @@ import { createFilterConditions, customId } from "@/lib/utils";
 import { queryParamSchema } from "@/lib/validations/api/bids/request";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { CustomError } from "@/lib/utils";
 
-//TODO: add next-auth to this
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
 
@@ -130,6 +130,56 @@ export async function POST(req: Request) {
 
 	try {
 		await db.transaction(async (tx) => {
+			let id = data.jobId ? data.jobId : data.contractId;
+			if (!id) {
+				throw new CustomError("Identifier must be defined", 400);
+			}
+
+			// Make sure the job or contract exists, is active and the user has not already bid on it with the same company
+			const targetExists = await tx
+				.select()
+				.from(data.jobId ? jobs : contracts)
+				.where(
+					and(
+						eq(data.jobId ? jobs.id : contracts.id, id),
+						eq(data.jobId ? jobs.isActive : contracts.isActive, true)
+					)
+				)
+				.limit(1);
+
+			if (!targetExists.length) {
+				throw new CustomError(
+					"Job or contract does not exist or is inactive.",
+					404
+				);
+			}
+
+			const userHasBid = await tx
+				.select({ bidId: bids.id })
+				.from(bidsRelationships)
+				.innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+				.where(
+					and(
+						eq(
+							data.jobId
+								? bidsRelationships.jobId
+								: bidsRelationships.contractId,
+							id
+						),
+						eq(bids.companyId, data.companyId),
+						eq(bids.isActive, true)
+					)
+				)
+				.limit(1);
+
+			if (userHasBid.length) {
+				throw new CustomError(
+					"User has already bid on this job or contract with this company.",
+					400
+				);
+			}
+
+			// Check if the user is trying to bid on their own company's job or contract
 			const usersCompaniesOwnPosting = await tx
 				.select()
 				.from(jobsRelationships)
@@ -142,11 +192,13 @@ export async function POST(req: Request) {
 				.limit(1);
 
 			if (usersCompaniesOwnPosting.length) {
-				throw new Error(
-					"User cannot bid on their own companies jobs or contracts."
+				throw new CustomError(
+					"User cannot bid on their own companies jobs or contracts.",
+					400
 				);
 			}
 
+			// Make sure the bid price is higher than the minimum bid price
 			if (data.contractId) {
 				const minPrice = await tx
 					.select({ price: contracts.price })
@@ -155,8 +207,9 @@ export async function POST(req: Request) {
 					.limit(1);
 
 				if (minPrice[0] && Number(minPrice[0].price) > Number(data.price)) {
-					throw new Error(
-						"Bid price cannot be lower than the contract's minimum bid price."
+					throw new CustomError(
+						"Bid price cannot be lower than the contract's minimum bid price.",
+						400
 					);
 				}
 			}
@@ -174,8 +227,6 @@ export async function POST(req: Request) {
 				bidId: newId,
 				[data.jobId ? "jobId" : "contractId"]: data.jobId || data.contractId,
 			});
-
-			console.log("Bid created. ID: ", newId);
 		});
 
 		return new Response(
@@ -185,220 +236,211 @@ export async function POST(req: Request) {
 			{ status: 201 }
 		);
 	} catch (err) {
-		const message = (err as Error).message || "Error creating bid.";
+		const message =
+			err instanceof CustomError
+				? (err as Error).message
+				: "Error creating bid.";
 		return new Response(
 			JSON.stringify({
 				error: message,
 			}),
-			{ status: 500 }
+			{ status: err instanceof CustomError ? err.status : 500 }
 		);
 	}
 }
-// export async function PATCH(req: Request) {
-// 	const { query } = parse(req.url, true);
 
-// 	const session = await getServerSession(authOptions);
+export async function PATCH(req: Request) {
+	const session = await getServerSession(authOptions);
 
-// 	if (!session || !session.user.ownedCompanies)
-// 		return new Response("Unauthorized", { status: 401 });
+	if (!session || !session.user.ownedCompanies) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
 
-// 	let reqBody = await req.json();
+	const ownedCompanyIds = session.user.ownedCompanies.map(
+		(company) => company.id
+	);
 
-// 	const attemptBodyParse = updateBidSchema.safeParse({
-// 		...reqBody,
-// 		id: query.bidId,
-// 	});
+	const { query } = parse(req.url, true);
 
-// 	if (!attemptBodyParse.success) {
-// 		console.log("PATCH /api/bids/ Error:", attemptBodyParse.error);
-// 		return new Response("Error parsing request body.", { status: 400 });
-// 	}
+	let params = queryParamSchema.PATCH.safeParse(query);
 
-// 	reqBody = attemptBodyParse.data;
+	if (!params.success) {
+		return new Response(
+			JSON.stringify({ error: params.error.issues[0]?.message }),
+			{ status: 400 }
+		);
+	}
 
-// 	if (Object.keys(reqBody).length === 1) {
-// 		return new Response("No fields to update.", { status: 400 });
-// 	}
+	const { data } = params;
 
-// 	try {
-// 		const bidExists = await db
-// 			.select()
-// 			.from(bids)
-// 			.where(eq(bids.id, reqBody.id))
-// 			.limit(1);
+	try {
+		await db.transaction(async (tx) => {
+			const [bidExists] = await tx
+				.select({
+					id: bids.id,
+					companyId: bids.companyId,
+					status: bids.status,
+					isActive: bids.isActive,
+					jobId: bidsRelationships.jobId,
+					contractId: bidsRelationships.contractId,
+				})
+				.from(bids)
+				.innerJoin(bidsRelationships, eq(bids.id, bidsRelationships.bidId))
+				.where(eq(bids.id, data.bidId))
+				.limit(1);
 
-// 		if (!bidExists.length)
-// 			return new Response("Bid does not exist.", { status: 404 });
+			if (!bidExists) throw new CustomError("Bid does not exist.", 404);
 
-// 		await db.update(bids).set(reqBody).where(eq(bids.id, reqBody.id));
-// 	} catch (err) {
-// 		console.log("PATCH /api/bids/ Error:", err);
-// 		return new Response("Error updating bid.", { status: 500 });
-// 	}
+			if (!ownedCompanyIds.includes(bidExists.companyId))
+				throw new CustomError("Not authorized to update this bid.", 401);
 
-// 	return new Response("Updated Bid.", { status: 200 });
-// }
+			// Check if bid and updated status' are valid
+			if (
+				data.status === "accepted" ||
+				data.status === "declined" ||
+				bidExists.status === "accepted" ||
+				bidExists.status === "declined"
+			) {
+				throw new CustomError("Bid is not able to be updated.", 400);
+			}
 
-// export async function PUT(req: Request) {
-// 	const session = await getServerSession(authOptions);
+			// Determine the target ID
+			const targetId = bidExists.jobId || bidExists.contractId;
+			if (!targetId) {
+				throw new Error("Job ID or Contract ID must be provided.");
+			}
 
-// 	if (!session || !session.user.ownedCompanies)
-// 		return new Response("Unauthorized", { status: 401 });
+			// Define the condition to target the correct job or contract
+			const targetCondition: any = bidExists.jobId
+				? eq(jobsRelationships.jobId, targetId)
+				: eq(jobsRelationships.contractId, targetId);
 
-// 	const { query } = parse(req.url, true);
-// 	const acceptBid = query.acceptBid === "true";
+			const [targetIsActive] = await tx
+				.select({
+					count: sql`count(*)`,
+				})
+				.from(bidExists.jobId ? jobs : contracts)
+				.innerJoin(jobsRelationships, targetCondition)
+				.where(
+					and(eq(bidExists.jobId ? jobs.isActive : contracts.isActive, true))
+				)
+				.limit(1);
 
-// 	// Make sure the user wants to accept the bid
-// 	if (!acceptBid) {
-// 		return new Response("Bid was not accepted", { status: 400 });
-// 	}
+			if (!targetIsActive)
+				throw new CustomError(
+					"Job or contract does not exist or is inactive.",
+					404
+				);
 
-// 	const ownedCompanyIds = session.user.ownedCompanies.map(
-// 		(company) => company.id
-// 	);
+			const { price, status, bidId } = data;
 
-// 	const attemptBodyParse = acceptBidQuerySchema.safeParse({
-// 		bidId: query.bidId,
-// 		contractId: query.contractId,
-// 		jobId: query.jobId,
-// 	});
+			await tx
+				.update(bids)
+				.set({
+					price,
+					status,
+					isActive: status && status !== "pending" ? false : true,
+				})
+				.where(eq(bids.id, bidId));
+		});
+	} catch (err) {
+		const message =
+			err instanceof CustomError
+				? (err as Error).message
+				: "Error creating bid.";
+		return new Response(
+			JSON.stringify({
+				error: message,
+			}),
+			{ status: err instanceof CustomError ? err.status : 500 }
+		);
+	}
 
-// 	if (!attemptBodyParse.success) {
-// 		console.log("PUT /api/bids/ Error:", attemptBodyParse.error);
-// 		return new Response("Error parsing request body.", { status: 400 });
-// 	}
+	return new Response(
+		JSON.stringify({
+			message: "Bid updated.",
+		}),
+		{ status: 200 }
+	);
+}
 
-// 	const reqBody = attemptBodyParse.data;
+export async function DELETE(req: Request) {
+	const session = await getServerSession(authOptions);
 
-// 	try {
-// 		const allContractJobs = await db
-// 			.select()
-// 			.from(companyContractsView)
-// 			.where(inArray(companyContractsView.companyId, ownedCompanyIds))
-// 			.limit(1);
+	if (!session || !session.user.ownedCompanies) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
 
-// 		if (allContractJobs.length === 0) {
-// 			return new Response("Unauthorized", { status: 401 });
-// 		}
-// 	} catch (err) {
-// 		console.log("PUT /api/bids/ Error:", err);
-// 		return new Response("Error fetching contract jobs.", { status: 500 });
-// 	}
+	const ownedCompanyIds = session.user.ownedCompanies.map(
+		(company) => company.id
+	);
 
-// 	try {
-// 		//TODO: is there a way to get arpund this without using type any?
-// 		let targetTable: any, targetId: string;
+	const { query } = parse(req.url, true);
 
-// 		if (reqBody.jobId && !reqBody.contractId) {
-// 			targetTable = jobBids;
-// 			targetId = reqBody.jobId;
-// 		} else if (!reqBody.jobId && reqBody.contractId) {
-// 			targetTable = contractBids;
-// 			targetId = reqBody.contractId;
-// 		} else {
-// 			return new Response(
-// 				"Either both 'jobId' and 'contractId' were provided or neither were provided.",
-// 				{ status: 400 }
-// 			);
-// 		}
+	let params = queryParamSchema.DELETE.safeParse(query);
 
-// 		await db.transaction(async (tx) => {
-// 			await tx
-// 				.update(bids)
-// 				.set({ status: "accepted" })
-// 				.where(eq(bids.id, reqBody.bidId));
+	if (!params.success) {
+		return new Response(
+			JSON.stringify({ error: params.error.issues[0]?.message }),
+			{ status: 400 }
+		);
+	}
 
-// 			// Set all the target's bids to rejected
-// 			let rejectBidsQuery = db
-// 				.update(bids)
-// 				.set({ status: "declined" })
-// 				.where(
-// 					and(
-// 						ne(bids.id, targetId),
-// 						exists(
-// 							db
-// 								.select()
-// 								.from(targetTable)
-// 								.where(eq(targetTable.bidId, bids.id))
-// 						)
-// 					)
-// 				);
-// 			await tx.execute(rejectBidsQuery);
+	const { data } = params;
 
-// 			// Set target to inactive
-// 			let deactivateTargetQuery = db
-// 				.update(targetTable === jobBids ? jobs : contracts)
-// 				.set({ isActive: 0 })
-// 				.where(eq(targetTable === jobBids ? jobs.id : contracts.id, targetId));
-// 			await tx.execute(deactivateTargetQuery);
-// 		});
-// 	} catch (err) {
-// 		console.log("PUT /api/bid/[bidId] Error:", err);
-// 		return new Response("An error occured while accepting the bid", {
-// 			status: 500,
-// 		});
-// 	}
+	try {
+		const [bidToDelete] = await db
+			.select()
+			.from(bids)
+			.where(eq(bids.id, data.bidId))
+			.limit(1);
 
-// 	return new Response("If the bid exists, it was accepted", { status: 200 });
-// }
+		if (!bidToDelete) throw new CustomError("Bid not found.", 404);
 
-// export async function DELETE(req: Request) {
-// 	const session = await getServerSession(authOptions);
+		if (!ownedCompanyIds.includes(bidToDelete.companyId)) {
+			throw new CustomError("Not authorized to delete this bid.", 401);
+		}
 
-// 	if (!session || !session.user.ownedCompanies)
-// 		return new Response("Unauthorized", { status: 401 });
+		if (bidToDelete.isDeleted) {
+			throw new CustomError("Bid is already deleted.", 400);
+		}
 
-// 	const { query } = parse(req.url, true);
-// 	const validQuery = deleteBidQuerySchema.safeParse(query);
+		await db
+			.update(bids)
+			.set({
+				isActive: false,
+				deletedAt: new Date(),
+				isDeleted: true,
+			})
+			.where(eq(bids.id, data.bidId));
+	} catch (err) {
+		const message =
+			err instanceof CustomError
+				? (err as Error).message
+				: "Error deleting bid.";
+				
+		return new Response(
+			JSON.stringify({
+				error: message,
+			}),
+			{ status: err instanceof CustomError ? err.status : 500 }
+		);
+	}
 
-// 	if (!validQuery.success) {
-// 		console.log("DELETE /api/bids/ Error:", validQuery.error);
-// 		return new Response("Invalid query parameters.", { status: 400 });
-// 	}
-
-// 	const bidId = validQuery.data.bidId;
-
-// 	// Check if the user owns the company that owns the bids
-// 	try {
-// 		const userOwnsBid = await db
-// 			.select()
-// 			.from(bids)
-// 			.where(
-// 				and(
-// 					inArray(
-// 						bids.companyId,
-// 						session.user.ownedCompanies.map((company) => company.id)
-// 					),
-// 					eq(bids.id, bidId)
-// 				)
-// 			)
-// 			.limit(1);
-
-// 		if (!userOwnsBid.length) {
-// 			return new Response("Unauthorized", { status: 401 });
-// 		}
-// 	} catch (err) {
-// 		console.log("DELETE /api/bids/ Error:", err);
-// 		return new Response("An error occurred while checking bid ownership.", {
-// 			status: 500,
-// 		});
-// 	}
-
-// 	try {
-// 		const bidExists = await db
-// 			.select()
-// 			.from(bids)
-// 			.where(eq(bids.id, bidId))
-// 			.limit(1);
-
-// 		if (!bidExists.length)
-// 			return new Response("Bid does not exist.", { status: 404 });
-
-// 		await db.update(bids).set({ isActive: 0 }).where(eq(bids.id, bidId));
-// 	} catch (err) {
-// 		console.log("DELETE /api/bids/ Error:", err);
-// 		return new Response("Error deleting bid.", { status: 500 });
-// 	}
-
-// 	return new Response("Deleted Bid.", { status: 200 });
-// }
+	return new Response(
+		JSON.stringify({
+			message: `Bid deleted.`,
+		}),
+		{ status: 200 }
+	);
+}

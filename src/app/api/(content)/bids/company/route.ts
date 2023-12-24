@@ -8,9 +8,25 @@ import {
 } from "@/db/schema/tables/relations/content";
 import { queryParamSchema } from "@/lib/validations/api/bids/company/request";
 import { createFilterConditions } from "@/lib/utils";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth/next";
 
-//TODO: add next-auth to this
 export async function GET(req: Request) {
+	const session = await getServerSession(authOptions);
+
+	if (!session || !session.user.ownedCompanies) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
+
+	const ownedCompanyIds = session.user.ownedCompanies.map(
+		(company) => company.id
+	);
+
 	const { query } = parse(req.url, true);
 
 	const params = queryParamSchema.GET.safeParse(query);
@@ -22,9 +38,19 @@ export async function GET(req: Request) {
 		);
 	}
 
+	const { data } = params;
+
+	if (!ownedCompanyIds.includes(data.id)) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
+
 	// Create query conditions based on filters from the query params
 	const filterConditions = (params: any, bids: any) => {
-		const { data } = params;
 		const conditions = createFilterConditions(params, bids);
 
 		if (data.outgoing) {
