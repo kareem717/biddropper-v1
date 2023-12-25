@@ -161,7 +161,10 @@ export const reviews = pgTable("reviews", {
 		.unique()
 		.$defaultFn(() => customId("rev")),
 	authorId: varchar("author_id", { length: 50 })
-		.references(() => user.id)
+		.references(() => user.id, {
+			onDelete: "cascade",
+			onUpdate: "cascade",
+		})
 		.notNull(),
 	rating: numeric("rating", { precision: 2, scale: 1 }).notNull(),
 	createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),

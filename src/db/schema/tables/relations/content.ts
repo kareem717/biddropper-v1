@@ -25,10 +25,16 @@ export const industriesToJobs = pgTable(
 	{
 		industryId: varchar("industry_id", { length: 50 })
 			.notNull()
-			.references(() => industries.id),
+			.references(() => industries.id, {
+				onDelete: "restrict",
+				onUpdate: "cascade",
+			}),
 		jobId: varchar("job_id", { length: 50 })
 			.notNull()
-			.references(() => jobs.id),
+			.references(() => jobs.id, {
+				onDelete: "cascade",
+				onUpdate: "cascade",
+			}),
 	},
 	(table) => ({
 		pk: primaryKey({
@@ -57,10 +63,16 @@ export const industriesToCompanies = pgTable(
 	{
 		industryId: varchar("industry_id", { length: 50 })
 			.notNull()
-			.references(() => industries.id),
+			.references(() => industries.id, {
+				onDelete: "restrict",
+				onUpdate: "cascade",
+			}),
 		companyId: varchar("company_id", { length: 50 })
 			.notNull()
-			.references(() => companies.id),
+			.references(() => companies.id, {
+				onDelete: "cascade",
+				onUpdate: "cascade",
+			}),
 	},
 	(table) => ({
 		pk: primaryKey({
@@ -132,12 +144,28 @@ export const mediaRelationships = pgTable(
 			.notNull()
 			.primaryKey()
 			.unique()
-			.references(() => media.id),
-		jobId: varchar("job_id", { length: 50 }).references(() => jobs.id),
+			.references(() => media.id, {
+				onDelete: "cascade",
+				onUpdate: "cascade",
+			}),
+		jobId: varchar("job_id", { length: 50 }).references(() => jobs.id, {
+			onDelete: "set null",
+			onUpdate: "cascade",
+		}),
 		projectId: varchar("project_id", { length: 50 }).references(
-			() => projects.id
+			() => projects.id,
+			{
+				onDelete: "set null",
+				onUpdate: "cascade",
+			}
 		),
-		reviewId: varchar("review_id", { length: 50 }).references(() => reviews.id),
+		reviewId: varchar("review_id", { length: 50 }).references(
+			() => reviews.id,
+			{
+				onDelete: "set null",
+				onUpdate: "cascade",
+			}
+		),
 	},
 	(table) => ({
 		index: {
@@ -178,13 +206,27 @@ export const jobsRelationships = pgTable(
 			.notNull()
 			.primaryKey()
 			.unique()
-			.references(() => jobs.id),
-		userId: varchar("user_id", { length: 50 }).references(() => user.id),
+			.references(() => jobs.id, {
+				onDelete: "cascade",
+				onUpdate: "cascade",
+			}),
+		userId: varchar("user_id", { length: 50 }).references(() => user.id, {
+			onDelete: "set null",
+			onUpdate: "cascade",
+		}),
 		companyId: varchar("company_id", { length: 50 }).references(
-			() => companies.id
+			() => companies.id,
+			{
+				onDelete: "set null",
+				onUpdate: "cascade",
+			}
 		),
 		contractId: varchar("contract_id", { length: 50 }).references(
-			() => companies.id
+			() => companies.id,
+			{
+				onDelete: "set null",
+				onUpdate: "cascade",
+			}
 		),
 	},
 	(table) => ({
