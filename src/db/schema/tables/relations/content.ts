@@ -92,9 +92,13 @@ export const bidsRelationships = pgTable(
 			.primaryKey()
 			.unique()
 			.references(() => bids.id),
-		jobId: varchar("job_id", { length: 50 }).references(() => jobs.id),
+		jobId: varchar("job_id", { length: 50 }).references(() => jobs.id, {
+			onDelete: "restrict",
+			onUpdate: "cascade",
+		}),
 		contractId: varchar("contract_id", { length: 50 }).references(
-			() => contracts.id
+			() => contracts.id,
+			{ onDelete: "restrict", onUpdate: "cascade" }
 		),
 	},
 	(table) => ({
@@ -106,18 +110,18 @@ export const bidsRelationships = pgTable(
 );
 
 export const bidsToOwnerRelations = relations(bidsRelationships, ({ one }) => ({
-  bid: one(bids, {
-    fields: [bidsRelationships.bidId],
-    references: [bids.id],
-  }),
-  contract: one(companies, {
-    fields: [bidsRelationships.contractId],
-    references: [companies.id],
-  }),
-  job: one(jobs, {
-    fields: [bidsRelationships.jobId],
-    references: [jobs.id],
-  }),
+	bid: one(bids, {
+		fields: [bidsRelationships.bidId],
+		references: [bids.id],
+	}),
+	contract: one(companies, {
+		fields: [bidsRelationships.contractId],
+		references: [companies.id],
+	}),
+	job: one(jobs, {
+		fields: [bidsRelationships.jobId],
+		references: [jobs.id],
+	}),
 }));
 
 // Media Ownership

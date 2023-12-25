@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { bids, contracts, jobs } from "@/db/schema/tables/content";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { parse } from "url";
 import { avg, max, min, sql } from "drizzle-orm";
 import {
@@ -12,6 +12,7 @@ import { queryParamSchema } from "@/lib/validations/api/bids/request";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { CustomError } from "@/lib/utils";
+import { unionAll } from "drizzle-orm/pg-core";
 
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
@@ -411,24 +412,39 @@ export async function DELETE(req: Request) {
 			throw new CustomError("Not authorized to delete this bid.", 401);
 		}
 
-		if (bidToDelete.isDeleted) {
-			throw new CustomError("Bid is already deleted.", 400);
+		const contractWinningBids = db
+			.select({ bidId: contracts.winningBidId })
+			.from(contracts)
+			.where(isNotNull(contracts.winningBidId));
+
+		const jobWinningBids = db
+			.select({ bidId: jobs.winningBidId })
+			.from(jobs)
+			.where(isNotNull(jobs.winningBidId));
+
+		const winningBidIds = await unionAll(contractWinningBids, jobWinningBids);
+
+		if (winningBidIds.some((bid) => bid.bidId === bidToDelete.id)) {
+			throw new CustomError(
+				"Bid cannot be deleted because it is the winning bid for a job or contract.",
+				400
+			);
 		}
 
-		await db
-			.update(bids)
-			.set({
-				isActive: false,
-				deletedAt: new Date(),
-				isDeleted: true,
-			})
-			.where(eq(bids.id, data.bidId));
+		await db.delete(bids).where(eq(bids.id, bidToDelete.id));
+		
+		return new Response(
+		JSON.stringify({
+			message: `Bid deleted.`,
+		}),
+		{ status: 200 }
+	);
 	} catch (err) {
 		const message =
 			err instanceof CustomError
 				? (err as Error).message
 				: "Error deleting bid.";
-				
+
 		return new Response(
 			JSON.stringify({
 				error: message,
@@ -437,10 +453,5 @@ export async function DELETE(req: Request) {
 		);
 	}
 
-	return new Response(
-		JSON.stringify({
-			message: `Bid deleted.`,
-		}),
-		{ status: 200 }
-	);
+
 }

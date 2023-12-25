@@ -47,8 +47,6 @@ export const bids = pgTable(
 				onUpdate: "cascade",
 			}),
 		isActive: boolean("is_active").default(true).notNull(),
-		deletedAt: timestamp("deleted_at", { mode: "date" }),
-		isDeleted: boolean("is_deleted").default(false).notNull(),
 		status: enumBidStatus("status").default("pending").notNull(),
 	},
 	(table) => {
