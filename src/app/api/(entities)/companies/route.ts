@@ -1,13 +1,4 @@
 import { db } from "@/db/client";
-import {
-	companies,
-	addresses,
-	media,
-	industries,
-	companyIndustries,
-	companyJobs,
-	projects,
-} from "@/db/migrations/schema";
 import { randomUUID } from "crypto";
 import { inArray, eq, and, exists } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
@@ -18,8 +9,8 @@ import {
 	fetchCompanyQuerySchema,
 	updateCompanySchema,
 } from "@/lib/validations/api/api-companies";
+import { bodyParamSchema } from "@/lib/validations/api/companies/request";
 import { parse } from "url";
-import { companyReviews } from "@/db/migrations/last_working_schema";
 
 export async function POST(req: Request) {
 	const session = await getServerSession(authOptions);
@@ -27,21 +18,17 @@ export async function POST(req: Request) {
 
 	const reqBody = await req.json();
 
-	const attemptBodyParse = createCompanySchema.safeParse(reqBody);
+	const attemptBodyParse = bodyParamSchema.POST.safeParse(reqBody);
 
 	if (!attemptBodyParse.success) {
-		console.log("POST /api/companies Error:", attemptBodyParse.error);
-		return new Response("Error parsing request body or query parameters.", {
-			status: 400,
-		});
+		return new Response(
+			JSON.stringify({ error: attemptBodyParse.error.issues[0]?.message }),
+			{ status: 400 }
+		);
 	}
 
-	const {
-		address,
-		image,
-		industries: newCompanyIndustries,
-		...companyData
-	} = attemptBodyParse.data;
+	const { address, imageUrl, industryValues, ...companyData } =
+		attemptBodyParse.data;
 
 	// Make sure company name dosen't already exist
 	try {
@@ -55,12 +42,12 @@ export async function POST(req: Request) {
 			return new Response("Company name already exists", { status: 400 });
 		}
 	} catch (err) {
-		console.log("POST /api/companies Error:", err);
+		console.log("POST /api/com panies Error:", err);
 		return new Response("Error checking if company name already exists", {
 			status: 500,
 		});
 	}
-
+	
 	try {
 		await db.transaction(async (tx) => {
 			const newAddressId = `addr_${randomUUID()}`;
