@@ -222,7 +222,7 @@ export const jobsRelationships = pgTable(
 			}
 		),
 		contractId: varchar("contract_id", { length: 50 }).references(
-			() => companies.id,
+			() => contracts.id,
 			{
 				onDelete: "set null",
 				onUpdate: "cascade",

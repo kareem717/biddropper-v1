@@ -80,7 +80,6 @@ export async function GET(req: Request) {
 			.groupBy(sql`DATE(${bids.createdAt})`)
 			.limit(30);
 	} catch (err) {
-		console.error("Error fetching daily averages:", err);
 		return new Response(
 			JSON.stringify({ error: "Error fetching daily averages." }),
 			{ status: 500 }
