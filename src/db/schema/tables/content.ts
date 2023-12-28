@@ -68,7 +68,10 @@ export const companies = pgTable("companies", {
 	name: varchar("name", { length: 50 }).notNull(),
 	ownerId: varchar("owner_id", { length: 50 }).notNull(),
 	addressId: varchar("address_id", { length: 50 }).references(
-		() => addresses.id
+		() => addresses.id, {
+			onDelete: "set null",
+			onUpdate: "cascade",
+		}
 	),
 	serviceArea: numeric("service_area", { precision: 7, scale: 3 }),
 	emailAddress: varchar("email_address", { length: 320 }).notNull(),

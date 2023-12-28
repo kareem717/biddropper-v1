@@ -21,7 +21,10 @@ import { env } from "@/env.mjs";
 
 export async function POST(req: Request) {
 	const session = await getServerSession(authOptions);
-	if (!session) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+	if (!session)
+		return new Response(JSON.stringify({ error: "Unauthorized" }), {
+			status: 401,
+		});
 
 	const reqBody = await req.json();
 
@@ -54,7 +57,7 @@ export async function POST(req: Request) {
 		}
 	} catch (err) {
 		return new Response(
-			JSON.stringify({ error: "An error occured veryfing the contract name." }),
+			JSON.stringify({ error: "An error occured veryfing the company name." }),
 			{ status: 500 }
 		);
 	}
@@ -227,144 +230,254 @@ export async function POST(req: Request) {
 // 	}
 // }
 
-// export async function PATCH(req: Request) {
-// 	const session = await getServerSession(authOptions);
-// 	if (!session || session.user.ownedCompanies.length < 1) {
-// 		return new Response("Unauthorized", { status: 401 });
-// 	}
+export async function PATCH(req: Request) {
+	const session = await getServerSession(authOptions);
+	if (!session || session.user.ownedCompanies.length < 1) {
+		return new Response(JSON.stringify({ error: "Unauthorized" }), {
+			status: 401,
+		});
+	}
 
-// 	const reqBody = await req.json();
-// 	const { query } = parse(req.url, true);
+	const reqBody = await req.json();
 
-// 	const attemptBodyParse = updateCompanySchema.safeParse({
-// 		...reqBody,
-// 		id: query.companyId,
-// 	});
+	const attemptBodyParse = bodyParamSchema.PATCH.safeParse({
+		...reqBody,
+	});
 
-// 	if (!attemptBodyParse.success) {
-// 		console.log("PATCH /api/companies Error:", attemptBodyParse.error);
-// 		return new Response("Error parsing request body.", { status: 400 });
-// 	}
+	if (!attemptBodyParse.success) {
+		return new Response(
+			JSON.stringify({ error: attemptBodyParse.error.issues[0]?.message }),
+			{ status: 400 }
+		);
+	}
 
-// 	const {
-// 		removedJobs,
-// 		addedJobs,
-// 		removedIndustries,
-// 		addedIndustries,
-// 		removedProjects,
-// 		addedProjects,
-// 		addedReviews,
-// 		removedReviews,
-// 		newAddress,
-// 		newImage,
-// 		id: companyId,
-// 		...newCompanyDetails
-// 	} = attemptBodyParse.data;
+	const {
+		address,
+		addedIndustryValues,
+		deletedIndustryValues,
+		imageBase64,
+		id: companyId,
+		...newCompanyDetails
+	} = attemptBodyParse.data;
 
-// 	const userOwnsCompany = session.user.ownedCompanies.some(
-// 		(company) => company.id === companyId
-// 	);
+	const userOwnsCompany = session.user.ownedCompanies.some(
+		(company) => company.id === companyId
+	);
 
-// 	if (!userOwnsCompany) {
-// 		return new Response("Unauthorized", { status: 401 });
-// 	}
+	if (!userOwnsCompany) {
+		return new Response(
+			JSON.stringify({ error: "User does not own the company." }),
+			{
+				status: 401,
+			}
+		);
+	}
 
-// 	try {
-// 		await db.transaction(async (tx) => {
-// 			//update company details
-// 			if (newCompanyDetails) {
-// 				await tx
-// 					.update(companies)
-// 					.set(newCompanyDetails)
-// 					.where(eq(companies.id, companyId));
-// 			}
+	// Update company details
+	if (newCompanyDetails) {
+		try {
+			await db.transaction(async (tx) => {
+				await tx
+					.update(companies)
+					.set(newCompanyDetails)
+					.where(eq(companies.id, companyId));
+			});
+		} catch (err) {
+			return new Response(
+				JSON.stringify({ error: "An error updating the company's details." }),
+				{ status: 500 }
+			);
+		}
+	}
 
-// 			//update company jobs
-// 			if (removedJobs) {
-// 				await tx
-// 					.delete(companyJobs)
-// 					.where(eq(companyJobs.companyId, companyId));
-// 			}
+	// Update address
+	if (address) {
+		try {
+			await db.transaction(async (tx) => {
+				const [newAddress] = await tx
+					.insert(addresses)
+					.values({
+						...address,
+					})
+					.returning({ id: addresses.id });
 
-// 			if (addedJobs) {
-// 				const res = await fetch(
-// 					`${process.env.NEXT_PUBLIC_API_URL}/api/jobs?companyId=${companyId}`,
-// 					{
-// 						method: "POST",
-// 						headers: {
-// 							"Content-Type": "application/json",
-// 						},
-// 						body: JSON.stringify({
-// 							jobs: addedJobs.jobs,
-// 						}),
-// 					}
-// 				);
+				await tx
+					.delete(addresses)
+					.where(
+						eq(
+							addresses.id,
+							db
+								.select({ addressId: companies.addressId })
+								.from(companies)
+								.where(eq(companies.id, companyId))
+						)
+					);
 
-// 				if (!res.ok) {
-// 					tx.rollback();
-// 					throw new Error("Error adding jobs");
-// 				}
-// 			}
+				await tx
+					.update(companies)
+					.set({ addressId: newAddress?.id })
+					.where(eq(companies.id, companyId));
+			});
+		} catch (err) {
+			console.log(err);
+			return new Response(
+				JSON.stringify({ error: "An error updating the company's address." }),
+				{ status: 500 }
+			);
+		}
+	}
 
-// 			//update company projects
-// 			if (removedProjects) {
-// 				await tx.delete(projects).where(eq(projects.companyId, companyId));
-// 			}
+	// Update image
+	if (imageBase64) {
+		try {
+			const supabaseClient = await getSupabaseClient();
+			const newImageId = customId("media");
+			const fileType = imageBase64.split(";")[0]?.split("/")[1];
 
-// 			if (addedProjects) {
-// 				const res = await fetch(
-// 					`${process.env.NEXT_PUBLIC_API_URL}/api/projects?companyId=${companyId}`,
-// 					{
-// 						method: "POST",
-// 						headers: {
-// 							"Content-Type": "application/json",
-// 						},
-// 						body: JSON.stringify({
-// 							...addedProjects,
-// 						}),
-// 					}
-// 				);
+			if (!fileType || !["png", "jpeg", "jpg"].includes(fileType)) {
+				throw new CustomError("Invalid image format.", 400);
+			}
 
-// 				if (!res.ok) {
-// 					tx.rollback();
-// 					throw new Error("Error adding projects");
-// 				}
-// 			}
+			const fileName = `${newImageId}.${fileType}`;
 
-// 			//update company reviews
-// 			if (removedReviews) {
-// 				await tx
-// 					.delete(companyReviews)
-// 					.where(eq(companyReviews.companyId, companyId));
-// 			}
+			// Convert base64 to Blob
+			const base64Response = await fetch(imageBase64);
+			const blob = await base64Response.blob();
+			const { data, error } = await supabaseClient.storage
+				.from("images")
+				.upload(fileName, blob, {
+					contentType: `image/${fileType}`,
+				});
 
-// 			if (addedReviews) {
-// 				const res = await fetch(
-// 					`${process.env.NEXT_PUBLIC_API_URL}/api/reviews?companyId=${companyId}`,
-// 					{
-// 						method: "POST",
-// 						headers: {
-// 							"Content-Type": "application/json",
-// 						},
-// 						body: JSON.stringify({
-// 							...addedReviews,
-// 						}),
-// 					}
-// 				);
+			if (error) {
+				throw new CustomError("Error uploading image.", 500);
+			}
 
-// 				if (!res.ok) {
-// 					tx.rollback();
-// 					throw new Error("Error adding reviews");
-// 				}
-// 			}
-// 		});
-// 	} catch (err) {
-// 		console.log("PATCH /api/companies Error:", err);
-// 		return new Response("An error occured updating the company.", {
-// 			status: 500,
-// 		});
-// 	}
-// }
+			// Save url in db
+			const url = new URL(env.SUPABASE_ENDPOINT);
+			const publicImagesUrl = `https://${url.hostname}/storage/v1/object/public/images/${data?.path}`;
+			
+			try {
+				await db.transaction(async (tx) => {
+					await tx.insert(media).values({
+						id: newImageId,
+						url: publicImagesUrl,
+					});
+
+					await tx
+						.delete(media)
+						.where(
+							eq(
+								media.id,
+								db
+									.select({ imageId: companies.imageId })
+									.from(companies)
+									.where(eq(companies.id, companyId))
+							)
+						);
+
+					await tx
+						.update(companies)
+						.set({ imageId: newImageId })
+						.where(eq(companies.id, companyId));
+				});
+			} catch (err) {
+				// Delete image from storage
+				await supabaseClient.storage.from("images").remove([publicImagesUrl]);
+
+				throw new CustomError("An error occured inserting the new image.", 500);
+			}
+		} catch (err) {
+			const message =
+				err instanceof CustomError
+					? (err as Error).message
+					: "An error occured uploading the new company image.";
+			return new Response(
+				JSON.stringify({
+					error: message,
+				}),
+				{ status: err instanceof CustomError ? err.status : 500 }
+			);
+		}
+	}
+
+	// Delete industries
+	if (deletedIndustryValues) {
+		try {
+			await db.transaction(async (tx) => {
+				const industryIds = await tx
+					.select({ id: industries.id })
+					.from(industries)
+					.where(inArray(industries.value, deletedIndustryValues))
+					.limit(deletedIndustryValues.length);
+
+				if (industryIds.length !== deletedIndustryValues.length) {
+					throw new CustomError("Invalid industry values.", 400);
+				}
+				const industryIdStrings = industryIds.map((industry) => industry.id);
+				await tx
+					.delete(industriesToCompanies)
+					.where(
+						and(
+							eq(
+								industriesToCompanies.companyId,
+								db
+									.select({ id: companies.id })
+									.from(companies)
+									.where(eq(companies.id, companyId))
+							),
+							inArray(industriesToCompanies.industryId, industryIdStrings)
+						)
+					);
+			});
+		} catch (err) {
+			return new Response(
+				JSON.stringify({
+					error: "An error occured deleting the company's industries.",
+				}),
+				{ status: 500 }
+			);
+		}
+	}
+
+	// Add industries
+	if (addedIndustryValues) {
+		try {
+			await db.transaction(async (tx) => {
+				const industryIds = await tx
+					.select({ id: industries.id })
+					.from(industries)
+					.where(inArray(industries.value, addedIndustryValues))
+					.limit(addedIndustryValues.length);
+
+				if (industryIds.length !== addedIndustryValues.length) {
+					throw new CustomError("Invalid industry values.", 400);
+				}
+
+				await tx.insert(industriesToCompanies).values(
+					industryIds.map((industry) => ({
+						companyId,
+						industryId: industry.id,
+					}))
+				);
+			});
+		} catch (err) {
+			return new Response(
+				JSON.stringify({
+					error: "An error occured adding the company's industries.",
+				}),
+				{ status: 500 }
+			);
+		}
+	}
+
+	return new Response(
+		JSON.stringify({
+			message: "Company successfully updated.",
+		}),
+		{ status: 200 }
+	);
+}
 
 // export async function DELETE(req: Request) {
 // 	const { query } = parse(req.url, true);
