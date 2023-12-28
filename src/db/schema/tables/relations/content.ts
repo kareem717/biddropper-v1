@@ -103,14 +103,17 @@ export const bidsRelationships = pgTable(
 			.notNull()
 			.primaryKey()
 			.unique()
-			.references(() => bids.id),
+			.references(() => bids.id, {
+				onDelete: "cascade",
+				onUpdate: "cascade",
+			}),
 		jobId: varchar("job_id", { length: 50 }).references(() => jobs.id, {
-			onDelete: "restrict",
+			onDelete: "cascade",
 			onUpdate: "cascade",
 		}),
 		contractId: varchar("contract_id", { length: 50 }).references(
 			() => contracts.id,
-			{ onDelete: "restrict", onUpdate: "cascade" }
+			{ onDelete: "cascade", onUpdate: "cascade" }
 		),
 	},
 	(table) => ({

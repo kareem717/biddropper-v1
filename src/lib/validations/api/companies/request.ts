@@ -174,4 +174,21 @@ const patchBodyParams = createInsertSchema(companies, {
 		}
 	);
 
-export const bodyParamSchema = { POST: postBodyParams, PATCH: patchBodyParams };
+export const deleteQuerySchema = z.object({
+	id: z
+		.string({
+			required_error: "Missing identifier.",
+		})
+		.refine((id) => /^comp_[a-zA-Z0-9\-]{1,36}$/.test(id), {
+			message: "Invalid identifier.",
+		}),
+});
+
+export const bodyParamSchema = {
+	POST: postBodyParams,
+	PATCH: patchBodyParams,
+};
+
+export const queryParamSchema = {
+	DELETE: deleteQuerySchema,
+};
