@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { inArray, eq, and, gte, sql } from "drizzle-orm";
-import { bodyParamSchema } from "@/lib/validations/api/companies/search/request";
+import { bodyParamSchema } from "@/lib/validations/api/(entities)/companies/search/request";
 import {
 	addresses,
 	companies,

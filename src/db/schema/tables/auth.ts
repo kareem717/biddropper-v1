@@ -12,7 +12,7 @@ export const account = pgTable(
 	{
 		userId: text("userId")
 			.notNull()
-			.references(() => user.id, { onDelete: "cascade" }),
+			.references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		type: text("type").notNull(),
 		provider: text("provider").notNull(),
 		providerAccountId: text("providerAccountId").notNull(),
@@ -38,7 +38,7 @@ export const session = pgTable("session", {
 	sessionToken: text("sessionToken").primaryKey().notNull(),
 	userId: text("userId")
 		.notNull()
-		.references(() => user.id, { onDelete: "cascade" }),
+		.references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 

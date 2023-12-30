@@ -8,7 +8,7 @@ import {
 	jobsRelationships,
 } from "@/db/schema/tables/relations/content";
 import { createFilterConditions, customId } from "@/lib/utils";
-import { queryParamSchema } from "@/lib/validations/api/bids/request";
+import { queryParamSchema } from "@/lib/validations/api/(content)/bids/request";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { CustomError } from "@/lib/utils";
@@ -431,13 +431,13 @@ export async function DELETE(req: Request) {
 		}
 
 		await db.delete(bids).where(eq(bids.id, bidToDelete.id));
-		
+
 		return new Response(
-		JSON.stringify({
-			message: `Bid deleted.`,
-		}),
-		{ status: 200 }
-	);
+			JSON.stringify({
+				message: `Bid deleted.`,
+			}),
+			{ status: 200 }
+		);
 	} catch (err) {
 		const message =
 			err instanceof CustomError
@@ -451,6 +451,4 @@ export async function DELETE(req: Request) {
 			{ status: err instanceof CustomError ? err.status : 500 }
 		);
 	}
-
-
 }

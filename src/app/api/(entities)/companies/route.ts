@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth/next";
 import {
 	bodyParamSchema,
 	queryParamSchema,
-} from "@/lib/validations/api/companies/request";
+} from "@/lib/validations/api/(entities)/companies/request";
 import { createClient } from "@supabase/supabase-js";
 import { pipeline } from "stream";
 import { promisify } from "util";

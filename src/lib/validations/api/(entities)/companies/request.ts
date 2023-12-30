@@ -2,7 +2,7 @@ import * as z from "zod";
 import { createInsertSchema } from "drizzle-zod";
 import { companies, industries } from "@/db/schema/tables/content";
 import validator from "validator";
-import { bodyParamSchema as addressPostSchema } from "../addresses/request";
+import { bodyParamSchema as addressPostSchema } from "../../(content)/addresses/request";
 import { db } from "@/db/client";
 import { inArray, sql } from "drizzle-orm";
 
@@ -186,7 +186,7 @@ export const deleteQuerySchema = z.object({
 
 export const bodyParamSchema = {
 	POST: postBodyParams,
-	PATCH: patchBodyParams
+	PATCH: patchBodyParams,
 };
 
 export const queryParamSchema = {

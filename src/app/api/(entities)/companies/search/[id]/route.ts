@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { inArray, eq, and, gte, sql } from "drizzle-orm";
-import { queryParamSchema } from "@/lib/validations/api/companies/search/[id]/request";
+import { queryParamSchema } from "@/lib/validations/api/(entities)/companies/search/[id]/request";
 import {
 	addresses,
 	companies,
@@ -85,10 +85,10 @@ export async function GET(
 				eq(industries.id, industriesToCompanies.industryId)
 			)
 			.where(eq(companies.id, params.id))
-      .groupBy(
-        ...Object.values(querySelects),
-        ...(fetchType === "deep" ? [addresses.id] : [])
-      )
+			.groupBy(
+				...Object.values(querySelects),
+				...(fetchType === "deep" ? [addresses.id] : [])
+			)
 			.orderBy(companies.id)
 			.limit(1);
 

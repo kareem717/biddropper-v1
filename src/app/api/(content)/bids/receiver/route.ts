@@ -6,7 +6,7 @@ import {
 	bidsRelationships,
 	jobsRelationships,
 } from "@/db/schema/tables/relations/content";
-import { queryParamSchema } from "@/lib/validations/api/bids/request";
+import { queryParamSchema } from "@/lib/validations/api/(content)/bids/request";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { CustomError } from "@/lib/utils";

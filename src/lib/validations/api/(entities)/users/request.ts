@@ -1,0 +1,68 @@
+import * as z from "zod";
+import { createInsertSchema } from "drizzle-zod";
+import { companies, industries } from "@/db/schema/tables/content";
+import validator from "validator";
+import { bodyParamSchema as addressPostSchema } from "../../(content)/addresses/request";
+import { db } from "@/db/client";
+import { inArray, sql } from "drizzle-orm";
+import { user } from "@/db/schema/tables/auth";
+
+const patchBodyParams = createInsertSchema(user, {
+	id: z
+		.string({
+			required_error: "Missing identifier.",
+		})
+		.max(50, {
+			message: "Invalid identifier.",
+		})
+		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
+			message: "Invalid identifier.",
+		}),
+	email: z
+		.string()
+		.email({
+			message: "Invalid email address.",
+		})
+		.optional(),
+	name: z.string().optional(),
+	image: z.string().url().optional(),
+}).omit({
+  createdAt: true,
+  updatedAt: true,
+  emailVerified: true,
+});
+
+export const deleteQuerySchema = z.object({
+	id: z
+		.string({
+			required_error: "Missing identifier.",
+		})
+		.max(50, {
+			message: "Invalid identifier.",
+		})
+		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
+			message: "Invalid identifier.",
+		}),
+});
+
+export const getQuerySchema = z.object({
+	id: z
+		.string({
+			required_error: "Missing identifier.",
+		})
+		.max(50, {
+			message: "Invalid identifier.",
+		})
+		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
+			message: "Invalid identifier.",
+		}),
+});
+
+export const bodyParamSchema = {
+	PATCH: patchBodyParams,
+};
+
+export const queryParamSchema = {
+	DELETE: deleteQuerySchema,
+	GET: getQuerySchema,
+};
