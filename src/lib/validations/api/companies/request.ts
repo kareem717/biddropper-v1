@@ -186,7 +186,7 @@ export const deleteQuerySchema = z.object({
 
 export const bodyParamSchema = {
 	POST: postBodyParams,
-	PATCH: patchBodyParams,
+	PATCH: patchBodyParams
 };
 
 export const queryParamSchema = {

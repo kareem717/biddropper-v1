@@ -14,14 +14,11 @@ import { user } from "./auth";
 export const addresses = pgTable("addresses", {
 	id: varchar("id", { length: 50 })
 		.notNull()
-		.$defaultFn(() => {
-			console.log(customId("addr"));
-			return customId("addr");
-		})
+		.$defaultFn(() => customId("addr"))
 		.primaryKey()
 		.unique(),
-	xCoordinate: numeric("x-coordinate").notNull(),
-	yCoordinate: numeric("y-coordinate").notNull(),
+	latitude: numeric("latitude").notNull(),
+	longitude: numeric("longitude").notNull(),
 	addressLine1: varchar("address_line_1", { length: 70 }),
 	addressLine2: varchar("address_line_2", { length: 70 }),
 	city: varchar("city", { length: 50 }),
@@ -68,7 +65,8 @@ export const companies = pgTable("companies", {
 	name: varchar("name", { length: 50 }).notNull(),
 	ownerId: varchar("owner_id", { length: 50 }).notNull(),
 	addressId: varchar("address_id", { length: 50 }).references(
-		() => addresses.id, {
+		() => addresses.id,
+		{
 			onDelete: "set null",
 			onUpdate: "cascade",
 		}

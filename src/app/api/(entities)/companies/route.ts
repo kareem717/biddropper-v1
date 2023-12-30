@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { randomUUID } from "crypto";
-import { inArray, eq, and, exists } from "drizzle-orm";
+import { inArray, eq, and, gte, exists, sql } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 import {
@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 import { pipeline } from "stream";
 import { promisify } from "util";
 import { createWriteStream } from "fs";
+import { compressToEncodedURIComponent } from "lz-string";
 import {
 	addresses,
 	bids,
@@ -29,6 +30,7 @@ import {
 import { env } from "@/env.mjs";
 import { parse } from "url";
 import { text } from "stream/consumers";
+import { headers } from "next/headers";
 
 export async function POST(req: Request) {
 	const session = await getServerSession(authOptions);
@@ -37,7 +39,15 @@ export async function POST(req: Request) {
 			status: 401,
 		});
 
-	const reqBody = await req.json();
+	let reqBody;
+	try {
+		reqBody = await req.json();
+	} catch (error) {
+		return new Response(
+			JSON.stringify({ error: "Invalid JSON in request body." }),
+			{ status: 400 }
+		);
+	}
 
 	const attemptBodyParse = await bodyParamSchema.POST.safeParseAsync(reqBody);
 
@@ -178,69 +188,6 @@ export async function POST(req: Request) {
 	);
 }
 
-// export async function GET(req: Request) {
-// 	const { query } = parse(req.url, true);
-
-// 	const attemptBodyParse = fetchCompanyQuerySchema.safeParse(query);
-
-// 	if (!attemptBodyParse.success) {
-// 		console.log("GET /api/companies Error:", attemptBodyParse.error);
-// 		return new Response("Error parsing request body.", { status: 400 });
-// 	}
-
-// 	const { companyId, fetchType, limit } = attemptBodyParse.data;
-
-// 	let queryBuilder;
-
-// 	switch (fetchType) {
-// 		// Simple fetch obly gets the contract data
-// 		case "simple":
-// 			queryBuilder = db.select({ companies }).from(companies);
-// 			break;
-
-// 		// Deep fetch gets the contract data, job data, and media data
-// 		case "deep":
-// 			queryBuilder = db
-// 				.select()
-// 				.from(companies)
-// 				.innerJoin(media, eq(media.id, companies.imageId))
-// 				.innerJoin(addresses, eq(addresses.id, companies.addressId));
-
-// 			break;
-
-// 		// Minimal fetch only gets the data provided by the view
-// 		case "minimal":
-// 			queryBuilder = db
-// 				.select({
-// 					id: companies.id,
-// 					imageId: companies.imageId,
-// 					addressId: companies.addressId,
-// 				})
-// 				.from(companies);
-// 			break;
-// 	}
-
-// 	if (!queryBuilder) {
-// 		return new Response("Invalid 'fetchType'.", { status: 400 });
-// 	}
-
-// 	if (companyId) {
-// 		queryBuilder = queryBuilder.where(eq(companies.id, companyId));
-// 	}
-
-// 	try {
-// 		// Limit the number of results (defaults to 25)
-// 		const res = await queryBuilder.limit(companyId ? 1 : limit);
-
-// 		return new Response(JSON.stringify(res), { status: 200 });
-// 	} catch (err) {
-// 		console.log("GET /api/companies Error:", err);
-// 		return new Response("An error occured fetching the company/companies", {
-// 			status: 500,
-// 		});
-// 	}
-// }
-
 export async function PATCH(req: Request) {
 	const session = await getServerSession(authOptions);
 	if (!session || session.user.ownedCompanies.length < 1) {
@@ -249,8 +196,16 @@ export async function PATCH(req: Request) {
 		});
 	}
 
-	const reqBody = await req.json();
+	let reqBody;
 
+	try {
+		reqBody = await req.json();
+	} catch (error) {
+		return new Response(
+			JSON.stringify({ error: "Invalid JSON in request body." }),
+			{ status: 400 }
+		);
+	}
 	const attemptBodyParse = bodyParamSchema.PATCH.safeParse({
 		...reqBody,
 	});
@@ -512,7 +467,7 @@ export async function DELETE(req: Request) {
 
 	const { id } = attemptQueryParse.data;
 
-	if (!session.user.ownedCompanies.includes(id)) {
+	if (!session.user.ownedCompanies.some((company) => company.id === id)) {
 		return new Response(
 			JSON.stringify({
 				error: "User unauthorized to delete company.",
