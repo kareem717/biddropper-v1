@@ -171,7 +171,7 @@ export async function POST(req: Request) {
 		const message =
 			err instanceof CustomError
 				? (err as Error).message
-				: "Error creating bid.";
+				: "Error creating company.";
 		return new Response(
 			JSON.stringify({
 				error: message,
@@ -347,10 +347,9 @@ export async function PATCH(req: Request) {
 						.set({ imageId: newImageId })
 						.where(eq(companies.id, companyId));
 				});
-				//'comp_a342e257-77cc-4abe-9aa6-52fe1ac652d9'
 			} catch (err) {
 				// Delete image from storage
-				await supabaseClient.storage.from("images").remove([publicImagesUrl]);
+				await supabaseClient.storage.from("images").remove([data?.path]);
 
 				throw new CustomError("An error occured inserting the new image.", 500);
 			}
@@ -450,9 +449,9 @@ export async function DELETE(req: Request) {
 	const { query } = parse(req.url, true);
 
 	const session = await getServerSession(authOptions);
-	if (!session) {
-		return new Response("Unauthorized", { status: 401 });
-	}
+	// if (!session) {
+	// 	return new Response("Unauthorized", { status: 401 });
+	// }
 
 	const attemptQueryParse = queryParamSchema.DELETE.safeParse(query);
 
@@ -467,46 +466,50 @@ export async function DELETE(req: Request) {
 
 	const { id } = attemptQueryParse.data;
 
-	if (!session.user.ownedCompanies.some((company) => company.id === id)) {
-		return new Response(
-			JSON.stringify({
-				error: "User unauthorized to delete company.",
-			}),
-			{ status: 401 }
-		);
-	}
+	// if (!session.user.ownedCompanies.some((company) => company.id === id)) {
+	// 	return new Response(
+	// 		JSON.stringify({
+	// 			error: "User unauthorized to delete company.",
+	// 		}),
+	// 		{ status: 401 }
+	// 	);
+	// }
 
-	// Make sure user owns the company
-	try {
-		const [companyExists] = await db
-			.select({
-				id: companies.id,
-			})
-			.from(companies)
-			.where(eq(companies.id, id))
-			.limit(1);
+	// // Make sure user owns the company
+	// try {
+	// 	const [companyExists] = await db
+	// 		.select({
+	// 			id: companies.id,
+	// 		})
+	// 		.from(companies)
+	// 		.where(eq(companies.id, id))
+	// 		.limit(1);
 
-		if (!companyExists) {
-			return new Response(
-				JSON.stringify({
-					error: "The company does not exist.",
-				}),
-				{ status: 404 }
-			);
-		}
-	} catch (err) {
-		return new Response(
-			JSON.stringify({
-				error: "A server side error occured.",
-			}),
-			{
-				status: 500,
-			}
-		);
-	}
+	// 	if (!companyExists) {
+	// 		return new Response(
+	// 			JSON.stringify({
+	// 				error: "The company does not exist.",
+	// 			}),
+	// 			{ status: 404 }
+	// 		);
+	// 	}
+	// } catch (err) {
+	// 	return new Response(
+	// 		JSON.stringify({
+	// 			error: "A server side error occured.",
+	// 		}),
+	// 		{
+	// 			status: 500,
+	// 		}
+	// 	);
+	// }
 
 	try {
 		await db.transaction(async (tx) => {
+			await tx
+				.delete(jobsRelationships)
+				.where(eq(jobsRelationships.companyId, id));
+
 			await tx.delete(companies).where(eq(companies.id, id));
 
 			await tx
@@ -534,6 +537,10 @@ export async function DELETE(req: Request) {
 				)
 				.returning({ url: media.url });
 
+				console.log(await tx
+					.select({ imageId: companies.imageId })
+					.from(companies)
+					.where(eq(companies.id, id)));
 			// Delete image from storage
 			if (mediaUrl) {
 				const supabaseClient = await getSupabaseClient();

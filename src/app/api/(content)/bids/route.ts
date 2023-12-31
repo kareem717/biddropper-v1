@@ -17,6 +17,17 @@ import { unionAll } from "drizzle-orm/pg-core";
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
 
+	const session = await getServerSession(authOptions);
+
+	if (!session) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
+
 	// Input validation
 	const params = queryParamSchema.GET.safeParse(query);
 
@@ -27,15 +38,62 @@ export async function GET(req: Request) {
 		);
 	}
 
+	const { data } = params;
+
+	// Differentiate between job and contract bids
+	const idCondition: any = data.jobId
+		? eq(bidsRelationships.jobId, data.jobId as string)
+		: eq(bidsRelationships.contractId, data.contractId as string);
+
+	// Make sure user either owns a company or owns the job or contract
+	if (!session.user.ownedCompanies) {
+		if (data.contractId) {
+			return new Response(
+				JSON.stringify({
+					error:
+						"User is not authorized to view the bid data for this contract.",
+				}),
+				{ status: 401 }
+			);
+		} else if (!data.jobId) {
+			return new Response(
+				JSON.stringify({
+					error: "Job ID is not provided.",
+				}),
+				{ status: 400 }
+			);
+		}
+
+		try {
+			const [job] = await db
+				.select({
+					userId: jobsRelationships.userId,
+				})
+				.from(jobs)
+				.innerJoin(jobsRelationships, eq(jobs.id, jobsRelationships.jobId))
+				.where(eq(jobs.id, data.jobId))
+				.limit(1);
+
+			if (!job) {
+				return new Response(
+					JSON.stringify({
+						error: "User is not authorized to view the bid data for this job.",
+					}),
+					{ status: 401 }
+				);
+			}
+		} catch (err) {
+			return new Response(
+				JSON.stringify({
+					error: "Error finding job.",
+				}),
+				{ status: 404 }
+			);
+		}
+	}
+
 	// Create query conditions based on filters from the query params
 	const filterConditions = (params: any, bids: any) => {
-		const { data } = params;
-
-		// Differentiate between job and contract bids
-		const idCondition: any = data.jobId
-			? eq(bidsRelationships.jobId, data.jobId as string)
-			: eq(bidsRelationships.contractId, data.contractId as string);
-
 		const conditions = createFilterConditions(params, bids);
 
 		conditions.push(idCondition);
@@ -48,8 +106,11 @@ export async function GET(req: Request) {
 	try {
 		stats = db
 			.select({
-				medianPrice: sql<number>`percentile_cont(0.5) within group (order by ${bids.price})`,
-				averagePrice: sql<number>`${avg(bids.price)}`,
+				medianPrice:
+					sql<number>`percentile_cont(0.5) within group (order by ${bids.price})`.as(
+						"medianPrice"
+					),
+				averagePrice: sql<number>`${avg(bids.price)}`.as("averagePrice"),
 				count: sql`count(*)`.as("count"),
 				maxPrice: sql<number>`${max(bids.price)}`,
 				minPrice: sql<number>`${min(bids.price)}`,

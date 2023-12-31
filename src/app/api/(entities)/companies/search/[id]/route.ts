@@ -1,5 +1,5 @@
 import { db } from "@/db/client";
-import { inArray, eq, and, gte, sql } from "drizzle-orm";
+import { eq, and, gte, sql } from "drizzle-orm";
 import { queryParamSchema } from "@/lib/validations/api/(entities)/companies/search/[id]/request";
 import {
 	addresses,
@@ -8,15 +8,14 @@ import {
 	media,
 } from "@/db/schema/tables/content";
 import { industriesToCompanies } from "@/db/schema/tables/relations/content";
-import { NextRequest } from "next/server";
 import { parse } from "url";
 
 export async function GET(
-	req: NextRequest,
+	req: Request,
 	{ params }: { params: { id: string } }
 ) {
 	if (!params.id) {
-		return new Response("Missing company id.", { status: 400 });
+		return new Response("Missing company ID.", { status: 400 });
 	}
 
 	const { query } = parse(req.url, true);

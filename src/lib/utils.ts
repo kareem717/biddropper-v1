@@ -93,3 +93,5 @@ export class CustomError extends Error {
 		this.status = status;
 	}
 }
+
+export const base64Regex = /^data:image\/[a-zA-Z+]*;base64,[a-zA-Z0-9+/]*={0,2}$/;

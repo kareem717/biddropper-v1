@@ -100,7 +100,7 @@ export async function PATCH(req: Request) {
 					.from(contracts)
 					.where(eq(contracts.id, contractId))
 					.limit(1);
-				if (!contract?.isActive) {
+				if (!(contract && contract.isActive)) {
 					throw new CustomError("Contract is not active.", 400);
 				}
 			} else if (jobId) {
@@ -110,7 +110,7 @@ export async function PATCH(req: Request) {
 					.where(eq(jobs.id, jobId))
 					.limit(1);
 
-				if (!job?.isActive) {
+				if (!(job && job.isActive)) {
 					throw new CustomError("Job is not active.", 400);
 				}
 			}

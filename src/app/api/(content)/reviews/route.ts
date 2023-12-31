@@ -1,14 +1,8 @@
 import { db } from "@/db/client";
-import {
-	companies,
-	media,
-	reviewMedia,
-	reviews,
-	users,
-} from "@/db/migrations/schema";
+import { companies, media, reviews } from "@/db/schema/tables/content";
 import { authOptions } from "@/lib/auth";
 import { randomUUID } from "crypto";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, exists, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { headers } from "next/headers";
 import {
@@ -18,307 +12,348 @@ import {
 	updateReviewSchema,
 } from "@/lib/validations/api/api-review";
 import { parse } from "url";
-import fullReviewView from "@/db/views/full-review";
-
-//TODO: test this route
-export async function POST(req: Request) {
-	const { query } = parse(req.url, true);
-	const session = await getServerSession(authOptions);
-
-	if (!session) {
-		return new Response("Unauthorized", { status: 401 });
-	}
-
-	const reqBody = await req.json();
-
-	const attemptBodyParse = createReviewSchema.safeParse({
-		reqBody,
-		companyId: query.companyId,
-	});
-
-	if (!attemptBodyParse.success) {
-		console.log("GET /api/reviews Error:", attemptBodyParse.error);
-		return new Response("Error parsing request body or query parameters.", {
-			status: 400,
-		});
-	}
-
-	const { reviewMedia: reqMedia, companyId, ...review } = attemptBodyParse.data;
-
-	try {
-		const userOwnsCompany = await db
-			.select()
-			.from(companies)
-			.where(
-				and(eq(companies.id, companyId), ne(companies.ownerId, session.user.id))
-			);
-
-		if (!userOwnsCompany) {
-			return new Response("Company not found, or user owns company", {
-				status: 400,
-			});
-		}
-	} catch (err) {
-		console.log("GET /api/reviews Error:", err);
-		return new Response("Error checking if user owns company", { status: 500 });
-	}
-
-	try {
-		const newReviewId = `rev_${randomUUID()}`;
-
-		await db.transaction(async (tx) => {
-			await tx.insert(reviews).values({
-				companyId,
-				id: newReviewId,
-				authorId: session.user.id,
-				...review,
-			});
-
-			// Moved these variables inside the transaction to not create
-			// them if the transaction fails
-			const reviewPhotos = reqMedia.map((photo) => ({
-				id: `media_${randomUUID()}`,
-				...photo,
-			}));
-
-			await tx.insert(media).values(reviewPhotos);
-
-			const mediaLink = reviewPhotos.map((photo) => ({
-				mediaId: photo.id,
-				reviewId: newReviewId,
-			}));
-
-			await tx.insert(reviewMedia).values(mediaLink);
-		});
-
-		return new Response("Review created.", { status: 200 });
-	} catch (err) {
-		console.log("GET /api/reviews Error:", err);
-		return new Response("An error occurred while creating the review.", {
-			status: 500,
-		});
-	}
-}
+import {
+	bodyParamsSchema,
+	queryParamsSchema,
+} from "@/lib/validations/api/(content)/reviews/request";
+import { mediaRelationships } from "@/db/schema/tables/relations/content";
+import { CustomError } from "@/lib/utils";
+import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 
 export async function GET(req: Request) {
-	const { query } = parse(req.url, true);
-
-	const attemptQueryParse = fetchReviewQuerySchema.safeParse(query);
-
-	if (!attemptQueryParse.success) {
-		console.log("GET /api/reviews Error:", attemptQueryParse.error);
-		return new Response("Error parsing query parameters.", { status: 400 });
-	}
-
-	const { companyId, reviewId, limit, fetchType, authorId } =
-		attemptQueryParse.data;
-
-	let queryBuilder;
-
-	switch (fetchType) {
-		// Simple fetch obly gets the review data
-		case "simple":
-			queryBuilder = db
-				.select({ reviews })
-				.from(fullReviewView)
-				.innerJoin(reviews, eq(reviews.id, fullReviewView.reviewId));
-
-			break;
-
-		// Deep fetch gets the review data, and media data,
-		case "deep":
-			queryBuilder = db
-				.select()
-				.from(fullReviewView)
-				.leftJoin(media, eq(media.id, fullReviewView.mediaId));
-
-			break;
-
-		// Minimal fetch only gets the data provided by the view
-		case "minimal":
-			queryBuilder = db.select().from(fullReviewView);
-
-			break;
-	}
-
-	if (!queryBuilder) {
-		return new Response("Invalid 'fetchType'.", { status: 400 });
-	}
-
-	if (companyId) {
-		queryBuilder.where(eq(fullReviewView.companyId, companyId));
-	}
-
-	if (reviewId) {
-		queryBuilder.where(eq(fullReviewView.reviewId, reviewId));
-	}
-
-	if (authorId) {
-		queryBuilder.where(eq(fullReviewView.authorId, authorId));
-	}
-
-	try {
-		// Limit the number of results (defaults to 25)
-		const res = await queryBuilder.limit(authorId ? 1 : limit);
-
-		return new Response(JSON.stringify(res), { status: 200 });
-	} catch (err) {
-		console.log("GET /api/reviews Error:", err);
-		return new Response("An error occured fetching the review(s)", {
-			status: 500,
-		});
-	}
-}
-
-export async function PATCH(req: Request) {
 	const session = await getServerSession(authOptions);
-	if (!session) {
-		return new Response("Unauthorized", { status: 401 });
-	}
 
 	const { query } = parse(req.url, true);
 
-	const reqBody = await req.json();
+	if (!session) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
 
-	const attemptBodyParse = updateReviewSchema.safeParse({
-		id: query.id,
-		...reqBody,
+	const attemptQueryParamsParse = queryParamsSchema.GET.safeParse({
+		...query,
 	});
 
-	if (!attemptBodyParse.success) {
-		console.log("PATCH /api/reviews Error:", attemptBodyParse.error);
-		return new Response("Error parsing request body or query parameters.", {
-			status: 400,
-		});
+	if (!attemptQueryParamsParse.success) {
+		return new Response(
+			JSON.stringify({
+				error: attemptQueryParamsParse.error.issues[0]?.message,
+			}),
+			{ status: 400 }
+		);
 	}
 
-	const { id, removedMedia, newMedia, ...updateValues } = attemptBodyParse.data;
+	const queryParams = attemptQueryParamsParse.data;
 
-	//Make sure user owns the review
 	try {
-		const userOwnsReview = await db
-			.select()
-			.from(fullReviewView)
-			.where(eq(reviews.id, id))
-			.innerJoin(users, eq(reviews.authorId, session.user.id))
-			.limit(1);
+		const filters = and(
+			queryParams.reviewId ? eq(reviews.id, queryParams.reviewId) : undefined,
+			queryParams.authorId
+				? eq(reviews.authorId, queryParams.authorId)
+				: undefined,
+			queryParams.minRating
+				? gte(reviews.rating, queryParams.minRating)
+				: undefined,
+			queryParams.maxRating
+				? lte(reviews.rating, queryParams.maxRating)
+				: undefined,
+			queryParams.minCreatedAt
+				? gte(reviews.createdAt, queryParams.minCreatedAt)
+				: undefined,
+			queryParams.maxCreatedAt
+				? lte(reviews.createdAt, queryParams.maxCreatedAt)
+				: undefined,
+			queryParams.cursor ? gte(reviews.id, queryParams.cursor) : undefined
+		);
 
-		if (userOwnsReview.length < 1) {
-			return new Response("User does not own the review.", { status: 401 });
-		}
+		const res = await db
+			.select({
+				id: reviews.id,
+				authorId: reviews.authorId,
+				rating: reviews.rating,
+				createdAt: reviews.createdAt,
+				updatedAt: reviews.updatedAt,
+				description: reviews.description,
+				title: reviews.title,
+				companyId: reviews.companyId,
+				media: sql`ARRAY_AGG(${media.url})`,
+			})
+			.from(reviews)
+			.leftJoin(mediaRelationships, eq(reviews.id, mediaRelationships.reviewId))
+			.leftJoin(media, eq(mediaRelationships.mediaId, media.id))
+			.where(filters)
+			.limit(queryParams.limit + 1)
+			.groupBy(reviews.id)
+			.orderBy(reviews.id);
+
+		return new Response(
+			JSON.stringify({
+				cursor: res.length > queryParams.limit ? res[res.length - 1]?.id : null,
+				data: res.slice(0, queryParams.limit),
+			}),
+			{ status: 200 }
+		);
 	} catch (err) {
-		console.log("PATCH /api/reviews Error:", err);
-		return new Response("Error verifying review ownership.", { status: 500 });
+		return new Response(
+			JSON.stringify({
+				error: "Error retrieving reviews.",
+			}),
+			{ status: 500 }
+		);
 	}
-
-	// Delete jobs
-	if (removedMedia) {
-		try {
-			await db
-				.delete(reviewMedia)
-				.where(
-					and(
-						eq(reviewMedia.reviewId, id),
-						inArray(reviewMedia.mediaId, removedMedia)
-					)
-				);
-		} catch (err) {
-			console.log("PATCH /api/reviews Error:", err);
-			return new Response("Error deleting media.", { status: 500 });
-		}
-	}
-
-	// Insert media
-	if (newMedia) {
-		try {
-			let newMediaIds: string[];
-
-			await db.transaction(async (tx) => {
-				// insert new media
-				tx.insert(media).values(
-					newMedia.map((media) => {
-						const newId = `media_${crypto.randomUUID()}`;
-
-						newMediaIds.push(newId);
-
-						return {
-							...media,
-							id: newId,
-						};
-					})
-				);
-
-				// Link  new media to job
-				tx.insert(reviewMedia).values(
-					newMediaIds.map((mediaId) => ({
-						reviewId: id,
-						mediaId,
-					}))
-				);
-			});
-		} catch (err) {
-			console.log("PATCH /api/reviews Error:", err);
-			return new Response("An error occured while inserting new media.", {
-				status: 400,
-			});
-		}
-	}
-
-	// Update review
-	try {
-		await db.update(reviews).set(updateValues).where(eq(reviews.id, id));
-	} catch (err) {
-		console.log("PATCH /api/reviews Error:", err);
-		return new Response("Error updating review.", { status: 500 });
-	}
-
-	return new Response("Review updated successfully.", { status: 200 });
 }
 
+// export async function PATCH(req: Request) {
+// 	const session = await getServerSession(authOptions);
+
+// 	if (!session) {
+// 		return new Response(
+// 			JSON.stringify({
+// 				error: "Unauthorized",
+// 			}),
+// 			{ status: 401 }
+// 		);
+// 	}
+
+// 	const reqBody = await req.json();
+
+// 	const attemptBodyParse = bodyParamsSchema.PATCH.safeParse(reqBody);
+
+// 	if (!attemptBodyParse.success) {
+// 		return new Response(
+// 			JSON.stringify({
+// 				error: attemptBodyParse.error.issues[0]?.message,
+// 			}),
+// 			{ status: 400 }
+// 		);
+// 	}
+
+// 	const { id, addedImageBase64, removedMediaUrls, ...updateValues } =
+// 		attemptBodyParse.data;
+
+// 	// Make sure user owns the review
+// 	try {
+// 		const [review] = await db
+// 			.select()
+// 			.from(reviews)
+// 			.where(and(eq(reviews.id, id)))
+// 			.limit(1);
+
+// 		if (!review) {
+// 			return new Response(
+// 				JSON.stringify({
+// 					error: "Review not found.",
+// 				}),
+// 				{ status: 404 }
+// 			);
+// 		}
+
+// 		if (review.authorId !== session.user.id) {
+// 			return new Response(
+// 				JSON.stringify({
+// 					error: "User does not own the review.",
+// 				}),
+// 				{ status: 401 }
+// 			);
+// 		}
+// 	} catch (err) {
+// 		return new Response(
+// 			JSON.stringify({
+// 				error: "Error finding the review.",
+// 			}),
+// 			{ status: 404 }
+// 		);
+// 	}
+
+// 	try {
+// 		await db.transaction(async (tx) => {
+// 			// Update review
+// 			if (Object.keys(updateValues).length) {
+// 				try {
+// 					await tx.update(reviews).set(updateValues).where(eq(reviews.id, id));
+// 				} catch (err) {
+// 					throw new CustomError("Error updating the review.", 500);
+// 				}
+// 			}
+
+// 			// Remove images
+// 			if (removedMediaUrls?.length) {
+// 				try {
+// 					const deletedMediaIds = await tx
+// 						.delete(media)
+// 						.where(
+// 							and(
+// 								exists(
+// 									tx
+// 										.select()
+// 										.from(mediaRelationships)
+// 										.where(
+// 											and(
+// 												eq(mediaRelationships.mediaId, media.id),
+// 												inArray(
+// 													mediaRelationships.reviewId,
+// 													tx
+// 														.select({ id: reviews.id })
+// 														.from(reviews)
+// 														.where(eq(reviews.id, id))
+// 												)
+// 											)
+// 										)
+// 								),
+// 								inArray(media.url, removedMediaUrls)
+// 							)
+// 						)
+// 						.returning({ id: media.id });
+
+// 					// Delete images from supabase
+// 					const { error } = await getSupabaseClient()
+// 						.storage.from("images")
+// 						.remove(
+// 							reviewMediaUrls.map((mediaObj) => mediaObj.url.split("/")[-1])
+// 						);
+
+// 					if (error) {
+// 						throw new CustomError("Error deleting images from cloud.", 500);
+// 					}
+// 				} catch (err) {
+// 					throw new CustomError("Error removing images.", 500);
+// 				}
+// 			}
+
+// 			// Add images
+// 			if (addedImageBase64?.length) {
+// 				try {
+// 					const mediaIds = await Promise.all(
+// 						addedImageBase64.map(async (base64) => {
+// 							const id = randomUUID();
+
+// 							await trx.insert(media, {
+// 								id,
+// 								url: base64,
+// 							});
+
+// 							return id;
+// 						})
+// 					);
+
+// 					await tx.insert(
+// 						mediaRelationships,
+// 						mediaIds.map((mediaId) => ({
+// 							mediaId,
+// 							reviewId: id,
+// 						}))
+// 					);
+// 				} catch (err) {
+// 					throw new CustomError("Error adding images.", 500);
+// 				}
+// 			}
+// 		});
+// 	} catch (err) {
+// 		const message =
+// 			err instanceof CustomError
+// 				? (err as Error).message
+// 				: "Error deleting review.";
+
+// 		return new Response(
+// 			JSON.stringify({
+// 				error: message,
+// 			}),
+// 			{ status: err instanceof CustomError ? err.status : 500 }
+// 		);
+// 	}
+// }
+
+// TODO: Retest image delete
 export async function DELETE(req: Request) {
 	const session = await getServerSession(authOptions);
+
 	if (!session) {
 		return new Response("Unauthorized", { status: 401 });
 	}
 
 	const { query } = parse(req.url, true);
 
-	const attemptBodyParse = deleteReviewSchema.safeParse({
-		id: query.id,
-	});
+	const attemptQueryParamsParse = queryParamsSchema.DELETE.safeParse(query);
 
-	if (!attemptBodyParse.success) {
-		console.log("DELETE /api/reviews Error:", attemptBodyParse.error);
-		return new Response("Error parsing request body or query parameters.", {
-			status: 400,
-		});
+	if (!attemptQueryParamsParse.success) {
+		return new Response(
+			JSON.stringify({
+				error: attemptQueryParamsParse.error.issues[0]?.message,
+			}),
+			{ status: 400 }
+		);
 	}
 
-	const { id } = attemptBodyParse.data;
+	const { id } = attemptQueryParamsParse.data;
 
-	//Make sure user owns the review
+	// Validate that the review exists and that the user owns it
 	try {
-		const userOwnsReview = await db
-			.select()
-			.from(fullReviewView)
-			.where(eq(reviews.id, id))
-			.innerJoin(users, eq(reviews.authorId, session.user.id))
-			.limit(1);
+		const [review] = await db
+			.select({ authorId: reviews.authorId })
+			.from(reviews)
+			.where(eq(reviews.id, id));
 
-		if (userOwnsReview.length < 1) {
-			return new Response("User does not own the review.", { status: 401 });
+		if (!review) {
+			return new Response(JSON.stringify({ error: "Review not found." }), {
+				status: 404,
+			});
+		}
+
+		if (review.authorId !== session.user.id) {
+			return new Response(
+				JSON.stringify({ error: "User does not own the review." }),
+				{ status: 401 }
+			);
 		}
 	} catch (err) {
-		console.log("PATCH /api/reviews Error:", err);
-		return new Response("Error verifying review ownership.", { status: 500 });
+		return new Response(
+			JSON.stringify({
+				error: "Error retrieving the review.",
+			}),
+			{ status: 500 }
+		);
 	}
 
+	// Delete review
 	try {
-		await db.update(reviews).set({ isActive: 0 }).where(eq(reviews.id, id));
+		await db.transaction(async (tx) => {
+			// Delete Images From Supabase
+			const reviewMediaUrls = await tx
+				.select({ url: media.url })
+				.from(media)
+				.innerJoin(mediaRelationships, eq(media.id, mediaRelationships.mediaId))
+				.where(eq(mediaRelationships.reviewId, id));
+
+			const { error } = await getSupabaseClient()
+				.storage.from("images")
+				.remove(reviewMediaUrls.map((url) => url.url));
+
+			if (error) {
+				throw new CustomError("Error deleting images from cloud.", 500);
+			}
+
+			// Delete review
+			await tx.delete(reviews).where(eq(reviews.id, id));
+		});
 	} catch (err) {
-		console.log("DELETE /api/reviews Error:", err);
-		return new Response("Error deleting review.", { status: 500 });
+		const message =
+			err instanceof CustomError
+				? (err as Error).message
+				: "Error deleting review.";
+
+		return new Response(
+			JSON.stringify({
+				error: message,
+			}),
+			{ status: err instanceof CustomError ? err.status : 500 }
+		);
 	}
 
-	return new Response("Review deleted successfully.", { status: 200 });
+	return new Response(JSON.stringify({ message: "Review deleted." }), {
+		status: 200,
+	});
 }

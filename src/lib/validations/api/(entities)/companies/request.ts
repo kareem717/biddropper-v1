@@ -1,10 +1,9 @@
 import * as z from "zod";
 import { createInsertSchema } from "drizzle-zod";
-import { companies, industries } from "@/db/schema/tables/content";
+import { companies } from "@/db/schema/tables/content";
 import validator from "validator";
 import { bodyParamSchema as addressPostSchema } from "../../(content)/addresses/request";
-import { db } from "@/db/client";
-import { inArray, sql } from "drizzle-orm";
+import { base64Regex } from "@/lib/utils";
 
 const postBodyParams = createInsertSchema(companies, {
 	ownerId: z
@@ -44,7 +43,9 @@ const postBodyParams = createInsertSchema(companies, {
 })
 	.extend({
 		address: addressPostSchema.POST,
-		imageBase64: z.string(),
+		imageBase64: z.string().refine((str) => base64Regex.test(str), {
+			message: "Invalid base64 image format",
+		}),
 		industryValues: z
 			.array(z.string())
 			.min(1, {
