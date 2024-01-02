@@ -12,7 +12,7 @@ import { Adapter } from "next-auth/adapters";
 import { env } from "@/env.mjs";
 import { companies } from "@/db/schema/tables/content";
 import { eq } from "drizzle-orm";
-import { customId } from "../utils";
+import { v4 as uuidv4 } from "uuid";
 
 declare module "next-auth" {
 	interface Session extends DefaultSession {
@@ -38,9 +38,7 @@ export const authOptions: NextAuthOptions = {
 		strategy: "database",
 		maxAge: 7 * 24 * 60 * 60,
 		updateAge: 24 * 60 * 60,
-		generateSessionToken: () => {
-			return customId("sess");
-		},
+		generateSessionToken: uuidv4,
 	},
 	adapter: DrizzleAdapter(db),
 	providers: [

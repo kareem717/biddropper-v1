@@ -57,12 +57,15 @@ export async function PATCH(req: Request) {
 
 			if (!bidToUpdate)
 				throw new CustomError("Error whilst fetching bid.", 404);
-
+			// If bid is not active or has been retracted, throw error
 			if (
 				(data.status !== "accepted" && data.status !== "declined") ||
 				bidToUpdate.isActive !== true
 			) {
-				throw new CustomError("Bid is not able to be updated.", 400);
+				throw new CustomError(
+					"Bid is not able to be updated with that status.",
+					400
+				);
 			}
 
 			const [jobRel] = await tx
@@ -90,7 +93,10 @@ export async function PATCH(req: Request) {
 				(companyId && !ownedCompanyIds.includes(companyId)) ||
 				(userId && userId !== session?.user.id)
 			) {
-				throw new CustomError("Unauthorized.", 401);
+				throw new CustomError(
+					"Unauthorized to accept or decline this bid.",
+					401
+				);
 			}
 
 			// Check if job or contract is active
@@ -126,12 +132,15 @@ export async function PATCH(req: Request) {
 
 			// Update other bids
 			if (data.status === "accepted") {
+				console.log(2);
+				
 				const targetId = contractId || jobId;
 				const targetTable = contractId ? contracts : jobs;
 				const targetField = contractId ? contracts.id : jobs.id;
 				const targetRelationships = contractId
 					? bidsRelationships.contractId
 					: bidsRelationships.jobId;
+					console.log(2);
 
 				// Set all other bids to declined
 				await tx
@@ -156,10 +165,16 @@ export async function PATCH(req: Request) {
 						)
 					);
 
+				// Set winner flag on accepted bid
+				await tx
+					.update(bidsRelationships)
+					.set({ isWinner: true })
+					.where(and(eq(bidsRelationships.bidId, data.bidId)));
+
 				// Set job or contract to inactive and set winning bid id
 				await tx
 					.update(targetTable)
-					.set({ isActive: false, winningBidId: data.bidId })
+					.set({ isActive: false })
 					.where(eq(targetField, targetId));
 
 				// If target is a contract, we need to update the jobs in the contract
@@ -186,15 +201,17 @@ export async function PATCH(req: Request) {
 
 		return new Response(
 			JSON.stringify({
-				message: `Bid ${data.status === "accepted" ? "accepted" : "updated"}.`,
+				message: `Bid ${data.status === "accepted" ? "accepted" : "declined"}.`,
 			}),
 			{ status: 200 }
 		);
 	} catch (err) {
+		console.error(err);
+
 		const message =
 			err instanceof CustomError
 				? (err as Error).message
-				: "Error creating bid.";
+				: "Error updating bid.";
 		return new Response(
 			JSON.stringify({
 				error: message,

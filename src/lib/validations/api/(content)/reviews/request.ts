@@ -6,23 +6,13 @@ const getQueryParams = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^rev_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		})
+		.uuid()
 		.optional(),
 	authorId: z
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		})
+		.uuid()
 		.optional(),
 	minRating: z.coerce
 		.number()
@@ -38,7 +28,13 @@ const getQueryParams = z.object({
 		.multipleOf(0.5)
 		.transform((num) => String(num))
 		.optional(),
-	limit: z.coerce.number().optional().default(15),
+	limit: z.coerce
+		.number()
+		.max(25, {
+			message: "Limit is too large.",
+		})
+		.optional()
+		.default(15),
 	minCreatedAt: z.coerce
 		.number()
 		.transform((num) => new Date(num * 1000))
@@ -47,11 +43,7 @@ const getQueryParams = z.object({
 		.number()
 		.transform((num) => new Date(num * 1000))
 		.optional(),
-	cursor: z
-		.string()
-		.max(50)
-		.refine((str) => /^rev_[a-zA-Z0-9\-]{1,36}$/.test(str))
-		.optional(),
+	cursor: z.string().uuid().optional(),
 });
 
 const deleteQueryParams = z.object({
@@ -59,12 +51,7 @@ const deleteQueryParams = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^rev_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 });
 
 const patchBodyParams = z.object({
@@ -72,12 +59,7 @@ const patchBodyParams = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^rev_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 	description: z.string().max(1500).optional(),
 	title: z.string().max(255).optional(),
 	rating: z.coerce

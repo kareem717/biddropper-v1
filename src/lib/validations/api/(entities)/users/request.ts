@@ -12,12 +12,7 @@ const patchBodyParams = createInsertSchema(user, {
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 	email: z
 		.string()
 		.email({
@@ -27,9 +22,9 @@ const patchBodyParams = createInsertSchema(user, {
 	name: z.string().optional(),
 	image: z.string().url().optional(),
 }).omit({
-  createdAt: true,
-  updatedAt: true,
-  emailVerified: true,
+	createdAt: true,
+	updatedAt: true,
+	emailVerified: true,
 });
 
 export const deleteQuerySchema = z.object({
@@ -37,12 +32,7 @@ export const deleteQuerySchema = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 });
 
 export const getQuerySchema = z.object({
@@ -50,12 +40,7 @@ export const getQuerySchema = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 });
 
 export const bodyParamSchema = {

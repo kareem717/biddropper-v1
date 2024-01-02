@@ -7,23 +7,13 @@ const getQueryParams = z
 			.string({
 				required_error: "Missing identifier.",
 			})
-			.max(50, {
-				message: "Invalid identifier.",
-			})
-			.refine((id) => /^job_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-				message: "Invalid identifier.",
-			})
+			.uuid()
 			.optional(),
 		contractId: z
 			.string({
 				required_error: "Missing identifier.",
 			})
-			.max(50, {
-				message: "Invalid identifier.",
-			})
-			.refine((id) => /^cntr_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-				message: "Invalid identifier.",
-			})
+			.uuid()
 			.optional(),
 		status: z
 			.preprocess(
@@ -34,7 +24,13 @@ const getQueryParams = z
 			.default(["pending"]),
 		minPrice: z.string().optional(),
 		maxPrice: z.string().optional(),
-		limit: z.coerce.number().optional().default(15),
+		limit: z.coerce
+			.number()
+			.max(50, {
+				message: "Limit is too large.",
+			})
+			.optional()
+			.default(15),
 		minCreatedAt: z.coerce
 			.number()
 			.transform((num) => new Date(num * 1000))
@@ -62,34 +58,25 @@ const postQueryParams = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^job_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		})
+		.uuid()
 		.optional(),
 	contractId: z
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^cntr_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		})
+		.uuid()
 		.optional(),
 	companyId: z
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
+		.uuid(),
+	note: z
+		.string()
+		.max(300, {
+			message: "Note is too long.",
 		})
-		.refine((id) => /^comp_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.optional(),
 	price: z.coerce
 		.number({
 			required_error: "Missing price.",
@@ -107,12 +94,7 @@ const patchQueryParams = postQueryParams
 			.string({
 				required_error: "Missing identifier.",
 			})
-			.max(50, {
-				message: "Invalid identifier.",
-			})
-			.refine((id) => /^bid_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-				message: "Invalid identifier.",
-			}),
+			.uuid(),
 		status: z.enum(enumBidStatus.enumValues).optional(),
 	})
 	.omit({ jobId: true, contractId: true, companyId: true });
@@ -122,12 +104,7 @@ const deleteQueryParams = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^bid_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid()
 });
 
 export const queryParamSchema = {

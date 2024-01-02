@@ -10,12 +10,7 @@ const postBodyParams = createInsertSchema(companies, {
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 	emailAddress: z
 		.string({
 			required_error: "Missing email address.",
@@ -106,12 +101,7 @@ const patchBodyParams = createInsertSchema(companies, {
 			.string({
 				required_error: "Missing identifier.",
 			})
-			.max(50, {
-				message: "Invalid identifier.",
-			})
-			.refine((id) => /^comp_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-				message: "Invalid identifier.",
-			}),
+			.uuid(),
 		address: addressPostSchema.POST.optional(),
 		imageBase64: z.string().or(z.undefined()).optional(),
 		deletedIndustryValues: z
@@ -146,13 +136,13 @@ const patchBodyParams = createInsertSchema(companies, {
 			.optional(),
 	})
 	.omit({
+		ownerId: true,
 		createdAt: true,
 		updatedAt: true,
 		isVerified: true,
 		imageId: true,
 		addressId: true,
 		isActive: true,
-		ownerId: true,
 	})
 	.refine(
 		(data) => {
@@ -180,9 +170,7 @@ export const deleteQuerySchema = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.refine((id) => /^comp_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 });
 
 export const bodyParamSchema = {

@@ -16,22 +16,12 @@ const postBodyParams = createInsertSchema(reviews, {
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^comp_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 	authorId: z
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 })
 	.omit({
 		createdAt: true,
@@ -55,22 +45,12 @@ const getQueryParams = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^comp_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 	authorId: z
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^user_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		})
+		.uuid()
 		.optional(),
 	minRating: z.coerce
 		.number()
@@ -86,7 +66,13 @@ const getQueryParams = z.object({
 		.multipleOf(0.5)
 		.transform((num) => String(num))
 		.optional(),
-	limit: z.coerce.number().optional().default(15),
+	limit: z.coerce
+		.number()
+		.max(25, {
+			message: "Limit is too large.",
+		})
+		.optional()
+		.default(15),
 	minCreatedAt: z.coerce
 		.number()
 		.transform((num) => new Date(num * 1000))
@@ -95,11 +81,7 @@ const getQueryParams = z.object({
 		.number()
 		.transform((num) => new Date(num * 1000))
 		.optional(),
-	cursor: z
-		.string()
-		.max(50)
-		.refine((str) => /^rev_[a-zA-Z0-9\-]{1,36}$/.test(str))
-		.optional(),
+	cursor: z.string().uuid().optional(),
 });
 
 export const queryParamsSchema = {

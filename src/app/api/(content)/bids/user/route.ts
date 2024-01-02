@@ -1,5 +1,5 @@
 import { db } from "@/db/client";
-import { bids, companies, contracts, jobs } from "@/db/schema/tables/content";
+import { bids, jobs } from "@/db/schema/tables/content";
 import { and, eq, inArray } from "drizzle-orm";
 import { parse } from "url";
 import {
@@ -49,86 +49,36 @@ export async function GET(req: Request) {
 	const filterConditions = (params: any, bids: any) => {
 		const conditions = createFilterConditions(params, bids);
 
-		const companyOwnedByUser = db
-			.select({ companyId: companies.id })
-			.from(companies)
-			.where(eq(companies.ownerId, data.id));
+		const jobOwnedByUser = db
+			.select({ jobId: jobsRelationships.jobId })
+			.from(jobsRelationships)
+			.where(eq(jobsRelationships.userId, data.id));
 
-		if (data.outgoing) {
-			conditions.push(eq(bids.companyId, companyOwnedByUser));
-		} else {
-			const jobOwnedByUser = db
-				.select({ jobId: jobsRelationships.jobId })
-				.from(jobsRelationships)
-				.where(
-					data.includeCompanies
-						? inArray(jobsRelationships.companyId, companyOwnedByUser)
-						: eq(jobsRelationships.userId, data.id)
-				);
-
-			conditions.push(inArray(bidsRelationships.jobId, jobOwnedByUser));
-		}
+		conditions.push(inArray(bidsRelationships.jobId, jobOwnedByUser));
 
 		return conditions;
 	};
 
 	try {
-		let selectObject: { [key: string]: any } = {
-			id: bids.id,
-			price: bids.price,
-			createdAt: bids.createdAt,
-			companyId: bids.companyId,
-			isActive: bids.isActive,
-			status: bids.status,
-		};
-
-		// If bidTarget is not contracts, add job to select object
-		if (params.data.bidTarget !== "contracts") {
-			selectObject["job"] = { id: jobs.id };
-		}
-
-		// If bidTarget is not jobs, add contract to select object
-		if (params.data.bidTarget !== "jobs") {
-			selectObject["contract"] = { id: contracts.id, title: contracts.title };
-		}
-
-		let baseQuery = db
-			.select(selectObject)
+		const res = await db
+			.select({
+				id: bids.id,
+				price: bids.price,
+				createdAt: bids.createdAt,
+				companyId: bids.companyId,
+				isActive: bids.isActive,
+				status: bids.status,
+				job: {
+					id: jobs.id,
+					title: jobs.title,
+				},
+			})
 			.from(bidsRelationships)
 			.innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
 			.where(and(...filterConditions(params, bids)))
 			.limit(params.data.limit + 1)
 			.orderBy(bids.id)
-			.$dynamic();
-
-		let query;
-
-		if (params.data.bidTarget === "jobs") {
-			// If we're only looking for job bids, inner join jobs
-			query = baseQuery.innerJoin(jobs, eq(jobs.id, bidsRelationships.jobId));
-		} else if (params.data.bidTarget === "contracts") {
-			// If we're only looking for contract bids, inner join contracts
-			query = baseQuery.innerJoin(
-				contracts,
-				eq(contracts.id, bidsRelationships.contractId)
-			);
-		} else {
-			// If we're looking for both contract and job bids, left join both
-			query = baseQuery
-				.leftJoin(jobs, eq(jobs.id, bidsRelationships.jobId))
-				.leftJoin(contracts, eq(contracts.id, bidsRelationships.contractId));
-		}
-
-		const res = await query;
-
-		// Format response and shorten to requested limit
-		const formattedResponse: { [key: string]: any } = {};
-		if (res) {
-			for (const row of res.slice(0, params.data.limit)) {
-				const { id, ...rest } = row;
-				formattedResponse[id] = rest;
-			}
-		}
+			.innerJoin(jobs, eq(jobs.id, bidsRelationships.jobId));
 
 		return new Response(
 			JSON.stringify({
@@ -137,9 +87,7 @@ export async function GET(req: Request) {
 					res && res.length > params.data.limit
 						? res[res.length - 1]?.id
 						: null,
-				data: {
-					...formattedResponse,
-				},
+				data: res.slice(0, params.data.limit),
 			}),
 			{ status: 200 }
 		);

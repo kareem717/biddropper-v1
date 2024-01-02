@@ -6,17 +6,14 @@ import {
 	numeric,
 	boolean,
 	foreignKey,
+	uuid,
 } from "drizzle-orm/pg-core";
-import { customId } from "@/lib/utils";
 import { enumBidStatus, enumPropertyType, enumStartDateFlag } from "./enums";
 import { user } from "./auth";
+import { v4 as uuidv4 } from "uuid";
 
 export const addresses = pgTable("addresses", {
-	id: varchar("id", { length: 50 })
-		.notNull()
-		.$defaultFn(() => customId("addr"))
-		.primaryKey()
-		.unique(),
+	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
 	latitude: numeric("latitude").notNull(),
 	longitude: numeric("longitude").notNull(),
 	addressLine1: varchar("address_line_1", { length: 70 }),
@@ -32,20 +29,17 @@ export const addresses = pgTable("addresses", {
 export const bids = pgTable(
 	"bids",
 	{
-		id: varchar("id", { length: 50 })
-			.$defaultFn(() => customId("bid"))
-			.primaryKey()
-			.unique()
-			.notNull(),
+		id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
 		price: numeric("price", { precision: 10, scale: 2 }).notNull(),
 		createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 		updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
-		companyId: varchar("company_id", { length: 50 })
+		companyId: uuid("company_id")
 			.notNull()
 			.references(() => companies.id, {
 				onDelete: "cascade",
 				onUpdate: "cascade",
 			}),
+		note: varchar("note", { length: 300 }),
 		isActive: boolean("is_active").default(true).notNull(),
 		status: enumBidStatus("status").default("pending").notNull(),
 	},
@@ -57,20 +51,18 @@ export const bids = pgTable(
 );
 
 export const companies = pgTable("companies", {
-	id: varchar("id", { length: 50 })
-		.$defaultFn(() => customId("comp"))
-		.primaryKey()
-		.unique()
-		.notNull(),
+	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
 	name: varchar("name", { length: 50 }).notNull(),
-	ownerId: varchar("owner_id", { length: 50 }).notNull(),
-	addressId: varchar("address_id", { length: 50 }).references(
-		() => addresses.id,
-		{
-			onDelete: "set null",
+	ownerId: uuid("owner_id")
+		.notNull()
+		.references(() => user.id, {
+			onDelete: "cascade",
 			onUpdate: "cascade",
-		}
-	),
+		}),
+	addressId: uuid("address_id").references(() => addresses.id, {
+		onDelete: "set null",
+		onUpdate: "cascade",
+	}),
 	serviceArea: numeric("service_area", { precision: 7, scale: 3 }),
 	emailAddress: varchar("email_address", { length: 320 }).notNull(),
 	phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
@@ -80,7 +72,7 @@ export const companies = pgTable("companies", {
 	specialties: varchar("specialties", { length: 400 }),
 	services: varchar("services", { length: 400 }),
 	dateEstablished: timestamp("date_established", { mode: "date" }).notNull(),
-	imageId: varchar("image_id", { length: 50 }).references(() => media.id, {
+	imageId: uuid("image_id").references(() => media.id, {
 		onDelete: "set null",
 		onUpdate: "cascade",
 	}),
@@ -92,11 +84,7 @@ export const companies = pgTable("companies", {
 export const industries = pgTable(
 	"industries",
 	{
-		id: varchar("id", { length: 50 })
-			.notNull()
-			.$defaultFn(() => customId("indst"))
-			.primaryKey()
-			.unique(),
+		id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
 		label: varchar("label", { length: 100 }).notNull().unique(),
 		value: varchar("value", { length: 100 }).notNull().unique(),
 	},
@@ -108,50 +96,37 @@ export const industries = pgTable(
 );
 
 export const jobs = pgTable("jobs", {
-	id: varchar("id", { length: 50 })
-		.notNull()
-		.$defaultFn(() => customId("job"))
-		.primaryKey()
-		.unique(),
+	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
+	title: varchar("title", { length: 100 }).notNull(),
 	industry: varchar("industry", { length: 255 }).notNull(),
 	isActive: boolean("is_active").default(true).notNull(),
 	isCommercialProperty: boolean("is_commercial_property")
 		.default(false)
 		.notNull(),
 	description: varchar("description", { length: 3000 }).notNull(),
-	addressId: varchar("address_id", { length: 50 }).references(
-		() => addresses.id
-	),
+	addressId: uuid("address_id").references(() => addresses.id, {
+		onDelete: "restrict",
+		onUpdate: "cascade",
+	}),
 	createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: "date" }).notNull(),
 	startDate: timestamp("start_date", { mode: "date" }),
 	startDateFlag: enumStartDateFlag("start_date_flag").default("none").notNull(),
 	propertyType: enumPropertyType("property_type").notNull(),
-	winningBidId: varchar("winning_bid_id", { length: 50 }).references(
-		() => bids.id
-	),
 });
 
 export const media = pgTable("media", {
-	id: varchar("id", { length: 50 })
-		.notNull()
-		.$defaultFn(() => customId("media"))
-		.primaryKey()
-		.unique(),
+	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
 	url: varchar("url", { length: 2083 }).notNull(),
 });
 
 export const projects = pgTable("projects", {
-	id: varchar("id", { length: 50 })
-		.notNull()
-		.$defaultFn(() => customId("proj"))
-		.primaryKey()
-		.unique(),
+	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
 	title: varchar("title", { length: 255 }).notNull(),
 	description: varchar("description", { length: 3000 }).notNull(),
 	createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
-	companyId: varchar("company_id", { length: 50 })
+	companyId: uuid("company_id")
 		.notNull()
 		.references(() => companies.id, {
 			onDelete: "cascade",
@@ -161,13 +136,8 @@ export const projects = pgTable("projects", {
 });
 
 export const reviews = pgTable("reviews", {
-	id: varchar("id", { length: 50 })
-		.notNull()
-		.notNull()
-		.primaryKey()
-		.unique()
-		.$defaultFn(() => customId("rev")),
-	authorId: varchar("author_id", { length: 50 })
+	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
+	authorId: uuid("author_id")
 		.references(() => user.id, {
 			onDelete: "cascade",
 			onUpdate: "cascade",
@@ -178,7 +148,7 @@ export const reviews = pgTable("reviews", {
 	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 	description: varchar("description", { length: 1500 }).notNull(),
 	title: varchar("title", { length: 255 }).notNull(),
-	companyId: varchar("company_id", { length: 50 })
+	companyId: uuid("company_id")
 		.notNull()
 		.references(() => companies.id, {
 			onDelete: "cascade",
@@ -187,19 +157,18 @@ export const reviews = pgTable("reviews", {
 });
 
 export const contracts = pgTable("contracts", {
-	id: varchar("id", { length: 50 })
-		.notNull()
-		.$defaultFn(() => customId("cntr"))
-		.primaryKey()
-		.unique(),
+	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
 	isActive: boolean("is_active").default(true),
+	companyId: uuid("company_id")
+		.notNull()
+		.references(() => companies.id, {
+			onDelete: "cascade",
+			onUpdate: "cascade",
+		}),
 	title: varchar("title", { length: 100 }).notNull(),
 	description: varchar("description", { length: 3000 }).notNull(),
 	price: numeric("price", { precision: 10, scale: 2 }).notNull(),
 	createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 	endDate: timestamp("end_date", { mode: "date" }),
-	winningBidId: varchar("winning_bid_id", { length: 50 }).references(
-		() => bids.id
-	),
 });

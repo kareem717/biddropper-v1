@@ -1,8 +1,10 @@
 import {
+	boolean,
 	foreignKey,
 	index,
 	pgTable,
 	primaryKey,
+	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
 import {
@@ -17,19 +19,19 @@ import {
 } from "../content";
 import { relations } from "drizzle-orm";
 import { user } from "../auth";
-import { customId } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
 
 // Industry to Jobs
 export const industriesToJobs = pgTable(
 	"industries_to_jobs",
 	{
-		industryId: varchar("industry_id", { length: 50 })
+		industryId: uuid("industry_id")
 			.notNull()
 			.references(() => industries.id, {
 				onDelete: "restrict",
 				onUpdate: "cascade",
 			}),
-		jobId: varchar("job_id", { length: 50 })
+		jobId: uuid("job_id")
 			.notNull()
 			.references(() => jobs.id, {
 				onDelete: "cascade",
@@ -61,13 +63,13 @@ export const industriesToJobsRelations = relations(
 export const industriesToCompanies = pgTable(
 	"industries_to_companies",
 	{
-		industryId: varchar("industry_id", { length: 50 })
+		industryId: uuid("industry_id")
 			.notNull()
 			.references(() => industries.id, {
 				onDelete: "restrict",
 				onUpdate: "cascade",
 			}),
-		companyId: varchar("company_id", { length: 50 })
+		companyId: uuid("company_id")
 			.notNull()
 			.references(() => companies.id, {
 				onDelete: "cascade",
@@ -99,7 +101,7 @@ export const industriesToCompaniesRelations = relations(
 export const bidsRelationships = pgTable(
 	"bids_relationships",
 	{
-		bidId: varchar("bid_id", { length: 50 })
+		bidId: uuid("bid_id")
 			.notNull()
 			.primaryKey()
 			.unique()
@@ -107,14 +109,15 @@ export const bidsRelationships = pgTable(
 				onDelete: "cascade",
 				onUpdate: "cascade",
 			}),
-		jobId: varchar("job_id", { length: 50 }).references(() => jobs.id, {
+		jobId: uuid("job_id").references(() => jobs.id, {
 			onDelete: "cascade",
 			onUpdate: "cascade",
 		}),
-		contractId: varchar("contract_id", { length: 50 }).references(
+		contractId: uuid("contract_id").references(
 			() => contracts.id,
 			{ onDelete: "cascade", onUpdate: "cascade" }
 		),
+		isWinner: boolean("is_winner").default(false).notNull(),
 	},
 	(table) => ({
 		index: {
@@ -129,9 +132,9 @@ export const bidsToOwnerRelations = relations(bidsRelationships, ({ one }) => ({
 		fields: [bidsRelationships.bidId],
 		references: [bids.id],
 	}),
-	contract: one(companies, {
+	contract: one(contracts, {
 		fields: [bidsRelationships.contractId],
-		references: [companies.id],
+		references: [contracts.id],
 	}),
 	job: one(jobs, {
 		fields: [bidsRelationships.jobId],
@@ -143,7 +146,7 @@ export const bidsToOwnerRelations = relations(bidsRelationships, ({ one }) => ({
 export const mediaRelationships = pgTable(
 	"media_relationships",
 	{
-		mediaId: varchar("media_id", { length: 50 })
+		mediaId: uuid("media_id")
 			.notNull()
 			.primaryKey()
 			.unique()
@@ -151,18 +154,18 @@ export const mediaRelationships = pgTable(
 				onDelete: "cascade",
 				onUpdate: "cascade",
 			}),
-		jobId: varchar("job_id", { length: 50 }).references(() => jobs.id, {
+		jobId: uuid("job_id").references(() => jobs.id, {
 			onDelete: "set null",
 			onUpdate: "cascade",
 		}),
-		projectId: varchar("project_id", { length: 50 }).references(
+		projectId: uuid("project_id").references(
 			() => projects.id,
 			{
 				onDelete: "set null",
 				onUpdate: "cascade",
 			}
 		),
-		reviewId: varchar("review_id", { length: 50 }).references(
+		reviewId: uuid("review_id").references(
 			() => reviews.id,
 			{
 				onDelete: "set null",
@@ -205,7 +208,7 @@ export const mediaToOwnerRelations = relations(
 export const jobsRelationships = pgTable(
 	"jobs_relationships",
 	{
-		jobId: varchar("job_id", { length: 50 })
+		jobId: uuid("job_id")
 			.notNull()
 			.primaryKey()
 			.unique()
@@ -213,18 +216,18 @@ export const jobsRelationships = pgTable(
 				onDelete: "cascade",
 				onUpdate: "cascade",
 			}),
-		userId: varchar("user_id", { length: 50 }).references(() => user.id, {
+		userId: uuid("user_id").references(() => user.id, {
 			onDelete: "set null",
 			onUpdate: "cascade",
 		}),
-		companyId: varchar("company_id", { length: 50 }).references(
+		companyId: uuid("company_id").references(
 			() => companies.id,
 			{
 				onDelete: "set null",
 				onUpdate: "cascade",
 			}
 		),
-		contractId: varchar("contract_id", { length: 50 }).references(
+		contractId: uuid("contract_id").references(
 			() => contracts.id,
 			{
 				onDelete: "set null",

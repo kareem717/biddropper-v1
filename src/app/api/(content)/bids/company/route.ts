@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { bids, contracts, jobs } from "@/db/schema/tables/content";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { parse } from "url";
 import {
 	bidsRelationships,
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
 	if (!ownedCompanyIds.includes(data.id)) {
 		return new Response(
 			JSON.stringify({
-				error: "Unauthorized",
+				error: "Unauthorized to see bids for this company.",
 			}),
 			{ status: 401 }
 		);
@@ -56,12 +56,24 @@ export async function GET(req: Request) {
 		if (data.outgoing) {
 			conditions.push(eq(bids.companyId, data.id));
 		} else {
-			const jobOwnedByCompany = db
+			// All jobs and contracts ownded by the company
+			const jobsOwnedByCompany = db
 				.select({ jobId: jobsRelationships.jobId })
 				.from(jobsRelationships)
 				.where(eq(jobsRelationships.companyId, data.id));
 
-			conditions.push(inArray(bidsRelationships.jobId, jobOwnedByCompany));
+			const contractsOwnedByCompany = db
+				.select({ contractId: contracts.id })
+				.from(contracts)
+				.where(eq(contracts.companyId, data.id));
+
+			conditions.push(
+				//@ts-ignore
+				or(
+					inArray(bidsRelationships.jobId, jobsOwnedByCompany),
+					inArray(bidsRelationships.contractId, contractsOwnedByCompany)
+				)
+			);
 		}
 
 		return conditions;
@@ -79,7 +91,7 @@ export async function GET(req: Request) {
 
 		// If bidTarget is not contracts, add job to select object
 		if (params.data.bidTarget !== "contracts") {
-			selectObject["job"] = { id: jobs.id };
+			selectObject["job"] = { id: jobs.id, title: jobs.title };
 		}
 
 		// If bidTarget is not jobs, add contract to select object
@@ -114,17 +126,7 @@ export async function GET(req: Request) {
 				.leftJoin(contracts, eq(contracts.id, bidsRelationships.contractId));
 		}
 
-		console.log(query.toSQL());
 		const res = await query;
-
-		// Format response and shorten to requested limit
-		const formattedResponse: { [key: string]: any } = {};
-		if (res) {
-			for (const row of res.slice(0, params.data.limit)) {
-				const { id, ...rest } = row;
-				formattedResponse[id] = rest;
-			}
-		}
 
 		return new Response(
 			JSON.stringify({
@@ -133,9 +135,7 @@ export async function GET(req: Request) {
 					res && res.length > params.data.limit
 						? res[res.length - 1]?.id
 						: null,
-				data: {
-					...formattedResponse,
-				},
+				data: res,
 			}),
 			{ status: 200 }
 		);

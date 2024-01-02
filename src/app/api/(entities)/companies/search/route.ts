@@ -30,7 +30,6 @@ export async function POST(req: Request) {
 	const attemptBodyParse = bodyParamSchema.POST.safeParse(reqBody);
 
 	if (!attemptBodyParse.success) {
-		console.log(attemptBodyParse.error);
 		return new Response(
 			JSON.stringify({ error: attemptBodyParse.error.issues[0]?.message }),
 			{ status: 400 }
@@ -132,6 +131,7 @@ export async function POST(req: Request) {
 			{ status: 200 }
 		);
 	} catch (err) {
+		console.error(err);
 		return new Response(
 			JSON.stringify({
 				error: "An error occured whilst fetching the companies",

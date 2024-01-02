@@ -7,12 +7,13 @@ import {
 	bidsRelationships,
 	jobsRelationships,
 } from "@/db/schema/tables/relations/content";
-import { createFilterConditions, customId } from "@/lib/utils";
+import { createFilterConditions } from "@/lib/utils";
 import { queryParamSchema } from "@/lib/validations/api/(content)/bids/request";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { CustomError } from "@/lib/utils";
 import { unionAll } from "drizzle-orm/pg-core";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
@@ -184,7 +185,7 @@ export async function POST(req: Request) {
 	}
 
 	const { data } = params;
-	const newId = customId("bid");
+	const newId = uuidv4();
 	const targetCondition: any = data.jobId
 		? eq(jobsRelationships.jobId, data.jobId)
 		: eq(jobsRelationships.contractId, data.contractId!);
@@ -281,6 +282,7 @@ export async function POST(req: Request) {
 					id: newId,
 					price: data.price,
 					companyId: data.companyId,
+					note: data.note,
 				})
 				.returning({ insertedId: bids.id });
 
@@ -297,6 +299,7 @@ export async function POST(req: Request) {
 			{ status: 201 }
 		);
 	} catch (err) {
+		console.error(err);
 		const message =
 			err instanceof CustomError
 				? (err as Error).message
@@ -373,7 +376,7 @@ export async function PATCH(req: Request) {
 			// Determine the target ID
 			const targetId = bidExists.jobId || bidExists.contractId;
 			if (!targetId) {
-				throw new Error("Job ID or Contract ID must be provided.");
+				throw new Error("Job ID or Contract ID was not properly fetched.");
 			}
 
 			// Define the condition to target the correct job or contract
@@ -398,13 +401,14 @@ export async function PATCH(req: Request) {
 					404
 				);
 
-			const { price, status, bidId } = data;
+			const { price, status, bidId, note } = data;
 
 			await tx
 				.update(bids)
 				.set({
 					price,
 					status,
+					note,
 					isActive: status && status !== "pending" ? false : true,
 				})
 				.where(eq(bids.id, bidId));
@@ -470,25 +474,6 @@ export async function DELETE(req: Request) {
 
 		if (!ownedCompanyIds.includes(bidToDelete.companyId)) {
 			throw new CustomError("Not authorized to delete this bid.", 401);
-		}
-
-		const contractWinningBids = db
-			.select({ bidId: contracts.winningBidId })
-			.from(contracts)
-			.where(isNotNull(contracts.winningBidId));
-
-		const jobWinningBids = db
-			.select({ bidId: jobs.winningBidId })
-			.from(jobs)
-			.where(isNotNull(jobs.winningBidId));
-
-		const winningBidIds = await unionAll(contractWinningBids, jobWinningBids);
-
-		if (winningBidIds.some((bid) => bid.bidId === bidToDelete.id)) {
-			throw new CustomError(
-				"Bid cannot be deleted because it is the winning bid for a job or contract.",
-				400
-			);
 		}
 
 		await db.delete(bids).where(eq(bids.id, bidToDelete.id));

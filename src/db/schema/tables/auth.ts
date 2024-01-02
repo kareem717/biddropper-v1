@@ -4,13 +4,15 @@ import {
 	timestamp,
 	primaryKey,
 	integer,
+	uuid,
 } from "drizzle-orm/pg-core";
 import { customId } from "@/lib/utils";
+import {v4 as uuidv4} from "uuid";
 
 export const account = pgTable(
 	"account",
 	{
-		userId: text("userId")
+		userId: uuid("userId")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
 		type: text("type").notNull(),
@@ -36,14 +38,14 @@ export const account = pgTable(
 
 export const session = pgTable("session", {
 	sessionToken: text("sessionToken").primaryKey().notNull(),
-	userId: text("userId")
+	userId: uuid("userId")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 
 export const user = pgTable("user", {
-	id: text("id")
+	id: uuid("id")
 		.$defaultFn(() => customId("user"))
 		.primaryKey()
 		.unique()

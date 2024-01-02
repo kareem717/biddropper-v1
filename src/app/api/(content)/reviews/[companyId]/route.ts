@@ -7,7 +7,8 @@ import {
 	bodyParamSchema,
 	queryParamsSchema,
 } from "@/lib/validations/api/(content)/reviews/[companyId]/request";
-import { CustomError, customId } from "@/lib/utils";
+import { CustomError } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { env } from "@/env.mjs";
 import { mediaRelationships } from "@/db/schema/tables/relations/content";
@@ -97,7 +98,7 @@ export async function POST(
 			// Insert images
 			if (reviewImages?.length) {
 				// Assume base64Images is an array of base64 image URLs
-				const newMediaIds = reviewImages.map(() => customId("media"));
+				const newMediaIds = reviewImages.map(() => uuidv4());
 				const uploadPromises = reviewImages.map(async (imageBase64, index) => {
 					const newImageId = newMediaIds[index];
 					const fileType = imageBase64.split(";")[0]?.split("/")[1];
@@ -250,12 +251,11 @@ export async function GET(
 			{ status: 200 }
 		);
 	} catch (err) {
-    return new Response(
+		return new Response(
 			JSON.stringify({
 				error: "Error retrieving reviews.",
 			}),
 			{ status: 500 }
 		);
-  }
-
+	}
 }

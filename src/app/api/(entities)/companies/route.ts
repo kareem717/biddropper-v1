@@ -1,6 +1,5 @@
 import { db } from "@/db/client";
-import { randomUUID } from "crypto";
-import { inArray, eq, and, gte, exists, sql } from "drizzle-orm";
+import { inArray, eq, and, gte, exists, sql, ne } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 import {
@@ -21,7 +20,8 @@ import {
 	media,
 } from "@/db/schema/tables/content";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
-import { CustomError, customId } from "@/lib/utils";
+import { CustomError } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
 import {
 	bidsRelationships,
 	industriesToCompanies,
@@ -49,10 +49,12 @@ export async function POST(req: Request) {
 		);
 	}
 
-	const attemptBodyParse = await bodyParamSchema.POST.safeParseAsync(reqBody);
+	const attemptBodyParse = await bodyParamSchema.POST.safeParseAsync({
+		ownerId: session.user.id,
+		...reqBody,
+	});
 
 	if (!attemptBodyParse.success) {
-		console.log(attemptBodyParse.error);
 		return new Response(
 			JSON.stringify({ error: attemptBodyParse.error.issues[0]?.message }),
 			{ status: 400 }
@@ -85,7 +87,7 @@ export async function POST(req: Request) {
 
 	try {
 		await db.transaction(async (tx) => {
-			const newAddressId = `addr_${randomUUID()}`;
+			const newAddressId = uuidv4();
 			try {
 				// insert address
 				await tx.insert(addresses).values({
@@ -96,8 +98,8 @@ export async function POST(req: Request) {
 				throw new CustomError("Error inserting address.", 500);
 			}
 
-			// Upload image to Supabase
-			const newImageId = customId("media");
+			const supabaseClient = await getSupabaseClient();
+			const newImageId = uuidv4();
 			const fileType = imageBase64.split(";")[0]?.split("/")[1];
 
 			if (!fileType || !["png", "jpeg", "jpg"].includes(fileType)) {
@@ -109,8 +111,8 @@ export async function POST(req: Request) {
 			// Convert base64 to Blob
 			const base64Response = await fetch(imageBase64);
 			const blob = await base64Response.blob();
-			const { data, error } = await getSupabaseClient()
-				.storage.from("images")
+			const { data, error } = await supabaseClient.storage
+				.from("images")
 				.upload(fileName, blob, {
 					contentType: `image/${fileType}`,
 				});
@@ -132,16 +134,16 @@ export async function POST(req: Request) {
 			}
 
 			// insert company
-			const newCompanyId = `comp_${randomUUID()}`;
+			const newCompanyId = uuidv4();
 			try {
 				await tx.insert(companies).values({
 					id: newCompanyId,
-					// ownerId: session.user.id,
 					...companyData,
 					addressId: newAddressId,
 					imageId: newImageId,
 				});
 			} catch (error) {
+				await supabaseClient.storage.from("images").remove([data?.path]);
 				throw new CustomError("Error inserting company.", 500);
 			}
 
@@ -260,32 +262,20 @@ export async function PATCH(req: Request) {
 	if (address) {
 		try {
 			await db.transaction(async (tx) => {
-				const [newAddress] = await tx
-					.insert(addresses)
-					.values({
-						...address,
-					})
-					.returning({ id: addresses.id });
-
 				await tx
-					.delete(addresses)
+					.update(addresses)
+					.set(address)
 					.where(
-						eq(
+						inArray(
 							addresses.id,
-							tx
-								.select({ addressId: companies.addressId })
+							db
+								.select({ id: companies.addressId })
 								.from(companies)
 								.where(eq(companies.id, companyId))
 						)
 					);
-
-				await tx
-					.update(companies)
-					.set({ addressId: newAddress?.id })
-					.where(eq(companies.id, companyId));
 			});
 		} catch (err) {
-			console.log(err);
 			return new Response(
 				JSON.stringify({ error: "An error updating the company's address." }),
 				{ status: 500 }
@@ -297,7 +287,7 @@ export async function PATCH(req: Request) {
 	if (imageBase64) {
 		try {
 			const supabaseClient = await getSupabaseClient();
-			const newImageId = customId("media");
+			const newImageId = uuidv4();
 			const fileType = imageBase64.split(";")[0]?.split("/")[1];
 
 			if (!fileType || !["png", "jpeg", "jpg"].includes(fileType)) {
@@ -413,10 +403,23 @@ export async function PATCH(req: Request) {
 				const industryIds = await tx
 					.select({ id: industries.id })
 					.from(industries)
-					.where(inArray(industries.value, addedIndustryValues))
+					.where(
+						and(
+							inArray(industries.value, addedIndustryValues),
+							ne(
+								industries.id,
+								db
+									.select({ value: industriesToCompanies.industryId })
+									.from(industriesToCompanies)
+									.where(eq(industriesToCompanies.companyId, companyId))
+							)
+						)
+					)
 					.limit(addedIndustryValues.length);
 
-				if (industryIds.length !== addedIndustryValues.length) {
+				if (industryIds.length === 0) {
+					return;
+				} else if (industryIds.length !== addedIndustryValues.length) {
 					throw new CustomError("Invalid industry values.", 400);
 				}
 
@@ -428,11 +431,15 @@ export async function PATCH(req: Request) {
 				);
 			});
 		} catch (err) {
+			const message =
+				err instanceof CustomError
+					? (err as Error).message
+					: "An error occured adding the company's industries.";
 			return new Response(
 				JSON.stringify({
-					error: "An error occured adding the company's industries.",
+					error: message,
 				}),
-				{ status: 500 }
+				{ status: err instanceof CustomError ? err.status : 500 }
 			);
 		}
 	}
@@ -449,9 +456,10 @@ export async function DELETE(req: Request) {
 	const { query } = parse(req.url, true);
 
 	const session = await getServerSession(authOptions);
-	// if (!session) {
-	// 	return new Response("Unauthorized", { status: 401 });
-	// }
+
+	if (!session) {
+		return new Response("Unauthorized", { status: 401 });
+	}
 
 	const attemptQueryParse = queryParamSchema.DELETE.safeParse(query);
 
@@ -466,63 +474,50 @@ export async function DELETE(req: Request) {
 
 	const { id } = attemptQueryParse.data;
 
-	// if (!session.user.ownedCompanies.some((company) => company.id === id)) {
-	// 	return new Response(
-	// 		JSON.stringify({
-	// 			error: "User unauthorized to delete company.",
-	// 		}),
-	// 		{ status: 401 }
-	// 	);
-	// }
+	if (!session.user.ownedCompanies.some((company) => company.id === id)) {
+		return new Response(
+			JSON.stringify({
+				error: "User unauthorized to delete company.",
+			}),
+			{ status: 401 }
+		);
+	}
 
-	// // Make sure user owns the company
-	// try {
-	// 	const [companyExists] = await db
-	// 		.select({
-	// 			id: companies.id,
-	// 		})
-	// 		.from(companies)
-	// 		.where(eq(companies.id, id))
-	// 		.limit(1);
+	// Make sure user owns the company
+	try {
+		const [companyExists] = await db
+			.select({
+				id: companies.id,
+			})
+			.from(companies)
+			.where(eq(companies.id, id))
+			.limit(1);
 
-	// 	if (!companyExists) {
-	// 		return new Response(
-	// 			JSON.stringify({
-	// 				error: "The company does not exist.",
-	// 			}),
-	// 			{ status: 404 }
-	// 		);
-	// 	}
-	// } catch (err) {
-	// 	return new Response(
-	// 		JSON.stringify({
-	// 			error: "A server side error occured.",
-	// 		}),
-	// 		{
-	// 			status: 500,
-	// 		}
-	// 	);
-	// }
+		if (!companyExists) {
+			return new Response(
+				JSON.stringify({
+					error: "The company does not exist.",
+				}),
+				{ status: 404 }
+			);
+		}
+	} catch (err) {
+		return new Response(
+			JSON.stringify({
+				error: "A server side error occured.",
+			}),
+			{
+				status: 500,
+			}
+		);
+	}
 
 	try {
 		await db.transaction(async (tx) => {
-			await tx
-				.delete(jobsRelationships)
-				.where(eq(jobsRelationships.companyId, id));
-
-			await tx.delete(companies).where(eq(companies.id, id));
-
-			await tx
-				.delete(industriesToCompanies)
-				.where(
-					eq(
-						industriesToCompanies.companyId,
-						tx
-							.select({ id: companies.id })
-							.from(companies)
-							.where(eq(companies.id, id))
-					)
-				);
+			const [addressId] = await tx
+				.delete(companies)
+				.where(eq(companies.id, id))
+				.returning({ addressId: companies.addressId });
 
 			const [mediaUrl] = await tx
 				.delete(media)
@@ -537,10 +532,10 @@ export async function DELETE(req: Request) {
 				)
 				.returning({ url: media.url });
 
-				console.log(await tx
-					.select({ imageId: companies.imageId })
-					.from(companies)
-					.where(eq(companies.id, id)));
+			if (addressId && addressId.addressId) {
+				await tx.delete(addresses).where(eq(addresses.id, addressId.addressId));
+			}
+
 			// Delete image from storage
 			if (mediaUrl) {
 				const supabaseClient = await getSupabaseClient();
@@ -553,24 +548,14 @@ export async function DELETE(req: Request) {
 					throw new CustomError("Error deleting image.", 500);
 				}
 			}
-
-			await tx
-				.delete(addresses)
-				.where(
-					eq(
-						addresses.id,
-						tx
-							.select({ addressId: companies.addressId })
-							.from(companies)
-							.where(eq(companies.id, id))
-					)
-				);
 		});
 	} catch (err) {
-		console.log("DELETE /api/companies Error:", err);
-		return new Response("An error occured while deleting the company.", {
-			status: 500,
-		});
+		return new Response(
+			JSON.stringify({
+				error: "Error deleting company.",
+			}),
+			{ status: 200 }
+		);
 	}
 
 	return new Response("Company deleted", { status: 200 });

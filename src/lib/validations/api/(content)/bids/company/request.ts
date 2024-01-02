@@ -6,12 +6,7 @@ const getQueryParams = z.object({
 		.string({
 			required_error: "Missing identifier.",
 		})
-		.max(50, {
-			message: "Invalid identifier.",
-		})
-		.refine((id) => /^comp_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		}),
+		.uuid(),
 	bidTarget: z.enum(["jobs", "contracts"]).optional(),
 	outgoing: z.coerce.boolean().optional().default(false),
 	includeInactive: z
@@ -28,16 +23,14 @@ const getQueryParams = z.object({
 		.default(["pending"]),
 	minPrice: z.string().optional(),
 	maxPrice: z.string().optional(),
-	limit: z.coerce.number().optional().default(15),
-	cursor: z
-		.string()
+	limit: z.coerce
+		.number()
 		.max(50, {
-			message: "Invalid cursor.",
+			message: "Limit is too large.",
 		})
-		.refine((id) => /^bid_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-			message: "Invalid identifier.",
-		})
-		.optional(),
+		.optional()
+		.default(15),
+	cursor: z.string().uuid().optional(),
 	minCreatedAt: z.coerce
 		.number()
 		.transform((num) => new Date(num * 1000))
