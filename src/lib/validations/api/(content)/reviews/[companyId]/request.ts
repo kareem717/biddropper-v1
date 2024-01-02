@@ -8,7 +8,7 @@ const postBodyParams = createInsertSchema(reviews, {
 	title: z.string().min(1).max(255),
 	rating: z
 		.number()
-		.min(1)
+		.min(0)
 		.max(5)
 		.multipleOf(0.5)
 		.transform((num) => String(num)),
@@ -54,14 +54,14 @@ const getQueryParams = z.object({
 		.optional(),
 	minRating: z.coerce
 		.number()
-		.min(1)
+		.min(0)
 		.max(5)
 		.multipleOf(0.5)
 		.transform((num) => String(num))
 		.optional(),
 	maxRating: z.coerce
 		.number()
-		.min(1)
+		.min(0)
 		.max(5)
 		.multipleOf(0.5)
 		.transform((num) => String(num))

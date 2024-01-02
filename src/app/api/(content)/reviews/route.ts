@@ -1,16 +1,8 @@
 import { db } from "@/db/client";
-import { companies, media, reviews } from "@/db/schema/tables/content";
+import { media, reviews } from "@/db/schema/tables/content";
 import { authOptions } from "@/lib/auth";
-import { randomUUID } from "crypto";
-import { and, eq, exists, gte, inArray, lte, ne, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { getServerSession } from "next-auth";
-import { headers } from "next/headers";
-import {
-	createReviewSchema,
-	deleteReviewSchema,
-	fetchReviewQuerySchema,
-	updateReviewSchema,
-} from "@/lib/validations/api/api-review";
 import { parse } from "url";
 import {
 	bodyParamsSchema,
@@ -19,6 +11,8 @@ import {
 import { mediaRelationships } from "@/db/schema/tables/relations/content";
 import { CustomError } from "@/lib/utils";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
+import { env } from "@/env.mjs";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
@@ -96,165 +90,215 @@ export async function GET(req: Request) {
 	}
 }
 
-// export async function PATCH(req: Request) {
-// 	const session = await getServerSession(authOptions);
+export async function PATCH(req: Request) {
+	const session = await getServerSession(authOptions);
 
-// 	if (!session) {
-// 		return new Response(
-// 			JSON.stringify({
-// 				error: "Unauthorized",
-// 			}),
-// 			{ status: 401 }
-// 		);
-// 	}
+	if (!session) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
+	}
 
-// 	const reqBody = await req.json();
+	const reqBody = await req.json();
 
-// 	const attemptBodyParse = bodyParamsSchema.PATCH.safeParse(reqBody);
+	const attemptBodyParse = bodyParamsSchema.PATCH.safeParse(reqBody);
 
-// 	if (!attemptBodyParse.success) {
-// 		return new Response(
-// 			JSON.stringify({
-// 				error: attemptBodyParse.error.issues[0]?.message,
-// 			}),
-// 			{ status: 400 }
-// 		);
-// 	}
+	if (!attemptBodyParse.success) {
+		return new Response(
+			JSON.stringify({
+				error: attemptBodyParse.error.issues[0]?.message,
+			}),
+			{ status: 400 }
+		);
+	}
 
-// 	const { id, addedImageBase64, removedMediaUrls, ...updateValues } =
-// 		attemptBodyParse.data;
+	const { id, addedImageBase64, removedMediaUrls, ...updateValues } =
+		attemptBodyParse.data;
 
-// 	// Make sure user owns the review
-// 	try {
-// 		const [review] = await db
-// 			.select()
-// 			.from(reviews)
-// 			.where(and(eq(reviews.id, id)))
-// 			.limit(1);
+	// Make sure user owns the review
+	try {
+		const [review] = await db
+			.select()
+			.from(reviews)
+			.where(and(eq(reviews.id, id)))
+			.limit(1);
 
-// 		if (!review) {
-// 			return new Response(
-// 				JSON.stringify({
-// 					error: "Review not found.",
-// 				}),
-// 				{ status: 404 }
-// 			);
-// 		}
+		if (!review) {
+			return new Response(
+				JSON.stringify({
+					error: "Review not found.",
+				}),
+				{ status: 404 }
+			);
+		}
 
-// 		if (review.authorId !== session.user.id) {
-// 			return new Response(
-// 				JSON.stringify({
-// 					error: "User does not own the review.",
-// 				}),
-// 				{ status: 401 }
-// 			);
-// 		}
-// 	} catch (err) {
-// 		return new Response(
-// 			JSON.stringify({
-// 				error: "Error finding the review.",
-// 			}),
-// 			{ status: 404 }
-// 		);
-// 	}
+		if (review.authorId !== session.user.id) {
+			return new Response(
+				JSON.stringify({
+					error: "User does not own the review.",
+				}),
+				{ status: 401 }
+			);
+		}
+	} catch (err) {
+		return new Response(
+			JSON.stringify({
+				error: "Error finding the review.",
+			}),
+			{ status: 404 }
+		);
+	}
 
-// 	try {
-// 		await db.transaction(async (tx) => {
-// 			// Update review
-// 			if (Object.keys(updateValues).length) {
-// 				try {
-// 					await tx.update(reviews).set(updateValues).where(eq(reviews.id, id));
-// 				} catch (err) {
-// 					throw new CustomError("Error updating the review.", 500);
-// 				}
-// 			}
+	try {
+		await db.transaction(async (tx) => {
+			// Update review
+			if (Object.values(updateValues).length) {
+				try {
+					await tx.update(reviews).set(updateValues).where(eq(reviews.id, id));
+				} catch (err) {
+					throw new CustomError("Error updating the review.", 500);
+				}
+			}
 
-// 			// Remove images
-// 			if (removedMediaUrls?.length) {
-// 				try {
-// 					const deletedMediaIds = await tx
-// 						.delete(media)
-// 						.where(
-// 							and(
-// 								exists(
-// 									tx
-// 										.select()
-// 										.from(mediaRelationships)
-// 										.where(
-// 											and(
-// 												eq(mediaRelationships.mediaId, media.id),
-// 												inArray(
-// 													mediaRelationships.reviewId,
-// 													tx
-// 														.select({ id: reviews.id })
-// 														.from(reviews)
-// 														.where(eq(reviews.id, id))
-// 												)
-// 											)
-// 										)
-// 								),
-// 								inArray(media.url, removedMediaUrls)
-// 							)
-// 						)
-// 						.returning({ id: media.id });
+			// Remove images
+			if (removedMediaUrls?.length) {
+				try {
+					const deletedMedia = await tx
+						.select({ id: media.id, url: media.url })
+						.from(media)
+						.innerJoin(
+							mediaRelationships,
+							eq(media.id, mediaRelationships.mediaId)
+						)
+						.where(
+							and(
+								eq(mediaRelationships.reviewId, id),
+								inArray(media.url, removedMediaUrls)
+							)
+						);
 
-// 					// Delete images from supabase
-// 					const { error } = await getSupabaseClient()
-// 						.storage.from("images")
-// 						.remove(
-// 							reviewMediaUrls.map((mediaObj) => mediaObj.url.split("/")[-1])
-// 						);
+					if (deletedMedia.length) {
+						// Delete images from supabase
+						const { error } = await getSupabaseClient()
+							.storage.from("images")
+							.remove(
+								deletedMedia
+									.map((mediaObj) => mediaObj.url.split("/").pop())
+									.filter((url): url is string => url !== undefined)
+							);
 
-// 					if (error) {
-// 						throw new CustomError("Error deleting images from cloud.", 500);
-// 					}
-// 				} catch (err) {
-// 					throw new CustomError("Error removing images.", 500);
-// 				}
-// 			}
+						if (error) {
+							throw new CustomError("Error deleting images from cloud.", 500);
+						}
 
-// 			// Add images
-// 			if (addedImageBase64?.length) {
-// 				try {
-// 					const mediaIds = await Promise.all(
-// 						addedImageBase64.map(async (base64) => {
-// 							const id = randomUUID();
+						// Delete images from db
+						await tx.delete(media).where(
+							inArray(
+								media.id,
+								deletedMedia.map((mediaObj) => mediaObj.id)
+							)
+						);
+					}
+				} catch (err) {
+					const message =
+						err instanceof CustomError
+							? (err as Error).message
+							: "Error deleting review.";
 
-// 							await trx.insert(media, {
-// 								id,
-// 								url: base64,
-// 							});
+					throw new CustomError(
+						message,
+						err instanceof CustomError ? err.status : 500
+					);
+				}
+			}
 
-// 							return id;
-// 						})
-// 					);
+			// Add images
+			if (addedImageBase64?.length) {
+				const mediaCount = await tx
+					.select({ count: sql`COUNT(*)` })
+					.from(mediaRelationships)
+					.where(eq(mediaRelationships.reviewId, id));
 
-// 					await tx.insert(
-// 						mediaRelationships,
-// 						mediaIds.map((mediaId) => ({
-// 							mediaId,
-// 							reviewId: id,
-// 						}))
-// 					);
-// 				} catch (err) {
-// 					throw new CustomError("Error adding images.", 500);
-// 				}
-// 			}
-// 		});
-// 	} catch (err) {
-// 		const message =
-// 			err instanceof CustomError
-// 				? (err as Error).message
-// 				: "Error deleting review.";
+				if (
+					mediaCount[0] &&
+					Number(mediaCount[0].count) + addedImageBase64.length > 3
+				) {
+					throw new CustomError("Review cannot have more than 3 images.", 400);
+				}
 
-// 		return new Response(
-// 			JSON.stringify({
-// 				error: message,
-// 			}),
-// 			{ status: err instanceof CustomError ? err.status : 500 }
-// 		);
-// 	}
-// }
+				// Assume base64Images is an array of base64 image URLs
+				const newMediaIds = addedImageBase64.map(() => uuidv4());
+				const uploadPromises = addedImageBase64.map(
+					async (imageBase64, index) => {
+						const newImageId = newMediaIds[index];
+						const fileType = imageBase64.split(";")[0]?.split("/")[1];
+
+						if (!fileType || !["png", "jpeg", "jpg"].includes(fileType)) {
+							throw new CustomError("Invalid image format.", 400);
+						}
+
+						const fileName = `${newImageId}.${fileType}`;
+
+						// Convert base64 to Blob
+						const base64Response = await fetch(imageBase64);
+						const blob = await base64Response.blob();
+						const { data, error } = await getSupabaseClient()
+							.storage.from("images")
+							.upload(fileName, blob, {
+								contentType: `image/${fileType}`,
+							});
+
+						if (error) {
+							throw new CustomError("Error uploading image.", 500);
+						}
+
+						// Save url in db
+						try {
+							const url = new URL(env.SUPABASE_ENDPOINT);
+
+							await tx.insert(media).values({
+								id: newImageId,
+								url: `https://${url.hostname}/storage/v1/object/public/images/${data?.path}`,
+							});
+						} catch (err) {
+							throw new CustomError("Error inserting image.", 500);
+						}
+					}
+				);
+
+				// Wait for all uploads to complete
+				await Promise.all(uploadPromises);
+
+				// Relate images to review
+				await tx.insert(mediaRelationships).values(
+					newMediaIds.map((mediaId) => ({
+						mediaId: mediaId,
+						reviewId: id,
+					}))
+				);
+			}
+		});
+	} catch (err) {
+		const message =
+			err instanceof CustomError
+				? (err as Error).message
+				: "Error deleting review.";
+
+		return new Response(
+			JSON.stringify({
+				error: message,
+			}),
+			{ status: err instanceof CustomError ? err.status : 500 }
+		);
+	}
+
+	return new Response(JSON.stringify({ message: "Review updated." }), {
+		status: 200,
+	});
+}
 
 export async function DELETE(req: Request) {
 	const session = await getServerSession(authOptions);

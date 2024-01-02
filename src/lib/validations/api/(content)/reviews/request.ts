@@ -16,14 +16,14 @@ const getQueryParams = z.object({
 		.optional(),
 	minRating: z.coerce
 		.number()
-		.min(1)
+		.min(0)
 		.max(5)
 		.multipleOf(0.5)
 		.transform((num) => String(num))
 		.optional(),
 	maxRating: z.coerce
 		.number()
-		.min(1)
+		.min(0)
 		.max(5)
 		.multipleOf(0.5)
 		.transform((num) => String(num))
@@ -64,7 +64,7 @@ const patchBodyParams = z.object({
 	title: z.string().max(255).optional(),
 	rating: z.coerce
 		.number()
-		.min(1)
+		.min(0)
 		.max(5)
 		.multipleOf(0.5)
 		.transform((num) => String(num))
@@ -77,18 +77,7 @@ const patchBodyParams = z.object({
 		)
 		.max(3)
 		.optional(),
-	removedMediaUrls: z
-		.array(
-			z
-				.string()
-				.max(50, {
-					message: "Invalid identifier.",
-				})
-				.refine((id) => /^media_[a-zA-Z0-9\-]{1,36}$/.test(id), {
-					message: "Invalid identifier.",
-				})
-		)
-		.optional(),
+	removedMediaUrls: z.array(z.string().url()).optional(),
 });
 
 export const queryParamsSchema = {

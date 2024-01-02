@@ -49,6 +49,19 @@ export async function POST(
 	}
 	const { imageBase64: reviewImages, ...review } = attemptBodyParse.data;
 
+	if (
+		session.user.ownedCompanies.some(
+			(company) => company.id === params.companyId
+		)
+	) {
+		return new Response(
+			JSON.stringify({
+				error: "Cannot review your own company.",
+			}),
+			{ status: 401 }
+		);
+	}
+
 	try {
 		await db.transaction(async (tx) => {
 			// Make sure the company exists
