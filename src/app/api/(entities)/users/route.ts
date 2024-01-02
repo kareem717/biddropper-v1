@@ -8,6 +8,8 @@ import { eq, sql } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { parse } from "url";
 import { account, user } from "@/db/schema/tables/auth";
+import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
+import { CustomError } from "@/lib/utils";
 
 export async function PATCH(req: Request) {
 	const session = await getServerSession(authOptions);
@@ -87,18 +89,41 @@ export async function DELETE(req: Request) {
 	}
 
 	try {
-		const [deletedUser] = await db
-			.delete(user)
-			.where(eq(user.id, params.data.id))
-			.returning({ id: user.id });
+		await db.transaction(async (tx) => {
+			const [deletedUser] = await tx
+				.delete(user)
+				.where(eq(user.id, params.data.id))
+				.returning({ id: user.id, image: user.image });
 
-		if (!deletedUser) {
-			return new Response("User not found.", { status: 404 });
-		}
-	} catch (err) {
-		return new Response(JSON.stringify({ error: "Error deleting user." }), {
-			status: 500,
+			if (!deletedUser) {
+				return new Response("User not found.", { status: 404 });
+			}
+
+			// Delete user's image
+			const sbClient = getSupabaseClient();
+			const { error } = await sbClient.storage
+				.from("images")
+				.remove([`${deletedUser.image?.split("/")[-1]}.png`]);
+
+			if (error) {
+				throw new CustomError("Error deleting user image.", 500);
+			}
+
+			// Delete user's accounts
+			await tx.delete(account).where(eq(account.userId, deletedUser.id));
 		});
+	} catch (err) {
+		const message =
+			err instanceof CustomError
+				? (err as Error).message
+				: "Error deleting user.";
+
+		return new Response(
+			JSON.stringify({
+				error: message,
+			}),
+			{ status: err instanceof CustomError ? err.status : 500 }
+		);
 	}
 
 	return new Response("User deleted.", { status: 200 });

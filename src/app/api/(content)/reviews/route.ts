@@ -21,18 +21,7 @@ import { CustomError } from "@/lib/utils";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 
 export async function GET(req: Request) {
-	const session = await getServerSession(authOptions);
-
 	const { query } = parse(req.url, true);
-
-	if (!session) {
-		return new Response(
-			JSON.stringify({
-				error: "Unauthorized",
-			}),
-			{ status: 401 }
-		);
-	}
 
 	const attemptQueryParamsParse = queryParamsSchema.GET.safeParse({
 		...query,
@@ -267,7 +256,6 @@ export async function GET(req: Request) {
 // 	}
 // }
 
-// TODO: Retest image delete
 export async function DELETE(req: Request) {
 	const session = await getServerSession(authOptions);
 
@@ -323,14 +311,14 @@ export async function DELETE(req: Request) {
 		await db.transaction(async (tx) => {
 			// Delete Images From Supabase
 			const reviewMediaUrls = await tx
-				.select({ url: media.url })
+				.select({ id: media.id, url: media.url })
 				.from(media)
 				.innerJoin(mediaRelationships, eq(media.id, mediaRelationships.mediaId))
 				.where(eq(mediaRelationships.reviewId, id));
 
 			const { error } = await getSupabaseClient()
 				.storage.from("images")
-				.remove(reviewMediaUrls.map((url) => url.url));
+				.remove(reviewMediaUrls.map((media) => media.url));
 
 			if (error) {
 				throw new CustomError("Error deleting images from cloud.", 500);
@@ -338,6 +326,14 @@ export async function DELETE(req: Request) {
 
 			// Delete review
 			await tx.delete(reviews).where(eq(reviews.id, id));
+
+			// Delete images from db
+			await tx.delete(media).where(
+				inArray(
+					media.id,
+					reviewMediaUrls.map((mediaObj) => mediaObj.id)
+				)
+			);
 		});
 	} catch (err) {
 		const message =

@@ -152,6 +152,7 @@ export async function POST(
 			status: 201,
 		});
 	} catch (err) {
+		console.log(err);
 		const message =
 			err instanceof CustomError
 				? (err as Error).message
@@ -173,18 +174,7 @@ export async function GET(
 		return new Response("Missing company ID.", { status: 400 });
 	}
 
-	const session = await getServerSession(authOptions);
-
 	const { query } = parse(req.url, true);
-
-	if (!session) {
-		return new Response(
-			JSON.stringify({
-				error: "Unauthorized",
-			}),
-			{ status: 401 }
-		);
-	}
 
 	const attemptQueryParamsParse = queryParamsSchema.GET.safeParse({
 		companyId: params.companyId,
