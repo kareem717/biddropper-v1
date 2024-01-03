@@ -130,6 +130,8 @@ export async function POST(req: Request) {
 					url: `https://${url.hostname}/storage/v1/object/public/images/${data?.path}`,
 				});
 			} catch (err) {
+				// Delete image from storage
+				await supabaseClient.storage.from("images").remove([data?.path]);
 				throw new CustomError("Error inserting image.", 500);
 			}
 

@@ -98,7 +98,13 @@ export const industries = pgTable(
 export const jobs = pgTable("jobs", {
 	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
 	title: varchar("title", { length: 100 }).notNull(),
-	industry: varchar("industry", { length: 255 }).notNull(),
+	industry: varchar("industry", { length: 100 }).references(
+		() => industries.value,
+		{
+			onDelete: "set null",
+			onUpdate: "cascade",
+		}
+	),
 	isActive: boolean("is_active").default(true).notNull(),
 	isCommercialProperty: boolean("is_commercial_property")
 		.default(false)
@@ -107,9 +113,9 @@ export const jobs = pgTable("jobs", {
 	addressId: uuid("address_id").references(() => addresses.id, {
 		onDelete: "restrict",
 		onUpdate: "cascade",
-	}),
+	}).notNull(),
 	createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: "date" }).notNull(),
+	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 	startDate: timestamp("start_date", { mode: "date" }),
 	startDateFlag: enumStartDateFlag("start_date_flag").default("none").notNull(),
 	propertyType: enumPropertyType("property_type").notNull(),

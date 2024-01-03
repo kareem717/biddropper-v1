@@ -48,19 +48,6 @@ export const formatDate = (createdAt: Date): string => {
 	}
 };
 
-// Used for generating unique IDs for the database
-export const customId = (prefix: string): string => {
-	if (prefix.length > 17) {
-		throw new Error("Prefix must be 17 or less characters.");
-	}
-
-	const createId = init({
-		length: 32,
-	});
-
-	return `${prefix}_${createId()}`;
-};
-
 // Genenralized function foe the bids API endpoints, doubt I'll use this anywhere other than there
 export const createFilterConditions = (params: any, bids: any) => {
 	const { data } = params;
@@ -94,4 +81,23 @@ export class CustomError extends Error {
 	}
 }
 
-export const base64Regex = /^data:image\/[a-zA-Z+]*;base64,[a-zA-Z0-9+/]*={0,2}$/;
+export const base64Regex =
+	/^data:image\/[a-zA-Z+]*;base64,[a-zA-Z0-9+/]*={0,2}$/;
+
+function base64ImageSize(base64String: string) {
+	// Remove data URL prefix and extract base64 part
+	const base64Parts = base64String.split(",");
+
+	const base64Part = base64Parts[1];
+
+	if (!base64Part) {
+		throw new Error("Invalid base64 string");
+	}
+
+	// Calculate the byte size
+	const byteSize = (base64Part.length * 3) / 4;
+	// Convert to kilobytes
+	const sizeInMb = byteSize / 1024 / 1024;
+
+	return sizeInMb;
+}

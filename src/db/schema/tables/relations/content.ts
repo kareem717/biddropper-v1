@@ -21,44 +21,6 @@ import { relations } from "drizzle-orm";
 import { user } from "../auth";
 import { v4 as uuidv4 } from "uuid";
 
-// Industry to Jobs
-export const industriesToJobs = pgTable(
-	"industries_to_jobs",
-	{
-		industryId: uuid("industry_id")
-			.notNull()
-			.references(() => industries.id, {
-				onDelete: "restrict",
-				onUpdate: "cascade",
-			}),
-		jobId: uuid("job_id")
-			.notNull()
-			.references(() => jobs.id, {
-				onDelete: "cascade",
-				onUpdate: "cascade",
-			}),
-	},
-	(table) => ({
-		pk: primaryKey({
-			columns: [table.industryId, table.jobId],
-		}),
-	})
-);
-
-export const industriesToJobsRelations = relations(
-	industriesToJobs,
-	({ one }) => ({
-		industry: one(industries, {
-			fields: [industriesToJobs.industryId],
-			references: [industries.id],
-		}),
-		job: one(jobs, {
-			fields: [industriesToJobs.jobId],
-			references: [jobs.id],
-		}),
-	})
-);
-
 // Industry to Companies
 export const industriesToCompanies = pgTable(
 	"industries_to_companies",
