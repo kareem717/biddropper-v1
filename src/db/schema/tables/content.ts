@@ -154,11 +154,12 @@ export const reviews = pgTable("reviews", {
 			onDelete: "cascade",
 			onUpdate: "cascade",
 		}),
+	isActive: boolean("is_active").notNull().default(true),
 });
 
 export const contracts = pgTable("contracts", {
 	id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
-	isActive: boolean("is_active").default(true),
+	isActive: boolean("is_active").notNull().default(true),
 	companyId: uuid("company_id")
 		.notNull()
 		.references(() => companies.id, {

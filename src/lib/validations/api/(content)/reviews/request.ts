@@ -14,6 +14,10 @@ const getQueryParams = z.object({
 		})
 		.uuid()
 		.optional(),
+	includeInactive: z.preprocess(
+		(val) => (typeof val === "string" ? val.toLowerCase() === "true" : false),
+		z.boolean()
+	),
 	minRating: z.coerce
 		.number()
 		.min(0)

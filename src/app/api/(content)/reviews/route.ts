@@ -50,7 +50,8 @@ export async function GET(req: Request) {
 			queryParams.maxCreatedAt
 				? lte(reviews.createdAt, queryParams.maxCreatedAt)
 				: undefined,
-			queryParams.cursor ? gte(reviews.id, queryParams.cursor) : undefined
+			queryParams.cursor ? gte(reviews.id, queryParams.cursor) : undefined,
+			queryParams.includeInactive ? undefined : eq(reviews.isActive, true)
 		);
 
 		const res = await db

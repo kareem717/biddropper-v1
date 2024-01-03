@@ -24,7 +24,7 @@ export async function POST(
 
 	const session = await getServerSession(authOptions);
 
-	if (!session) {
+	if (!session || !session.user.ownedCompanies.length) {
 		return new Response(
 			JSON.stringify({
 				error: "Unauthorized",
@@ -223,7 +223,8 @@ export async function GET(
 			queryParams.maxCreatedAt
 				? lte(reviews.createdAt, queryParams.maxCreatedAt)
 				: undefined,
-			queryParams.cursor ? gte(reviews.id, queryParams.cursor) : undefined
+			queryParams.cursor ? gte(reviews.id, queryParams.cursor) : undefined,
+			queryParams.includeInactive ? undefined : eq(reviews.isActive, true)
 		);
 
 		const res = await db

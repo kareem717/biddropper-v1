@@ -1,307 +1,405 @@
 import { db } from "@/db/client";
-import { media, projectMedia, projects } from "@/db/migrations/schema";
-import fullProjectView from "@/db/views/full-project";
-import { authOptions } from "@/lib/auth";
+import { media, projects } from "@/db/schema/tables/content";
+import { mediaRelationships } from "@/db/schema/tables/relations/content";
 import {
-	createProjectSchema,
-	deleteProjectSchema,
-	fetchProjectQuerySchema,
-	updateProjectSchema,
-} from "@/lib/validations/api/api-project";
-import { randomUUID } from "crypto";
-import { eq, exists, and, sql, inArray } from "drizzle-orm";
-import { getServerSession } from "next-auth";
+	queryParamsSchema,
+	bodyParamsSchema,
+} from "@/lib/validations/api/(content)/projects/request";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { parse } from "url";
-
-//TODO: test all routes
-export async function POST(req: Request) {
-	const { query } = parse(req.url, true);
-
-	const session = await getServerSession(authOptions);
-
-	if (!session || !session.user.ownedCompanies) {
-		return new Response("Unauthorized", { status: 401 });
-	}
-
-	const reqBody = await req.json();
-	const attemptBodyParse = createProjectSchema.safeParse({
-		companyId: query.companyId,
-		...reqBody,
-	});
-
-	if (!attemptBodyParse.success) {
-		console.log("POST /api/projects Error:", attemptBodyParse.error);
-		return new Response("Error parsing request body.", { status: 400 });
-	}
-
-	const {
-		projectMedia: reqMedia,
-		companyId,
-		...project
-	} = attemptBodyParse.data;
-
-	try {
-		await db.transaction(async (tx) => {
-			const newProjectId = `proj_${randomUUID()}`;
-
-			await tx.insert(projects).values({
-				id: newProjectId,
-				companyId,
-				...project,
-			});
-
-			if (reqMedia) {
-				const projectPhotos = reqMedia.map((photo) => ({
-					id: `media_${randomUUID()}`,
-					...photo,
-				}));
-
-				const projectPhotosLink = projectPhotos.map((photo) => ({
-					mediaId: photo.id,
-					projectId: newProjectId,
-				}));
-
-				await tx.insert(media).values(projectPhotos);
-
-				await tx.insert(projectMedia).values(projectPhotosLink);
-			}
-		});
-
-		return new Response("Project created.", { status: 200 });
-	} catch (err) {
-		console.log("POST /api/projects Error:", err);
-		return new Response("An error occured inserting the project.", {
-			status: 500,
-		});
-	}
-}
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
+import { CustomError } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
+import { env } from "@/env.mjs";
 
 export async function GET(req: Request) {
 	const { query } = parse(req.url, true);
 
-	const attemptQueryParse = fetchProjectQuerySchema.safeParse(query);
+	const attemptQueryParamsParse = queryParamsSchema.GET.safeParse({
+		...query,
+	});
 
-	if (!attemptQueryParse.success) {
-		console.log("GET /api/projects Error:", attemptQueryParse.error);
-		return new Response("Error parsing query parameters.", { status: 400 });
+	if (!attemptQueryParamsParse.success) {
+		return new Response(
+			JSON.stringify({
+				error: attemptQueryParamsParse.error.issues[0]?.message,
+			}),
+			{ status: 400 }
+		);
 	}
 
-	const { projectId, companyId, limit, fetchType } = attemptQueryParse.data;
-
-	let queryBuilder;
-
-	switch (fetchType) {
-		// Simple fetch only gets the project data
-		case "simple":
-			queryBuilder = db
-				.select()
-				.from(fullProjectView)
-				.innerJoin(projects, eq(projects.id, fullProjectView.projectId));
-
-			break;
-
-		// Deep fetch gets the project data, and media data
-		case "deep":
-			queryBuilder = db
-				.select()
-				.from(fullProjectView)
-				.innerJoin(projects, eq(projects.id, fullProjectView.projectId))
-				.leftJoin(media, eq(media.id, fullProjectView.mediaId));
-
-			break;
-
-		// Minimal fetch only gets the data provided by the view
-		case "minimal":
-			queryBuilder = db.select().from(fullProjectView);
-
-			break;
-	}
-
-	if (!queryBuilder) {
-		return new Response("Invalid 'fetchType'.", { status: 400 });
-	}
-
-	if (companyId) {
-		queryBuilder = queryBuilder.where(eq(projects.companyId, companyId));
-	}
-
-	if (projectId) {
-		queryBuilder = queryBuilder.where(eq(fullProjectView.projectId, projectId));
-	}
+	const queryParams = attemptQueryParamsParse.data;
 
 	try {
-		// Limit the number of results (defaults to 25)
-		const res = await queryBuilder.limit(projectId ? 1 : limit);
+		const filters = and(
+			queryParams.projectId
+				? eq(projects.id, queryParams.projectId)
+				: undefined,
+			queryParams.minCreatedAt
+				? gte(projects.createdAt, queryParams.minCreatedAt)
+				: undefined,
+			queryParams.maxCreatedAt
+				? lte(projects.createdAt, queryParams.maxCreatedAt)
+				: undefined,
+			queryParams.cursor ? gte(projects.id, queryParams.cursor) : undefined,
+			queryParams.includeInactive ? undefined : eq(projects.isActive, true)
+		);
 
-		return new Response(JSON.stringify(res), { status: 200 });
+		const res = await db
+			.select({
+				id: projects.id,
+				createdAt: projects.createdAt,
+				updatedAt: projects.updatedAt,
+				description: projects.description,
+				title: projects.title,
+				companyId: projects.companyId,
+				media: sql`ARRAY_AGG(${media.url})`,
+			})
+			.from(projects)
+			.leftJoin(
+				mediaRelationships,
+				eq(projects.id, mediaRelationships.projectId)
+			)
+			.leftJoin(media, eq(mediaRelationships.mediaId, media.id))
+			.where(filters)
+			.limit(queryParams.limit + 1)
+			.groupBy(projects.id)
+			.orderBy(projects.id);
+
+		return new Response(
+			JSON.stringify({
+				cursor: res.length > queryParams.limit ? res[res.length - 1]?.id : null,
+				data: res.slice(0, queryParams.limit),
+			}),
+			{ status: 200 }
+		);
 	} catch (err) {
-		console.log("GET /api/projects Error:", err);
-		return new Response("An error occured fetching the project(s).", {
-			status: 500,
-		});
+		return new Response(
+			JSON.stringify({
+				error: "Error retrieving projects.",
+			}),
+			{ status: 500 }
+		);
 	}
 }
 
 export async function PATCH(req: Request) {
-	const { query } = parse(req.url, true);
-
 	const session = await getServerSession(authOptions);
-	if (!session) {
-		return new Response("Unauthorized", { status: 401 });
+
+	if (!session || !session.user.ownedCompanies.length) {
+		return new Response(
+			JSON.stringify({
+				error: "Unauthorized",
+			}),
+			{ status: 401 }
+		);
 	}
 
 	const reqBody = await req.json();
 
-	const attemptBodyParse = updateProjectSchema.safeParse({
-		id: query.id,
-		...reqBody,
-	});
+	const attemptBodyParse = bodyParamsSchema.PATCH.safeParse(reqBody);
 
 	if (!attemptBodyParse.success) {
-		console.log("PATCH /api/projects Error:", attemptBodyParse.error);
-		return new Response("Error parsing request body or query parameters.", {
-			status: 400,
-		});
+		return new Response(
+			JSON.stringify({
+				error: attemptBodyParse.error.issues[0]?.message,
+			}),
+			{ status: 400 }
+		);
 	}
 
-	const { id, removedMedia, newMedia, ...updateValues } = attemptBodyParse.data;
+	const { id, addedImageBase64, removedMediaUrls, ...updateValues } =
+		attemptBodyParse.data;
 
-	// Make sure user owns the contract
+	// Make sure user owns the project
 	try {
-		const userOwnsProject = await db
-			.select({
-				id: projects.id,
-			})
+		const [project] = await db
+			.select()
 			.from(projects)
-			.where(
-				inArray(
-					projects.companyId,
-					session.user.ownedCompanies.map((company) => company.id)
-				)
-			)
+			.where(and(eq(projects.id, id)))
 			.limit(1);
 
-		if (userOwnsProject.length < 1) {
-			return new Response("User does not own the project.", { status: 401 });
+		if (!project) {
+			return new Response(
+				JSON.stringify({
+					error: "Project not found.",
+				}),
+				{ status: 404 }
+			);
+		}
+
+		if (
+			!session.user.ownedCompanies.some(
+				(company) => company.id === project.companyId
+			)
+		) {
+			return new Response(
+				JSON.stringify({
+					error: "User does not own the project.",
+				}),
+				{ status: 401 }
+			);
 		}
 	} catch (err) {
-		console.log("PATCH /api/projects Error:", err);
-		return new Response("An error occured while checking project ownership.", {
-			status: 500,
-		});
-	}
-
-	// Delete media
-	if (removedMedia) {
-		try {
-			await db.transaction(async (tx) => {
-				tx.delete(projectMedia).where(
-					inArray(projectMedia.mediaId, removedMedia)
-				);
-			});
-		} catch (err) {
-			console.log("PATCH /api/projects Error:", err);
-			return new Response("Error deleting project media.", { status: 500 });
-		}
-	}
-
-	// Insert media
-	if (newMedia) {
-		try {
-			let newMediaIds: string[];
-
-			await db.transaction(async (tx) => {
-				// insert new media
-				tx.insert(media).values(
-					newMedia.map((media) => {
-						const newId = `media_${crypto.randomUUID()}`;
-
-						newMediaIds.push(newId);
-
-						return {
-							...media,
-							id: newId,
-						};
-					})
-				);
-
-				// Link  new media to job
-				tx.insert(projectMedia).values(
-					newMediaIds.map((mediaId) => ({
-						projectId: id,
-						mediaId,
-					}))
-				);
-			});
-		} catch (err) {
-			console.log("PATCH /api/projects Error:", err);
-			return new Response("An error occured while inserting new media.", {
-				status: 400,
-			});
-		}
+		return new Response(
+			JSON.stringify({
+				error: "Error finding the project.",
+			}),
+			{ status: 404 }
+		);
 	}
 
 	try {
-		await db.update(projects).set(updateValues).where(eq(projects.id, id));
+		await db.transaction(async (tx) => {
+			// Update project
+			if (Object.values(updateValues).length) {
+				try {
+					await tx
+						.update(projects)
+						.set(updateValues)
+						.where(eq(projects.id, id));
+				} catch (err) {
+					throw new CustomError("Error updating the project.", 500);
+				}
+			}
+
+			// Remove images
+			if (removedMediaUrls?.length) {
+				try {
+					const deletedMedia = await tx
+						.select({ id: media.id, url: media.url })
+						.from(media)
+						.innerJoin(
+							mediaRelationships,
+							eq(media.id, mediaRelationships.mediaId)
+						)
+						.where(
+							and(
+								eq(mediaRelationships.projectId, id),
+								inArray(media.url, removedMediaUrls)
+							)
+						);
+
+					if (deletedMedia.length) {
+						// Delete images from supabase
+						const { error } = await getSupabaseClient()
+							.storage.from("images")
+							.remove(
+								deletedMedia
+									.map((mediaObj) => mediaObj.url.split("/").pop())
+									.filter((url): url is string => url !== undefined)
+							);
+
+						if (error) {
+							throw new CustomError("Error deleting images from cloud.", 500);
+						}
+
+						// Delete images from db
+						await tx.delete(media).where(
+							inArray(
+								media.id,
+								deletedMedia.map((mediaObj) => mediaObj.id)
+							)
+						);
+					}
+				} catch (err) {
+					const message =
+						err instanceof CustomError
+							? (err as Error).message
+							: "Error deleting project.";
+
+					throw new CustomError(
+						message,
+						err instanceof CustomError ? err.status : 500
+					);
+				}
+			}
+
+			// Add images
+			if (addedImageBase64?.length) {
+				const mediaCount = await tx
+					.select({ count: sql`COUNT(*)` })
+					.from(mediaRelationships)
+					.where(eq(mediaRelationships.projectId, id));
+
+				if (
+					mediaCount[0] &&
+					Number(mediaCount[0].count) + addedImageBase64.length > 5
+				) {
+					throw new CustomError("Project cannot have more than 5 images.", 400);
+				}
+
+				// Assume base64Images is an array of base64 image URLs
+				const newMediaIds = addedImageBase64.map(() => uuidv4());
+				const uploadPromises = addedImageBase64.map(
+					async (imageBase64, index) => {
+						const newImageId = newMediaIds[index];
+						const fileType = imageBase64.split(";")[0]?.split("/")[1];
+
+						if (!fileType || !["png", "jpeg", "jpg"].includes(fileType)) {
+							throw new CustomError("Invalid image format.", 400);
+						}
+
+						const fileName = `${newImageId}.${fileType}`;
+
+						// Convert base64 to Blob
+						const base64Response = await fetch(imageBase64);
+						const blob = await base64Response.blob();
+						const { data, error } = await getSupabaseClient()
+							.storage.from("images")
+							.upload(fileName, blob, {
+								contentType: `image/${fileType}`,
+							});
+
+						if (error) {
+							throw new CustomError("Error uploading image.", 500);
+						}
+
+						// Save url in db
+						try {
+							const url = new URL(env.SUPABASE_ENDPOINT);
+
+							await tx.insert(media).values({
+								id: newImageId,
+								url: `https://${url.hostname}/storage/v1/object/public/images/${data?.path}`,
+							});
+						} catch (err) {
+							throw new CustomError("Error inserting image.", 500);
+						}
+					}
+				);
+
+				// Wait for all uploads to complete
+				await Promise.all(uploadPromises);
+
+				// Relate images to project
+				await tx.insert(mediaRelationships).values(
+					newMediaIds.map((mediaId) => ({
+						mediaId: mediaId,
+						projectId: id,
+					}))
+				);
+			}
+		});
 	} catch (err) {
-		console.log("PATCH /api/projects Error:", err);
-		return new Response("Error updating project.", { status: 500 });
+		const message =
+			err instanceof CustomError
+				? (err as Error).message
+				: "Error deleting project.";
+
+		return new Response(
+			JSON.stringify({
+				error: message,
+			}),
+			{ status: err instanceof CustomError ? err.status : 500 }
+		);
 	}
 
-	return new Response("Project updated successfully.", { status: 200 });
+	return new Response(JSON.stringify({ message: "Project updated." }), {
+		status: 200,
+	});
 }
 
 export async function DELETE(req: Request) {
-	const { query } = parse(req.url, true);
-
 	const session = await getServerSession(authOptions);
+
 	if (!session) {
 		return new Response("Unauthorized", { status: 401 });
 	}
 
-	const attemptQueryParse = deleteProjectSchema.safeParse(query);
+	const { query } = parse(req.url, true);
 
-	if (!attemptQueryParse.success) {
-		console.log("DELETE /api/projects Error:", attemptQueryParse.error);
-		return new Response("Error parsing query parameters.", { status: 400 });
+	const attemptQueryParamsParse = queryParamsSchema.DELETE.safeParse(query);
+
+	if (!attemptQueryParamsParse.success) {
+		return new Response(
+			JSON.stringify({
+				error: attemptQueryParamsParse.error.issues[0]?.message,
+			}),
+			{ status: 400 }
+		);
 	}
 
-	const { projectId } = attemptQueryParse.data;
+	const { id } = attemptQueryParamsParse.data;
 
-	// Make sure user owns the company who owns the contract
+	// Validate that the project exists and that the user owns it
 	try {
-		const userOwnsProject = await db
-			.select({
-				id: projects.id,
-			})
+		const [project] = await db
+			.select({ companyId: projects.companyId })
 			.from(projects)
-			.where(
-				inArray(
-					projects.companyId,
-					session.user.ownedCompanies.map((company) => company.id)
-				)
-			)
-			.limit(1);
+			.where(eq(projects.id, id));
 
-		if (userOwnsProject.length < 1) {
-			return new Response("User does not own the project.", { status: 401 });
+		if (!project) {
+			return new Response(JSON.stringify({ error: "Project not found." }), {
+				status: 404,
+			});
+		}
+
+		if (
+			!session.user.ownedCompanies.some(
+				(company) => company.id === project.companyId
+			)
+		) {
+			return new Response(
+				JSON.stringify({ error: "User does not own the project." }),
+				{ status: 401 }
+			);
 		}
 	} catch (err) {
-		console.log("DELETE /api/projects Error:", err);
-		return new Response("An error occured while checking project ownership.", {
-			status: 500,
-		});
+		return new Response(
+			JSON.stringify({
+				error: "Error retrieving the project.",
+			}),
+			{ status: 500 }
+		);
 	}
 
+	// Delete project
 	try {
-		await db
-			.update(projects)
-			.set({ isActive: 0 })
-			.where(eq(projects.id, projectId));
+		await db.transaction(async (tx) => {
+			// Delete Images From Supabase
+			const projectMediaUrls = await tx
+				.select({ id: media.id, url: media.url })
+				.from(media)
+				.innerJoin(mediaRelationships, eq(media.id, mediaRelationships.mediaId))
+				.where(eq(mediaRelationships.projectId, id));
+
+			const { error } = await getSupabaseClient()
+				.storage.from("images")
+				.remove(projectMediaUrls.map((media) => media.url));
+
+			if (error) {
+				throw new CustomError("Error deleting images from cloud.", 500);
+			}
+
+			// Delete project
+			await tx.delete(projects).where(eq(projects.id, id));
+
+			// Delete images from db
+			await tx.delete(media).where(
+				inArray(
+					media.id,
+					projectMediaUrls.map((mediaObj) => mediaObj.id)
+				)
+			);
+		});
 	} catch (err) {
-		console.log("DELETE /api/projects Error:", err);
-		return new Response("Error deleting project.", { status: 500 });
+		const message =
+			err instanceof CustomError
+				? (err as Error).message
+				: "Error deleting project.";
+
+		return new Response(
+			JSON.stringify({
+				error: message,
+			}),
+			{ status: err instanceof CustomError ? err.status : 500 }
+		);
 	}
 
-	return new Response("Project deleted successfully.", { status: 200 });
+	return new Response(JSON.stringify({ message: "Project deleted." }), {
+		status: 200,
+	});
 }
