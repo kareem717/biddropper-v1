@@ -2,8 +2,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import CreateProjectForm from "@/components/forms/create-project";
-// src/app/page.tsx
-import UploadForm from "./testform";
+
 export default async function Home() {
 	const session = await getServerSession(authOptions);
 	return (
@@ -25,8 +24,6 @@ export default async function Home() {
 				</a>
 			</div>
 			<pre>{JSON.stringify(session, null, 2)}</pre>
-
-<UploadForm />
 		</main>
 	);
 }

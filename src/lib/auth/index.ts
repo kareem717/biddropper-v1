@@ -63,6 +63,10 @@ export const authOptions: NextAuthOptions = {
 			},
 		}),
 	],
+	pages: {
+		signIn: "/auth/login",
+		signOut: "/auth/logout",
+	},
 	debug: env["NODE_ENV"] === "development",
 	callbacks: {
 		async session({ session, user }) {

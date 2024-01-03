@@ -1,10 +1,8 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { ModeToggle } from "@/components/ui/mode-toggle";
 
 const roboto = Roboto({ weight: "400", subsets: ["latin"] });
 
@@ -19,20 +17,13 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		// <ClerkProvider>
-			<html lang="en">
-				<body className={roboto.className}>
-					<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-						{/* <div className="relative">*/}
-							<nav className="h-[40px] md:h-[60px] w-full bg-white bg-cover">
-								<ModeToggle />
-							</nav> 
-							{children}
-							<Toaster />
-						{/* </div> */}
-					</ThemeProvider>
-				</body>
-			</html>
-		// </ClerkProvider>
+		<html lang="en">
+			<body className={`${roboto.className} h-screen`}>
+				<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+					{children}
+					<Toaster />
+				</ThemeProvider>
+			</body>
+		</html>
 	);
 }

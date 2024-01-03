@@ -12,7 +12,7 @@ export default function SSOCallback({ searchParams }: SSOCallbackPageProps) {
   React.useEffect(() => {
     void handleRedirectCallback(searchParams)
   }, [searchParams, handleRedirectCallback])
-
+console.log(1)
   return (
     <div
       role="status"

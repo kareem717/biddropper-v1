@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
@@ -25,20 +25,12 @@ export function OAuthSignIn() {
 	async function oauthSignIn(provider: OAuthProviderType) {
 		setIsLoading(provider);
 		const res = await signIn(provider);
+		console.log(res)
 
-		console.log(res);
-		// if (res?.ok) {
-		// 	toast.success("Successfully signed in");
-		// 	redirect("/");
-		// } else {
-		// 	toast.error("Something went wrong", {
-		// 		description: "Failed to sign in, please try again",
-		// 	});
-		// }
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
+		<div className="grid grid-cols-1 gap-2">
 			{oauthProviders.map((provider) => {
 				const Icon = Icons[provider.icon];
 
@@ -46,8 +38,6 @@ export function OAuthSignIn() {
 					<Button
 						aria-label={`Sign in with ${provider.name}`}
 						key={provider.strategy}
-						variant="outline"
-						className="w-full bg-background sm:w-auto"
 						onClick={() => void oauthSignIn(provider.strategy)}
 						disabled={isLoading !== null}
 					>

@@ -57,6 +57,10 @@ module.exports = {
 				sm: "calc(var(--radius) - 4px)",
 			},
 			keyframes: {
+				border: {
+					"0%, 100%": { backgroundPosition: "0% 50%" },
+					"50%": { backgroundPosition: "100% 50%" },
+				},
 				"accordion-down": {
 					from: { height: 0 },
 					to: { height: "var(--radix-accordion-content-height)" },
@@ -93,6 +97,7 @@ module.exports = {
 				},
 			},
 			animation: {
+				border: "border 4s ease infinite",
 				"accordion-down": "accordion-down 0.2s ease-out",
 				"accordion-up": "accordion-up 0.2s ease-out",
 				"move-forever": "move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite",
