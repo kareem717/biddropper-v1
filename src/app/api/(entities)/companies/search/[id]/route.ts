@@ -20,7 +20,10 @@ export async function GET(
 
 	const { query } = parse(req.url, true);
 
-	const attemptQueryParse = queryParamSchema.GET.safeParse(query);
+	const attemptQueryParse = queryParamSchema.GET.safeParse({
+		companyId: params.id,
+		query,
+	});
 
 	if (!attemptQueryParse.success) {
 		console.log(attemptQueryParse.error);
@@ -30,7 +33,7 @@ export async function GET(
 		);
 	}
 
-	const { fetchType } = attemptQueryParse.data;
+	const { companyId, fetchType } = attemptQueryParse.data;
 
 	const querySelectsBase = {
 		id: companies.id,
@@ -83,7 +86,7 @@ export async function GET(
 				industries,
 				eq(industries.id, industriesToCompanies.industryId)
 			)
-			.where(eq(companies.id, params.id))
+			.where(eq(companies.id, companyId))
 			.groupBy(
 				...Object.values(querySelects),
 				...(fetchType === "deep" ? [addresses.id] : [])
