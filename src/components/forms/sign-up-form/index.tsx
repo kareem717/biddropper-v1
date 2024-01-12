@@ -10,39 +10,39 @@ import { Progress } from "@/components/ui/progress";
 import { useSignUp } from "@clerk/nextjs";
 
 export function SignUpForm() {
-	const [data, setData] = useState({});
-	const [step, setStep] = useState(0);
-	const [progress, setProgress] = useState(0);
-	const clerkSignUp = useSignUp();
+  const [data, setData] = useState({});
+  const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const clerkSignUp = useSignUp();
 
-	const setFormValues = (values: Record<string, string>) => {
-		setData((prevValues) => ({
-			...prevValues,
-			...values,
-		}));
-	};
+  const setFormValues = (values: Record<string, string>) => {
+    setData((prevValues) => ({
+      ...prevValues,
+      ...values,
+    }));
+  };
 
-	const addProgress = (value: number) => {
-		if (progress + value > 100) {
-			setProgress(100);
-			return;
-		} else if (progress + value < 0) {
-			setProgress(0);
-			return;
-		} else {
-			setProgress((prevProgress) => prevProgress + value);
-		}
-	};
+  const addProgress = (value: number) => {
+    if (progress + value > 100) {
+      setProgress(100);
+      return;
+    } else if (progress + value < 0) {
+      setProgress(0);
+      return;
+    } else {
+      setProgress((prevProgress) => prevProgress + value);
+    }
+  };
 
-	return (
-		<MultistepFormContext.Provider
-			value={{ data, setFormValues, step, setStep, addProgress, clerkSignUp }}
-		>
-			<Progress value={progress} max={100} />
-			{step === 0 && <StepOneForm />}
-			{step === 1 && <StepTwoForm />}
-			{step === 2 && <StepThreeForm />}
-			{step === 3 && <StepFourForm />}
-		</MultistepFormContext.Provider>
-	);
+  return (
+    <MultistepFormContext.Provider
+      value={{ data, setFormValues, step, setStep, addProgress, clerkSignUp }}
+    >
+      <Progress value={progress} max={100} />
+      {step === 0 && <StepOneForm />}
+      {step === 1 && <StepTwoForm />}
+      {step === 2 && <StepThreeForm />}
+      {step === 3 && <StepFourForm />}
+    </MultistepFormContext.Provider>
+  );
 }

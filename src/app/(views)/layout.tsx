@@ -6,13 +6,13 @@ import { QueryClient, QueryClientProvider } from "react-query";
 const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-	return (
-		<AuthSessionProvider>
-			<QueryClientProvider client={queryClient}>
-				<main>{children}</main>
-			</QueryClientProvider>
-		</AuthSessionProvider>
-	);
+  return (
+    <AuthSessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <main>{children}</main>
+      </QueryClientProvider>
+    </AuthSessionProvider>
+  );
 };
 
 export default Layout;

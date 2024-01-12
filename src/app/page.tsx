@@ -4,26 +4,26 @@ import { getServerSession } from "next-auth";
 import CreateProjectForm from "@/components/forms/create-project";
 
 export default async function Home() {
-	const session = await getServerSession(authOptions);
-	return (
-		<main>
-			<div className="flex flex-row gap-4 pt-[60px]">
-				<a href="/contracts" className={buttonVariants()}>
-					Contracts
-				</a>
+  const session = await getServerSession(authOptions);
+  return (
+    <main>
+      <div className="flex flex-row gap-4 pt-[60px]">
+        <a href="/contracts" className={buttonVariants()}>
+          Contracts
+        </a>
 
-				<a href="/company" className={buttonVariants()}>
-					Company
-				</a>
+        <a href="/company" className={buttonVariants()}>
+          Company
+        </a>
 
-				<a href="/create-job" className={buttonVariants()}>
-					Create Job
-				</a>
-				<a href="/job-view" className={buttonVariants()}>
-					job view
-				</a>
-			</div>
-			<pre>{JSON.stringify(session, null, 2)}</pre>
-		</main>
-	);
+        <a href="/create-job" className={buttonVariants()}>
+          Create Job
+        </a>
+        <a href="/job-view" className={buttonVariants()}>
+          job view
+        </a>
+      </div>
+      <pre>{JSON.stringify(session, null, 2)}</pre>
+    </main>
+  );
 }

@@ -8,10 +8,10 @@ import * as relations from "./schema/tables/relations/content";
 const client = postgres(env["SUPABASE_DATABASE_URL"]);
 
 export const db = drizzle(client, {
-	schema: {
-		...content,
-		...auth,
-		...relations,
-	},
+  schema: {
+    ...content,
+    ...auth,
+    ...relations,
+  },
 });
 export type DBClient = typeof db;

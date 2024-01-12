@@ -81,12 +81,8 @@
           "name": "account_userId_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -94,10 +90,7 @@
       "compositePrimaryKeys": {
         "account_provider_providerAccountId_pk": {
           "name": "account_provider_providerAccountId_pk",
-          "columns": [
-            "provider",
-            "providerAccountId"
-          ]
+          "columns": ["provider", "providerAccountId"]
         }
       },
       "uniqueConstraints": {}
@@ -131,12 +124,8 @@
           "name": "session_userId_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -200,9 +189,7 @@
         "user_id_unique": {
           "name": "user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -234,10 +221,7 @@
       "compositePrimaryKeys": {
         "verificationToken_identifier_token_pk": {
           "name": "verificationToken_identifier_token_pk",
-          "columns": [
-            "identifier",
-            "token"
-          ]
+          "columns": ["identifier", "token"]
         }
       },
       "uniqueConstraints": {}
@@ -322,9 +306,7 @@
         "addresses_id_unique": {
           "name": "addresses_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -382,9 +364,7 @@
       "indexes": {
         "company_id": {
           "name": "company_id",
-          "columns": [
-            "company_id"
-          ],
+          "columns": ["company_id"],
           "isUnique": false
         }
       },
@@ -393,12 +373,8 @@
           "name": "bids_company_id_companies_id_fk",
           "tableFrom": "bids",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -408,9 +384,7 @@
         "bids_id_unique": {
           "name": "bids_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -531,12 +505,8 @@
           "name": "companies_address_id_addresses_id_fk",
           "tableFrom": "companies",
           "tableTo": "addresses",
-          "columnsFrom": [
-            "address_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["address_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -544,12 +514,8 @@
           "name": "companies_image_id_media_id_fk",
           "tableFrom": "companies",
           "tableTo": "media",
-          "columnsFrom": [
-            "image_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["image_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         }
@@ -559,9 +525,7 @@
         "companies_id_unique": {
           "name": "companies_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -633,12 +597,8 @@
           "name": "contracts_winning_bid_id_bids_id_fk",
           "tableFrom": "contracts",
           "tableTo": "bids",
-          "columnsFrom": [
-            "winning_bid_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["winning_bid_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -648,9 +608,7 @@
         "contracts_id_unique": {
           "name": "contracts_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -680,9 +638,7 @@
       "indexes": {
         "value": {
           "name": "value",
-          "columns": [
-            "value"
-          ],
+          "columns": ["value"],
           "isUnique": false
         }
       },
@@ -692,23 +648,17 @@
         "industries_id_unique": {
           "name": "industries_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         },
         "industries_label_unique": {
           "name": "industries_label_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "label"
-          ]
+          "columns": ["label"]
         },
         "industries_value_unique": {
           "name": "industries_value_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "value"
-          ]
+          "columns": ["value"]
         }
       }
     },
@@ -799,12 +749,8 @@
           "name": "jobs_address_id_addresses_id_fk",
           "tableFrom": "jobs",
           "tableTo": "addresses",
-          "columnsFrom": [
-            "address_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["address_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -812,12 +758,8 @@
           "name": "jobs_winning_bid_id_bids_id_fk",
           "tableFrom": "jobs",
           "tableTo": "bids",
-          "columnsFrom": [
-            "winning_bid_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["winning_bid_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -827,9 +769,7 @@
         "jobs_id_unique": {
           "name": "jobs_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -857,9 +797,7 @@
         "media_id_unique": {
           "name": "media_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -919,12 +857,8 @@
           "name": "projects_company_id_companies_id_fk",
           "tableFrom": "projects",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -934,9 +868,7 @@
         "projects_id_unique": {
           "name": "projects_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -1001,12 +933,8 @@
           "name": "reviews_author_id_user_id_fk",
           "tableFrom": "reviews",
           "tableTo": "user",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1014,12 +942,8 @@
           "name": "reviews_company_id_companies_id_fk",
           "tableFrom": "reviews",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1029,9 +953,7 @@
         "reviews_id_unique": {
           "name": "reviews_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       }
     },
@@ -1064,12 +986,8 @@
           "name": "bids_relationships_bid_id_bids_id_fk",
           "tableFrom": "bids_relationships",
           "tableTo": "bids",
-          "columnsFrom": [
-            "bid_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bid_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1077,12 +995,8 @@
           "name": "bids_relationships_job_id_jobs_id_fk",
           "tableFrom": "bids_relationships",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1090,12 +1004,8 @@
           "name": "bids_relationships_contract_id_contracts_id_fk",
           "tableFrom": "bids_relationships",
           "tableTo": "contracts",
-          "columnsFrom": [
-            "contract_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["contract_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1105,9 +1015,7 @@
         "bids_relationships_bid_id_unique": {
           "name": "bids_relationships_bid_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "bid_id"
-          ]
+          "columns": ["bid_id"]
         }
       }
     },
@@ -1134,12 +1042,8 @@
           "name": "industries_to_companies_industry_id_industries_id_fk",
           "tableFrom": "industries_to_companies",
           "tableTo": "industries",
-          "columnsFrom": [
-            "industry_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["industry_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -1147,12 +1051,8 @@
           "name": "industries_to_companies_company_id_companies_id_fk",
           "tableFrom": "industries_to_companies",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1160,10 +1060,7 @@
       "compositePrimaryKeys": {
         "industries_to_companies_industry_id_company_id_pk": {
           "name": "industries_to_companies_industry_id_company_id_pk",
-          "columns": [
-            "industry_id",
-            "company_id"
-          ]
+          "columns": ["industry_id", "company_id"]
         }
       },
       "uniqueConstraints": {}
@@ -1191,12 +1088,8 @@
           "name": "industries_to_jobs_industry_id_industries_id_fk",
           "tableFrom": "industries_to_jobs",
           "tableTo": "industries",
-          "columnsFrom": [
-            "industry_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["industry_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -1204,12 +1097,8 @@
           "name": "industries_to_jobs_job_id_jobs_id_fk",
           "tableFrom": "industries_to_jobs",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1217,10 +1106,7 @@
       "compositePrimaryKeys": {
         "industries_to_jobs_industry_id_job_id_pk": {
           "name": "industries_to_jobs_industry_id_job_id_pk",
-          "columns": [
-            "industry_id",
-            "job_id"
-          ]
+          "columns": ["industry_id", "job_id"]
         }
       },
       "uniqueConstraints": {}
@@ -1260,12 +1146,8 @@
           "name": "jobs_relationships_job_id_jobs_id_fk",
           "tableFrom": "jobs_relationships",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1273,12 +1155,8 @@
           "name": "jobs_relationships_user_id_user_id_fk",
           "tableFrom": "jobs_relationships",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -1286,12 +1164,8 @@
           "name": "jobs_relationships_company_id_companies_id_fk",
           "tableFrom": "jobs_relationships",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -1299,12 +1173,8 @@
           "name": "jobs_relationships_contract_id_contracts_id_fk",
           "tableFrom": "jobs_relationships",
           "tableTo": "contracts",
-          "columnsFrom": [
-            "contract_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["contract_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         }
@@ -1314,9 +1184,7 @@
         "jobs_relationships_job_id_unique": {
           "name": "jobs_relationships_job_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "job_id"
-          ]
+          "columns": ["job_id"]
         }
       }
     },
@@ -1355,12 +1223,8 @@
           "name": "media_relationships_media_id_media_id_fk",
           "tableFrom": "media_relationships",
           "tableTo": "media",
-          "columnsFrom": [
-            "media_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["media_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1368,12 +1232,8 @@
           "name": "media_relationships_job_id_jobs_id_fk",
           "tableFrom": "media_relationships",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -1381,12 +1241,8 @@
           "name": "media_relationships_project_id_projects_id_fk",
           "tableFrom": "media_relationships",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -1394,12 +1250,8 @@
           "name": "media_relationships_review_id_reviews_id_fk",
           "tableFrom": "media_relationships",
           "tableTo": "reviews",
-          "columnsFrom": [
-            "review_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["review_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         }
@@ -1409,9 +1261,7 @@
         "media_relationships_media_id_unique": {
           "name": "media_relationships_media_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "media_id"
-          ]
+          "columns": ["media_id"]
         }
       }
     }

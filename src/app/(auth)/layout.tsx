@@ -5,19 +5,21 @@ import LogoDiv from "@/components/logo-div";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 
 interface AuthLayoutProps {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
-	return (
-		<div className="flex flex-col h-screen">
-			<nav className="p-3 flex justify-between">
-				<LogoDiv />
-				<ModeToggle />
-			</nav>
-			<main className="flex-grow">
-				<div className="h-full flex items-center justify-center">{children}</div>
-			</main>
-		</div>
-	);
+  return (
+    <div className="flex h-screen flex-col">
+      <nav className="flex justify-between p-3">
+        <LogoDiv />
+        <ModeToggle />
+      </nav>
+      <main className="flex-grow">
+        <div className="flex h-full items-center justify-center">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
 }

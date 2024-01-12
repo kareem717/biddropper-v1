@@ -7,15 +7,15 @@ import { Shell } from "@/components/shells";
 // export const runtime = "edge"
 
 export interface SSOCallbackPageProps {
-	searchParams: HandleOAuthCallbackParams;
+  searchParams: HandleOAuthCallbackParams;
 }
 
 export default function SSOCallbackPage({
-	searchParams,
+  searchParams,
 }: SSOCallbackPageProps) {
-	return (
-		<Shell className="max-w-lg">
-			<SSOCallback searchParams={searchParams} />
-		</Shell>
-	);
+  return (
+    <Shell className="max-w-lg">
+      <SSOCallback searchParams={searchParams} />
+    </Shell>
+  );
 }

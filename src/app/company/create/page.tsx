@@ -5,9 +5,9 @@ import AuthSessionProvider from "@/components/providers/auth-session-provider";
 import CreateCompanyForm from "@/components/forms/company-forms/create";
 
 export default async function CreateCompanyPage() {
-	return (
-		<AuthSessionProvider>
-				<CreateCompanyForm />
-		</AuthSessionProvider>
-	);
+  return (
+    <AuthSessionProvider>
+      <CreateCompanyForm />
+    </AuthSessionProvider>
+  );
 }
