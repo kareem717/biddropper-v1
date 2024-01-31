@@ -1,7 +1,7 @@
 // 'use server';
 import React from "react";
 import { useMultistepForm } from "@/hooks/use-multistep-form";
-import ImageUploader from "@/components/image-uploader";
+import ImageDropzone from "@/components/image-dropzone";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
@@ -30,7 +30,7 @@ function AddImagesForm() {
 
   return (
     <div>
-      <ImageUploader
+      <ImageDropzone
         onClientUploadComplete={onClientUploadComplete}
         onUploadError={onUploadError}
         className="grid grid-cols-1 gap-4 overflow-auto sm:grid-cols-2 lg:grid-cols-3"

@@ -5,9 +5,7 @@ import * as content from "./schema/tables/content";
 import * as auth from "./schema/tables/auth";
 import * as relations from "./schema/tables/relations/content";
 
-const client = postgres(env["SUPABASE_DATABASE_URL"]);
-
-export const db = drizzle(client, {
+export const db = drizzle(postgres(env["SUPABASE_DATABASE_URL"], { prepare: false }), {
   schema: {
     ...content,
     ...auth,

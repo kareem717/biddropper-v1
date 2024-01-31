@@ -1,9 +1,8 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/ui/theme-provider";
-
 const roboto = Roboto({ weight: "400", subsets: ["latin"] });
 
 export const metadata: Metadata = {

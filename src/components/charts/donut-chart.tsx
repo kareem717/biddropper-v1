@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from "recharts";
 
-interface SimpleBarChartProps {
+interface DonutChartProps {
   data: {
     name: string;
     value: number;
@@ -16,7 +16,7 @@ interface SimpleBarChartProps {
   responsiveContainerProps?: ResponsiveContainerProps;
 }
 
-const SimpleBarChart: React.FC<SimpleBarChartProps> = ({
+const DonutChart: React.FC<DonutChartProps> = ({
   responsiveContainerProps,
   data,
 }) => {
@@ -60,4 +60,4 @@ const SimpleBarChart: React.FC<SimpleBarChartProps> = ({
   );
 };
 
-export default SimpleBarChart;
+export default DonutChart;

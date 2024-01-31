@@ -167,6 +167,8 @@ export async function POST(req: Request) {
       }
     });
   } catch (err) {
+    console.log(err)
+    
     const message =
       err instanceof CustomError
         ? (err as Error).message

@@ -1,11 +1,6 @@
 // "use client";
 import LineChart from "../charts/line-chart";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import SimpleBarChart from "../charts/simple-bar-chart";
 import DonutChart from "../charts/donut-chart";
 
@@ -28,7 +23,7 @@ const dummyData3 = Array.from({ length: 4 }, (_, i) => ({
 
 const StatCard: React.FC = ({ ...props }) => {
   return (
-    <div className="grid w-full grid-cols-1 gap-2 md:gap-6 md:grid-cols-3 [&>*]:aspect-video ">
+    <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-3 md:gap-6 [&>*]:aspect-video ">
       <Card>
         <CardHeader className="items-left flex flex-col justify-between space-y-0 pb-2">
           <CardTitle className="text-base font-normal">Subscriptions</CardTitle>

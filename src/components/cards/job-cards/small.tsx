@@ -8,7 +8,7 @@ import BadgeTooltip from "../../badge-tooltip";
 import { timeHorizons } from "@/config/time-horizons";
 import { propertyTypes } from "@/config/property-types";
 import Link from "next/link";
-import useIndustries from "@/hooks/use-industries";
+import useIndustries from "@/hooks/api/use-industries";
 
 interface JobCardProps {
   id: string;

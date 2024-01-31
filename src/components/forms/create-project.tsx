@@ -23,7 +23,7 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { insertProjectSchema } from "@/lib/validations/posts/projects";
-import ImageUploader, { ImageUploaderRef } from "@/components/image-uploader";
+import ImageDropzone, { ImageDropzoneRef } from "@/components/image-dropzone";
 import { insertMediaSchema } from "@/lib/validations/posts/posts";
 import { insertCompanySchema } from "@/lib/validations/companies";
 import { Icons } from "@/components/icons";
@@ -59,7 +59,7 @@ const CreateProjectForm: FC<ComponentPropsWithoutRef<"div">> = ({
 
   const userId = session?.data?.user?.id;
   const userCompanies = session?.data?.user?.ownedCompanies;
-  const imageUploaderRef = useRef<ImageUploaderRef>(null);
+  const ImageDropzoneRef = useRef<ImageDropzoneRef>(null);
   const [formStep, setFormStep] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
   const totalSteps = 2;
@@ -95,7 +95,7 @@ const CreateProjectForm: FC<ComponentPropsWithoutRef<"div">> = ({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsFetching(true);
-    const uploadedPhotos = await imageUploaderRef.current?.upload();
+    const uploadedPhotos = await ImageDropzoneRef.current?.upload();
 
     if (!uploadedPhotos) {
       toast.error("Something went wrong when uploading images!");
@@ -192,7 +192,7 @@ const CreateProjectForm: FC<ComponentPropsWithoutRef<"div">> = ({
 
             {formStep === 1 && (
               <div>
-                <ImageUploader
+                <ImageDropzone
                   onClientUploadComplete={(
                     res:
                       | {
@@ -206,7 +206,7 @@ const CreateProjectForm: FC<ComponentPropsWithoutRef<"div">> = ({
                   onUploadError={(err) => {
                     console.log(err);
                   }}
-                  ref={imageUploaderRef}
+                  ref={ImageDropzoneRef}
                   className="grid grid-cols-1 gap-4 overflow-auto sm:grid-cols-2 lg:grid-cols-3"
                 />
               </div>

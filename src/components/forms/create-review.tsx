@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import ImageUploader, { ImageUploaderRef } from "../image-uploader";
+import ImageDropzone, { ImageDropzoneRef } from "../image-dropzone";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -56,7 +56,7 @@ const CreateReview: FC<CreateReviewFormProps> = ({ ...props }) => {
   }
 
   const companyId = params.companyId;
-  const imageUploaderRef = useRef<ImageUploaderRef>(null);
+  const ImageDropzoneRef = useRef<ImageDropzoneRef>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,7 +68,7 @@ const CreateReview: FC<CreateReviewFormProps> = ({ ...props }) => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const files = await imageUploaderRef.current?.upload();
+    const files = await ImageDropzoneRef.current?.upload();
 
     const res = await fetch("/api/reviews", {
       method: "POST",
@@ -150,9 +150,9 @@ const CreateReview: FC<CreateReviewFormProps> = ({ ...props }) => {
               <AccordionItem value="item-1">
                 <AccordionTrigger>Upload Images</AccordionTrigger>
                 <AccordionContent className="max-h-[20vh] overflow-auto">
-                  <ImageUploader
+                  <ImageDropzone
                     maxFiles={3}
-                    ref={imageUploaderRef}
+                    ref={ImageDropzoneRef}
                     onClientUploadComplete={() => {
                       console.log("client upload complete");
                     }}

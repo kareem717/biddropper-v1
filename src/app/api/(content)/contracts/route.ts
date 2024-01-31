@@ -222,7 +222,6 @@ export async function GET(req: Request) {
 
     if (!contractId) {
       if (dbQuery.length > limit) {
-        console.log(limit, dbQuery.length);
         nextCursor = dbQuery[dbQuery.length - 1]?.contracts.id;
         dbQuery = dbQuery.slice(0, -1);
       }
@@ -232,8 +231,6 @@ export async function GET(req: Request) {
 
     // @ts-ignore
     const res = dbQuery.reduce((acc: any, curr: any) => {
-      console.log(acc, curr);
-
       // If the contract doesn't exist, create it
       if (!acc.find((contract: any) => contract.id === curr.contracts.id)) {
         // console.log("Creating contract");

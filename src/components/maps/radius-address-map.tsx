@@ -60,22 +60,22 @@ function RadiusAddress(
     AddressAutofillRetrieveResponse | undefined
   >();
 
-  const handleRetrieve = (res: AddressAutofillRetrieveResponse) => {
-    setAddress(res);
+    const handleRetrieve = (res: AddressAutofillRetrieveResponse) => {
+      setAddress(res);
 
-    const retrievedCoordinates = res?.features?.[0]?.geometry?.coordinates;
-    if (!retrievedCoordinates) return;
+      const retrievedCoordinates = res?.features?.[0]?.geometry?.coordinates;
+      if (!retrievedCoordinates) return;
 
-    setCoordinates(retrievedCoordinates);
+      setCoordinates(retrievedCoordinates);
 
-    if (map.current) {
-      map.current.flyTo({ center: retrievedCoordinates as any });
-    }
+      if (map.current) {
+        map.current.flyTo({ center: retrievedCoordinates as any });
+      }
 
-    if (onRetrieve) {
-      onRetrieve(res);
-    }
-  };
+      if (onRetrieve) {
+        onRetrieve(res);
+      }
+    };
 
   const handleRadiusChange = (numArr: number[]) => {
     if (!numArr[0]) return;

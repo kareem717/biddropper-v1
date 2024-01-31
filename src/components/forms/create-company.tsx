@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { insertCompanySchema } from "@/lib/validations/entities/companies";
-import ImageUploader, { ImageUploaderRef } from "@/components/image-uploader";
+import ImageDropzone, { ImageDropzoneRef } from "@/components/image-dropzone";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -91,7 +91,7 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
   if (!session) {
     router.replace("/sign-in");
   }
-  const imageUploaderRef = useRef<ImageUploaderRef>(null);
+  const ImageDropzoneRef = useRef<ImageDropzoneRef>(null);
   const comboRef = useRef<MultiSelectComboBoxRef>(null);
   const radiusMapRef = useRef<RadiusAddressRef>(null);
   const userId = session.data?.user?.id;
@@ -127,8 +127,8 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
     setIsFetching(true);
 
     // upload image
-    const uploadSuccess = await imageUploaderRef?.current?.upload();
-    if (!uploadSuccess && imageUploaderRef?.current?.files?.length) {
+    const uploadSuccess = await ImageDropzoneRef?.current?.upload();
+    if (!uploadSuccess && ImageDropzoneRef?.current?.files?.length) {
       toast.error("Image upload failed", {
         action: {
           label: "Retry",
@@ -312,7 +312,7 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
                     <FormControl>
                       <div>
                         {/* //TODO: implement the uploading functionality */}
-                        <ImageUploader
+                        <ImageDropzone
                           onClientUploadComplete={(
                             res:
                               | {
@@ -326,7 +326,7 @@ const CreateCompanyForm: FC<ComponentPropsWithoutRef<"div">> = ({
                           onUploadError={(err) => {
                             console.log(err);
                           }}
-                          ref={imageUploaderRef}
+                          ref={ImageDropzoneRef}
                           maxFiles={1}
                           className="max-h-[20vh] overflow-hidden"
                           spinnerClassName="max-h-[20vh] overflow-hidden"

@@ -8,8 +8,7 @@ import { base64Regex } from "@/lib/utils";
 const postBodyParams = createInsertSchema(jobs, {
   industry: z.string().max(100).optional(),
   isCommercialProperty: z.boolean().optional().default(false),
-  description: z.string().max(3000),
-  startDate: z.coerce.number().transform((num) => new Date(num * 1000)),
+  startDate: z.coerce.date().optional(),
   startDateFlag: z
     .enum(enumStartDateFlag.enumValues)
     .optional()
@@ -124,5 +123,8 @@ const getQueryParams = z.object({
     .optional(),
 });
 
+
 export const bodyParamSchema = { POST: postBodyParams, PATCH: patchBodyParams };
 export const queryParamSchema = { DELETE: deleteQueryParams };
+export type PostBodyParams = z.infer<typeof postBodyParams>;
+export type PatchBodyParams = z.infer<typeof patchBodyParams>;
