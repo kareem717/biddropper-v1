@@ -2,8 +2,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import CreateProjectForm from "@/components/forms/create-project";
+import { api } from "@/trpc/server";
 
 export default async function Home() {
+  const res = await api.post.getSecretMessage.query({});
+
+  console.log(res);
   const session = await getServerSession(authOptions);
   return (
     <main>

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { enumBidStatus } from "@/db/schema/tables/enums";
+import { enumBidStatus } from "@/server/db/schema/tables/enums";
 
 const getQueryParams = z.object({
   id: z
@@ -45,4 +45,3 @@ const getQueryParams = z.object({
 
 export const queryParamSchema = { GET: getQueryParams };
 export type APIGetUserBidsParams = z.infer<typeof getQueryParams>;
-

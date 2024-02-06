@@ -1,4 +1,7 @@
-import { enumPropertyType, enumStartDateFlag } from "@/db/schema/tables/enums";
+import {
+  enumPropertyType,
+  enumStartDateFlag,
+} from "@/server/db/schema/tables/enums";
 import * as z from "zod";
 
 const postBodyParams = z.object({

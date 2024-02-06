@@ -1,11 +1,11 @@
-import { db } from "@/db/client";
-import { bids, contracts, jobs } from "@/db/schema/tables/content";
+import { db } from "@/server/db/client";
+import { bids, contracts, jobs } from "@/server/db/schema/tables/content";
 import { and, eq, inArray, or } from "drizzle-orm";
 import { parse } from "url";
 import {
   bidsRelationships,
   jobsRelationships,
-} from "@/db/schema/tables/relations/content";
+} from "@/server/db/schema/tables/relations/content";
 import { queryParamSchema } from "@/lib/validations/api/(content)/bids/company/request";
 import { createFilterConditions } from "@/lib/utils";
 import { authOptions } from "@/lib/auth";

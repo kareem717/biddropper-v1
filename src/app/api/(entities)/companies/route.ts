@@ -1,4 +1,4 @@
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 import { inArray, eq, and, gte, exists, sql, ne } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
@@ -18,7 +18,7 @@ import {
   industries,
   jobs,
   media,
-} from "@/db/schema/tables/content";
+} from "@/server/db/schema/tables/content";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { CustomError } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
@@ -26,7 +26,7 @@ import {
   bidsRelationships,
   industriesToCompanies,
   jobsRelationships,
-} from "@/db/schema/tables/relations/content";
+} from "@/server/db/schema/tables/relations/content";
 import { env } from "@/env.mjs";
 import { parse } from "url";
 import { text } from "stream/consumers";

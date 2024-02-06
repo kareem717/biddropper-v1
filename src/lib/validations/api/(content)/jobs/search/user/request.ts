@@ -1,5 +1,8 @@
-import { jobs } from "@/db/schema/tables/content";
-import { enumPropertyType, enumStartDateFlag } from "@/db/schema/tables/enums";
+import { jobs } from "@/server/db/schema/tables/content";
+import {
+  enumPropertyType,
+  enumStartDateFlag,
+} from "@/server/db/schema/tables/enums";
 import { createInsertSchema } from "drizzle-zod";
 import * as z from "zod";
 import { base64Regex } from "@/lib/utils";

@@ -1,4 +1,4 @@
-import { reviews } from "@/db/schema/tables/content";
+import { reviews } from "@/server/db/schema/tables/content";
 import { base64Regex } from "@/lib/utils";
 import { createInsertSchema } from "drizzle-zod";
 import * as z from "zod";

@@ -1,6 +1,6 @@
-import { db } from "@/db/client";
-import { media, projects } from "@/db/schema/tables/content";
-import { mediaRelationships } from "@/db/schema/tables/relations/content";
+import { db } from "@/server/db/client";
+import { media, projects } from "@/server/db/schema/tables/content";
+import { mediaRelationships } from "@/server/db/schema/tables/relations/content";
 import { authOptions } from "@/lib/auth";
 import {
   bodyParamSchema,

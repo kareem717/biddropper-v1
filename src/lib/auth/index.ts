@@ -6,11 +6,11 @@ import {
 } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { Adapter } from "next-auth/adapters";
 import { env } from "@/env.mjs";
-import { companies } from "@/db/schema/tables/content";
+import { companies } from "@/server/db/schema/tables/content";
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
@@ -86,9 +86,9 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export const getServerAuthSession = (ctx: {
-  req: GetServerSidePropsContext["req"];
-  res: GetServerSidePropsContext["res"];
-}) => {
-  return getServerSession(ctx.req, ctx.res, authOptions);
-};
+/**
+ * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
+ *
+ * @see https://next-auth.js.org/configuration/nextjs
+ */
+export const getServerAuthSession = () => getServerSession(authOptions);

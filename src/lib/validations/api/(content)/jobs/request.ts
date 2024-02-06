@@ -1,5 +1,8 @@
-import { jobs } from "@/db/schema/tables/content";
-import { enumPropertyType, enumStartDateFlag } from "@/db/schema/tables/enums";
+import { jobs } from "@/server/db/schema/tables/content";
+import {
+  enumPropertyType,
+  enumStartDateFlag,
+} from "@/server/db/schema/tables/enums";
 import { createInsertSchema } from "drizzle-zod";
 import { bodyParamSchema as addressSchema } from "../../(references)/addresses/request";
 import * as z from "zod";
@@ -122,7 +125,6 @@ const getQueryParams = z.object({
     })
     .optional(),
 });
-
 
 export const bodyParamSchema = { POST: postBodyParams, PATCH: patchBodyParams };
 export const queryParamSchema = { DELETE: deleteQueryParams };

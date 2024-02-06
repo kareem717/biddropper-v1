@@ -1,6 +1,11 @@
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 import { authOptions } from "@/lib/auth";
-import { addresses, industries, jobs, media } from "@/db/schema/tables/content";
+import {
+  addresses,
+  industries,
+  jobs,
+  media,
+} from "@/server/db/schema/tables/content";
 import { getServerSession } from "next-auth";
 import {
   bodyParamSchema,
@@ -9,7 +14,7 @@ import {
 import {
   jobsRelationships,
   mediaRelationships,
-} from "@/db/schema/tables/relations/content";
+} from "@/server/db/schema/tables/relations/content";
 import { CustomError } from "@/lib/utils";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { env } from "@/env.mjs";
@@ -167,8 +172,8 @@ export async function POST(req: Request) {
       }
     });
   } catch (err) {
-    console.log(err)
-    
+    console.log(err);
+
     const message =
       err instanceof CustomError
         ? (err as Error).message

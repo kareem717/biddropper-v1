@@ -1,5 +1,5 @@
-import { db } from "@/db/client";
-import { media, reviews } from "@/db/schema/tables/content";
+import { db } from "@/server/db/client";
+import { media, reviews } from "@/server/db/schema/tables/content";
 import { authOptions } from "@/lib/auth";
 import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { getServerSession } from "next-auth";
@@ -8,7 +8,7 @@ import {
   bodyParamsSchema,
   queryParamsSchema,
 } from "@/lib/validations/api/(content)/reviews/request";
-import { mediaRelationships } from "@/db/schema/tables/relations/content";
+import { mediaRelationships } from "@/server/db/schema/tables/relations/content";
 import { CustomError } from "@/lib/utils";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { env } from "@/env.mjs";

@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { createInsertSchema } from "drizzle-zod";
-import { companies } from "@/db/schema/tables/content";
+import { companies } from "@/server/db/schema/tables/content";
 import validator from "validator";
 import { bodyParamSchema as addressPostSchema } from "../../(references)/addresses/request";
 import { base64Regex } from "@/lib/utils";

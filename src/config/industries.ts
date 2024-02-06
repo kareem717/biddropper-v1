@@ -1,4 +1,4 @@
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 import { industries as dbIndustries } from "@/db/migrations/schema";
 export const industries = await db
   .select({

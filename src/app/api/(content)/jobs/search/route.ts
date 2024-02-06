@@ -1,11 +1,11 @@
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 import { authOptions } from "@/lib/auth";
-import { addresses, companies, jobs } from "@/db/schema/tables/content";
+import { addresses, companies, jobs } from "@/server/db/schema/tables/content";
 import { getServerSession } from "next-auth";
 import { bodyParamSchema } from "@/lib/validations/api/(content)/jobs/search/request";
-import { jobsRelationships } from "@/db/schema/tables/relations/content";
+import { jobsRelationships } from "@/server/db/schema/tables/relations/content";
 import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
-import { user } from "@/db/schema/tables/auth";
+import { user } from "@/server/db/schema/tables/auth";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);

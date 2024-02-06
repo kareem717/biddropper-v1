@@ -1,9 +1,9 @@
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 import { authOptions } from "@/lib/auth";
-import { addresses, jobs } from "@/db/schema/tables/content";
+import { addresses, jobs } from "@/server/db/schema/tables/content";
 import { getServerSession } from "next-auth";
 import { bodyParamSchema } from "@/lib/validations/api/(content)/jobs/search/user/request";
-import { jobsRelationships } from "@/db/schema/tables/relations/content";
+import { jobsRelationships } from "@/server/db/schema/tables/relations/content";
 import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 export async function POST(req: Request) {

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 
 import { eq, sql, and } from "drizzle-orm";
 

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { enumBidStatus } from "@/db/schema/tables/enums";
+import { enumBidStatus } from "@/server/db/schema/tables/enums";
 
 const getQueryParams = z.object({
   id: z
