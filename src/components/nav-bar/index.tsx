@@ -1,7 +1,7 @@
 "use client";
 import React, { ComponentPropsWithoutRef, FC, useState } from "react";
 import { Button } from "@/components/ui/button";
-import SideBar from "@/components/admin-nav-bar/side-bar";
+import SideBar from "@/components/nav-bar/side-bar";
 import { Icons } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "../ui/mode-toggle";
@@ -29,7 +29,7 @@ const DashboardPageBoard: FC<DashboardPageBoardProps> = ({ ...props }) => {
         }}
       />
       <div className="h-14 w-full border-b-2 border-foreground/20 sm:h-16">
-        <div className="m-auto flex h-full items-center justify-between sm:px-4 lg:px-10 max-w-[1920px]">
+        <div className="m-auto flex h-full max-w-[1920px] items-center justify-between sm:px-4 lg:px-10">
           <div className="flex w-1/4 items-center justify-between md:w-[12%]">
             <Button
               onClick={() => {

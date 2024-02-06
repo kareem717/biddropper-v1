@@ -84,6 +84,7 @@ export async function GET(req: Request) {
       id: bids.id,
       price: bids.price,
       createdAt: bids.createdAt,
+      note: bids.note,
       companyId: bids.companyId,
       isActive: bids.isActive,
       status: bids.status,

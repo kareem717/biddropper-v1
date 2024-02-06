@@ -1,7 +1,7 @@
 "use client";
 import AuthSessionProvider from "@/components/providers/auth-session-provider";
 import React from "react";
-import AdminNavBar from "@/components/admin-nav-bar";
+import AdminNavBar from "@/components/nav-bar";
 
 import { QueryClient, QueryClientProvider } from "react-query";
 const queryClient = new QueryClient();

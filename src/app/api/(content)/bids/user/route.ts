@@ -36,6 +36,8 @@ export async function GET(req: Request) {
 
   const { data } = params;
 
+  console.log(data);
+
   if (data.id !== session.user.id) {
     return new Response(
       JSON.stringify({
@@ -68,6 +70,7 @@ export async function GET(req: Request) {
         companyId: bids.companyId,
         isActive: bids.isActive,
         status: bids.status,
+        note: bids.note,
         job: {
           id: jobs.id,
           title: jobs.title,
@@ -92,7 +95,7 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (err) {
-    console.error(err);
+    console.log(err);
     return new Response(
       JSON.stringify({
         error: "Error fetching data.",
@@ -101,3 +104,4 @@ export async function GET(req: Request) {
     );
   }
 }
+

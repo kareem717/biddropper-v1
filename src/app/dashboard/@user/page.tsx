@@ -1,8 +1,11 @@
+import UserDashboard from "@/components/dashboards/user-dashboard";
 import { FunctionComponent } from "react";
-import DashboardPage from "@/components/dashboard";
 
 const Dashboard: FunctionComponent = () => {
-  return <DashboardPage />;
+
+  return (
+      <UserDashboard />
+  );
 };
 
 export default Dashboard;

@@ -57,7 +57,7 @@ export const createFilterConditions = (params: any, bids: any) => {
   const { data } = params;
   const conditions = [
     inArray(bids.status, data.status),
-    inArray(bids.isActive, data.includeInactive),
+    inArray(bids.isActive, data.isActive),
   ];
 
   const addCondition = (conditionFn: Function, field: any, value: any) => {
@@ -105,3 +105,4 @@ function base64ImageSize(base64String: string) {
 
   return sizeInMb;
 }
+

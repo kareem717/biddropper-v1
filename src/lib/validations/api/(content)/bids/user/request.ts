@@ -7,15 +7,19 @@ const getQueryParams = z.object({
       required_error: "Missing identifier.",
     })
     .uuid(),
-  includeInactive: z
-    .string()
+  isActive: z
+    .preprocess(
+      (input) => (typeof input === "string" ? input.split(",") : input),
+      z.array(z.enum(["true", "false"])).max(2),
+    )
     .optional()
-    .transform((val) => val?.toLowerCase() === "true")
-    .transform((bool) => (bool ? [true, false] : [true])),
+    .default(["true"]),
   status: z
     .preprocess(
-      (input) => (typeof input === "string" ? JSON.parse(input) : input),
-      z.array(z.enum(enumBidStatus.enumValues)),
+      (input) => (typeof input === "string" ? input.split(",") : input),
+      z
+        .array(z.enum(enumBidStatus.enumValues))
+        .max(enumBidStatus.enumValues.length),
     )
     .optional()
     .default(["pending"]),
@@ -40,3 +44,5 @@ const getQueryParams = z.object({
 });
 
 export const queryParamSchema = { GET: getQueryParams };
+export type APIGetUserBidsParams = z.infer<typeof getQueryParams>;
+

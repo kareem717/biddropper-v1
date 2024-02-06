@@ -1,8 +1,8 @@
 // "use client";
-import LineChart from "../charts/line-chart";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import SimpleBarChart from "../charts/simple-bar-chart";
-import DonutChart from "../charts/donut-chart";
+import LineChart from "../../charts/line-chart";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import SimpleBarChart from "../../charts/simple-bar-chart";
+import DonutChart from "../../charts/donut-chart";
 
 const dummyData1 = Array.from({ length: 10 }, (_, i) => ({
   name: `Item ${i + 1}`,

@@ -126,5 +126,5 @@ const getQueryParams = z.object({
 
 export const bodyParamSchema = { POST: postBodyParams, PATCH: patchBodyParams };
 export const queryParamSchema = { DELETE: deleteQueryParams };
-export type PostBodyParams = z.infer<typeof postBodyParams>;
+export type APIPatchCreateJobParams = z.infer<typeof postBodyParams>;
 export type PatchBodyParams = z.infer<typeof patchBodyParams>;
