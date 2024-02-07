@@ -5,10 +5,12 @@ import CreateProjectForm from "@/components/forms/create-project";
 import { api } from "@/trpc/server";
 
 export default async function Home() {
-  const res = await api.post.getSecretMessage.query({});
-
-  console.log(res);
   const session = await getServerSession(authOptions);
+  const test = await api.bid.getJobBidStats.query({
+    jobId: '08db6f02-2264-484c-acf0-38e19a182793'
+  })
+
+  console.log(test)
   return (
     <main>
       <div className="flex flex-row gap-4 pt-[60px]">

@@ -22,8 +22,8 @@ export const addresses = pgTable("addresses", {
   region: varchar("region", { length: 50 }),
   postalCode: varchar("postal_code", { length: 10 }).notNull(),
   country: varchar("country", { length: 60 }).notNull(),
-  createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export const bids = pgTable(

@@ -3,7 +3,6 @@ import { twMerge } from "tailwind-merge";
 import { isClerkAPIResponseError } from "@clerk/nextjs";
 import { toast } from "sonner";
 import * as z from "zod";
-import { init } from "@paralleldrive/cuid2";
 import { gte, inArray, lte } from "drizzle-orm";
 
 // Used for merging tailwind classes
@@ -106,3 +105,24 @@ function base64ImageSize(base64String: string) {
   return sizeInMb;
 }
 
+
+// function drizzleSchemaProperties(schema: any) {
+// // src/server/api/validations/utils/generateZodEnumFromTable.ts
+// import { z } from 'zod';
+// import { bids } from '../../db/schema/tables/content';
+
+// // Utility type to extract table column names as a union type
+// type TableKeys<T> = keyof T;
+
+// // Extracting keys from the bids table schema
+// type BidKeys = TableKeys<typeof bids.columns>;
+
+// // Utility function to convert the keys to a Zod enum
+// function generateZodEnumFromTable<T extends string>(keys: T[]): z.ZodEnum<[T, ...T[]]> {
+//   return z.enum(keys);
+// }
+
+// // Example usage: Dynamically creating a Zod enum schema for orderBy
+// const bidKeysArray: BidKeys[] = Object.keys(bids.columns) as BidKeys[];
+// const orderBySchema = generateZodEnumFromTable(bidKeysArray);
+// }
