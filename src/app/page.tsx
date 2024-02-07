@@ -6,11 +6,14 @@ import { api } from "@/trpc/server";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
-  const test = await api.bid.getJobBidStats.query({
-    jobId: '08db6f02-2264-484c-acf0-38e19a182793'
-  })
+  const test = await api.bid.createJobBid.mutate({
+    price: 100000,
+    note: "test",
+    jobId: "63f14ebc-ce35-4bb6-b657-616fbd4df863",
+    companyId: "1a50b6f5-cc08-4b0a-9e3f-d3f0b39a11dd",
+  });
 
-  console.log(test)
+  console.log(test);
   return (
     <main>
       <div className="flex flex-row gap-4 pt-[60px]">

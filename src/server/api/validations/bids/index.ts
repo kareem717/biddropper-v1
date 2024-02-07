@@ -79,8 +79,9 @@ export const getJobBidStatsInput = z
     message: "No additional properties are allowed in the object.",
   });
 
-export const getContractBidStatsInput = z
-  .object({
+export const getContractBidStatsInput = getJobBidStatsInput
+  .omit({ jobId: true })
+  .extend({
     contractId: z
       .string({
         required_error: "Contract identifier is required.",
@@ -89,72 +90,6 @@ export const getContractBidStatsInput = z
       .uuid({
         message: "Contract identifier must be a valid UUID.",
       }),
-    status: z
-      .array(z.enum(enumBidStatus.enumValues), {
-        required_error: "Status is required.",
-        invalid_type_error: "Status must be an array of valid bid statuses.",
-      })
-      .optional()
-      .default(["pending"]),
-    minPrice: z
-      .number({
-        required_error: "Minimum price is required.",
-        invalid_type_error: "Minimum price must be a number.",
-      })
-      .multipleOf(0.01, {
-        message: "Minimum price must have no more than two decimal places.",
-      })
-      .positive({
-        message: "Minimum price must be positive.",
-      })
-      .optional(),
-    maxPrice: z
-      .number({
-        required_error: "Maximum price is required.",
-        invalid_type_error: "Maximum price must be a number.",
-      })
-      .multipleOf(0.01, {
-        message: "Maximum price must have no more than two decimal places.",
-      })
-      .positive({
-        message: "Maximum price must be positive.",
-      })
-      .optional(),
-    limit: z
-      .number({
-        required_error: "Limit is required.",
-        invalid_type_error: "Limit must be a number.",
-      })
-      .max(50, {
-        message: "Limit cannot exceed 50.",
-      })
-      .optional()
-      .default(15),
-    minCreatedAt: z
-      .date({
-        required_error: "Minimum creation date is required.",
-        invalid_type_error: "Minimum creation date must be a valid date.",
-      })
-      .optional(),
-    maxCreatedAt: z
-      .date({
-        required_error: "Maximum creation date is required.",
-        invalid_type_error: "Maximum creation date must be a valid date.",
-      })
-      .optional(),
-    isActive: z
-      .array(z.boolean(), {
-        required_error: "Valid activity is required.",
-        invalid_type_error: "Valid activity must be an array of booleans.",
-      })
-      .max(2, {
-        message: "Valid activity array cannot contain more than 2 items.",
-      })
-      .optional()
-      .default([true]),
-  })
-  .strict({
-    message: "No additional properties are allowed in the object.",
   });
 
 export const getBidStatsOutput = z.object({
@@ -179,39 +114,65 @@ export const getBidStatsOutput = z.object({
   ),
 });
 
-// const postQueryParams = z.object({
-//   jobId: z
-//     .string({
-//       required_error: "Missing identifier.",
-//     })
-//     .uuid()
-//     .optional(),
-//   contractId: z
-//     .string({
-//       required_error: "Missing identifier.",
-//     })
-//     .uuid()
-//     .optional(),
-//   companyId: z
-//     .string({
-//       required_error: "Missing identifier.",
-//     })
-//     .uuid(),
-//   note: z
-//     .string()
-//     .max(300, {
-//       message: "Note is too long.",
-//     })
-//     .optional(),
-//   price: z.coerce
-//     .number({
-//       required_error: "Missing price.",
-//     })
-//     .nonnegative({
-//       message: "Invalid price.",
-//     })
-//     .transform((val) => String(val)),
-// });
+export const createJobBidInput = z
+  .object({
+    jobId: z
+      .string({
+        required_error: "Job ID is required but missing.",
+        invalid_type_error: "Job ID must be a string.",
+      })
+      .uuid({
+        message: "Job ID must be a valid UUID.",
+      }),
+    companyId: z
+      .string({
+        required_error: "Company ID is required.",
+        invalid_type_error: "Company ID must be a string.",
+      })
+      .uuid({
+        message: "Company ID must be a valid UUID.",
+      }),
+    note: z
+      .string({
+        required_error: "Note is required but missing.",
+        invalid_type_error: "Note must be a string.",
+      })
+      .max(300, {
+        message: "Note exceeds the maximum length of 300 characters.",
+      })
+      .optional(),
+    price: z
+      .number({
+        required_error: "Price is required.",
+        invalid_type_error: "Price must be a number.",
+      })
+      .multipleOf(0.01, {
+        message: "Price must have no more than two decimal places.",
+      })
+      .max(12000000.0, {
+        message: "Price cannot exceed $12,000,000.00.",
+      })
+      .positive({
+        message: "Price must be a positive number.",
+      })
+      .transform((val) => String(val)),
+  })
+  .strict({
+    message: "No additional properties are allowed in the object.",
+  });
+
+export const createContractBidInput = createJobBidInput
+  .omit({ jobId: true })
+  .extend({
+    contractId: z
+      .string({
+        required_error: "Contract ID is required.",
+        invalid_type_error: "Contract ID must be a string.",
+      })
+      .uuid({
+        message: "Contract ID must be a valid UUID.",
+      }),
+  });
 
 // const patchQueryParams = postQueryParams
 //   .partial()

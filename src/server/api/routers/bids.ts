@@ -1,13 +1,9 @@
-import { z } from "zod";
-
 import {
   createTRPCRouter,
-  publicProcedure,
   authenticatedProcedure,
   companyOwnerProcedure,
 } from "@/server/api/trpc";
-import { createFilterConditions } from "@/lib/utils";
-import { jobs, bids } from "@/server/db/schema/tables/content";
+import { jobs, bids, contracts } from "@/server/db/schema/tables/content";
 import {
   bidsRelationships,
   jobsRelationships,
@@ -18,7 +14,10 @@ import {
   getJobBidStatsInput,
   getBidStatsOutput,
   getContractBidStatsInput,
+  createJobBidInput,
+  createContractBidInput,
 } from "../validations/bids";
+import { v4 as uuidv4 } from "uuid";
 
 export const bidRouter = createTRPCRouter({
   getJobBidStats: authenticatedProcedure
@@ -209,5 +208,193 @@ export const bidRouter = createTRPCRouter({
         stats,
         dailyAverages,
       } as any;
+    }),
+  createJobBid: companyOwnerProcedure
+    .input(createJobBidInput)
+    .mutation(async ({ ctx, input: data }) => {
+      const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
+        (company) => company.id,
+      );
+
+      const newId = uuidv4();
+
+      await ctx.db.transaction(async (tx) => {
+        // Make sure the job or contract exists, is active and the user has not already bid on it with the same company
+        const targetExists = await tx
+          .select()
+          .from(jobs)
+          .where(and(eq(jobs.id, data.jobId), eq(jobs.isActive, true)))
+          .limit(1);
+
+        if (!targetExists.length) {
+          throw new TRPCError({
+            message: "Listing does not exist or is not active.",
+            code: "BAD_REQUEST",
+          });
+        }
+
+        const userHasBid = await tx
+          .select({ bidId: bids.id })
+          .from(bidsRelationships)
+          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .where(
+            and(
+              eq(bidsRelationships.jobId, data.jobId),
+              eq(bids.companyId, data.companyId),
+              eq(bids.isActive, true),
+            ),
+          )
+          .limit(1);
+
+        if (userHasBid.length) {
+          throw new TRPCError({
+            message: "Company has already bid on this listing.",
+            code: "BAD_REQUEST",
+          });
+        }
+
+        // Check if the user is trying to bid on their own company's job or contract
+        const usersCompaniesOwnPosting = await tx
+          .select()
+          .from(jobsRelationships)
+          .where(
+            and(
+              eq(jobsRelationships.jobId, data.jobId),
+              inArray(jobsRelationships.companyId, ownedCompanyIds),
+            ),
+          )
+          .limit(1);
+
+        console.log(usersCompaniesOwnPosting);
+
+        if (usersCompaniesOwnPosting.length) {
+          throw new TRPCError({
+            message: "Cannot bid on your own company's listing.",
+            code: "BAD_REQUEST",
+          });
+        }
+
+            
+
+        await tx
+          .insert(bids)
+          .values({
+            id: newId,
+            price: data.price,
+            companyId: data.companyId,
+            note: data.note,
+          })
+          .returning({ insertedId: bids.id });
+
+        await tx.insert(bidsRelationships).values({
+          bidId: newId,
+          jobId: data.jobId 
+        });
+      });
+    }),
+  createContractBid: companyOwnerProcedure
+    .input(createContractBidInput)
+    .mutation(async ({ ctx, input: data }) => {
+      const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
+        (company) => company.id,
+      );
+
+      const newId = uuidv4();
+
+      await ctx.db.transaction(async (tx) => {
+        let id = data.contractId;
+
+        // Make sure the job or contract exists, is active and the user has not already bid on it with the same company
+        const targetExists = await tx
+          .select()
+          .from( contracts)
+          .where(
+            and(
+              eq(contracts.id, id),
+              eq(contracts.isActive, true),
+            ),
+          )
+          .limit(1);
+
+        if (!targetExists.length) {
+          throw new TRPCError({
+            message: "Listing does not exist or is not active.",
+            code: "BAD_REQUEST",
+          });
+        }
+
+        const userHasBid = await tx
+          .select({ bidId: bids.id })
+          .from(bidsRelationships)
+          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .where(
+            and(
+              eq(
+                  bidsRelationships.contractId,
+                id,
+              ),
+              eq(bids.companyId, data.companyId),
+              eq(bids.isActive, true),
+            ),
+          )
+          .limit(1);
+
+        if (userHasBid.length) {
+          throw new TRPCError({
+            message: "Company has already bid on this listing.",
+            code: "BAD_REQUEST",
+          });
+        }
+
+        // Check if the user is trying to bid on their own company's job or contract
+        const usersCompaniesOwnPosting = await tx
+          .select()
+          .from(contracts)
+          .where(
+            and(
+              eq(contracts.id, id),
+              inArray(contracts.companyId, ownedCompanyIds),
+            ),
+          )
+          .limit(1);
+
+
+        if (usersCompaniesOwnPosting.length) {
+          throw new TRPCError({
+            message: "Cannot bid on your own company's listing.",
+            code: "BAD_REQUEST",
+          });
+        }
+
+        // Make sure the bid price is higher than the minimum bid price
+        if (data.contractId) {
+          const minPrice = await tx
+            .select({ price: contracts.price })
+            .from(contracts)
+            .where(eq(contracts.id, data.contractId))
+            .limit(1);
+
+          if (minPrice[0] && Number(minPrice[0].price) > Number(data.price)) {
+            throw new TRPCError({
+              message: "Bid price is lower than the minimum bid price.",
+              code: "BAD_REQUEST",
+            });
+          }
+        }
+
+        await tx
+          .insert(bids)
+          .values({
+            id: newId,
+            price: data.price,
+            companyId: data.companyId,
+            note: data.note,
+          })
+
+        await tx.insert(bidsRelationships).values({
+          bidId: newId,
+          contractId: data.contractId,
+        });
+      });
     }),
 });
