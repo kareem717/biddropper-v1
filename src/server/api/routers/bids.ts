@@ -8,7 +8,19 @@ import {
   bidsRelationships,
   jobsRelationships,
 } from "@/server/db/schema/tables/relations/content";
-import { eq, sql, avg, and, max, min, gte, inArray, lte } from "drizzle-orm";
+import {
+  eq,
+  sql,
+  avg,
+  and,
+  max,
+  min,
+  gte,
+  inArray,
+  lte,
+  asc,
+  desc,
+} from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import {
   getJobBidStatsInput,
@@ -16,9 +28,14 @@ import {
   getContractBidStatsInput,
   createJobBidInput,
   createContractBidInput,
+  updateBidInput,
+  deleteBidInput,
+  getUserBidsInput,
+  getCompanyBidsInput,
 } from "../validations/bids";
 import { v4 as uuidv4 } from "uuid";
-
+import { createSelectSchema } from "drizzle-zod";
+import { createFilterConditions } from "@/lib/utils";
 export const bidRouter = createTRPCRouter({
   getJobBidStats: authenticatedProcedure
     .input(getJobBidStatsInput)
@@ -211,6 +228,7 @@ export const bidRouter = createTRPCRouter({
     }),
   createJobBid: companyOwnerProcedure
     .input(createJobBidInput)
+    .output(createSelectSchema(bids))
     .mutation(async ({ ctx, input: data }) => {
       const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
         (company) => company.id,
@@ -218,7 +236,7 @@ export const bidRouter = createTRPCRouter({
 
       const newId = uuidv4();
 
-      await ctx.db.transaction(async (tx) => {
+      const res = await ctx.db.transaction(async (tx) => {
         // Make sure the job or contract exists, is active and the user has not already bid on it with the same company
         const targetExists = await tx
           .select()
@@ -274,26 +292,52 @@ export const bidRouter = createTRPCRouter({
           });
         }
 
-            
+        try {
+          const insertedBid = await tx
+            .insert(bids)
+            .values({
+              id: newId,
+              price: data.price,
+              companyId: data.companyId,
+              note: data.note,
+            })
+            .returning({
+              id: bids.id,
+              price: bids.price,
+              createdAt: bids.createdAt,
+              updatedAt: bids.updatedAt,
+              companyId: bids.companyId,
+              note: bids.note,
+              isActive: bids.isActive,
+              status: bids.status,
+            });
 
-        await tx
-          .insert(bids)
-          .values({
-            id: newId,
-            price: data.price,
-            companyId: data.companyId,
-            note: data.note,
-          })
-          .returning({ insertedId: bids.id });
+          await tx.insert(bidsRelationships).values({
+            bidId: newId,
+            jobId: data.jobId,
+          });
 
-        await tx.insert(bidsRelationships).values({
-          bidId: newId,
-          jobId: data.jobId 
-        });
+          if (!insertedBid[0]) {
+            throw new TRPCError({
+              message: "Error creating bid.",
+              code: "INTERNAL_SERVER_ERROR",
+            });
+          }
+
+          return insertedBid[0];
+        } catch (err) {
+          throw new TRPCError({
+            message: "Error creating bid.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
       });
+
+      return res;
     }),
   createContractBid: companyOwnerProcedure
     .input(createContractBidInput)
+    .output(createSelectSchema(bids))
     .mutation(async ({ ctx, input: data }) => {
       const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
         (company) => company.id,
@@ -301,19 +345,14 @@ export const bidRouter = createTRPCRouter({
 
       const newId = uuidv4();
 
-      await ctx.db.transaction(async (tx) => {
+      const res = await ctx.db.transaction(async (tx) => {
         let id = data.contractId;
 
         // Make sure the job or contract exists, is active and the user has not already bid on it with the same company
         const targetExists = await tx
           .select()
-          .from( contracts)
-          .where(
-            and(
-              eq(contracts.id, id),
-              eq(contracts.isActive, true),
-            ),
-          )
+          .from(contracts)
+          .where(and(eq(contracts.id, id), eq(contracts.isActive, true)))
           .limit(1);
 
         if (!targetExists.length) {
@@ -329,10 +368,7 @@ export const bidRouter = createTRPCRouter({
           .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
           .where(
             and(
-              eq(
-                  bidsRelationships.contractId,
-                id,
-              ),
+              eq(bidsRelationships.contractId, id),
               eq(bids.companyId, data.companyId),
               eq(bids.isActive, true),
             ),
@@ -358,7 +394,6 @@ export const bidRouter = createTRPCRouter({
           )
           .limit(1);
 
-
         if (usersCompaniesOwnPosting.length) {
           throw new TRPCError({
             message: "Cannot bid on your own company's listing.",
@@ -382,19 +417,550 @@ export const bidRouter = createTRPCRouter({
           }
         }
 
-        await tx
-          .insert(bids)
-          .values({
-            id: newId,
-            price: data.price,
-            companyId: data.companyId,
-            note: data.note,
-          })
+        try {
+          const insertedBid = await tx
+            .insert(bids)
+            .values({
+              id: newId,
+              price: data.price,
+              companyId: data.companyId,
+              note: data.note,
+            })
+            .returning({
+              id: bids.id,
+              price: bids.price,
+              createdAt: bids.createdAt,
+              updatedAt: bids.updatedAt,
+              companyId: bids.companyId,
+              note: bids.note,
+              isActive: bids.isActive,
+              status: bids.status,
+            });
 
-        await tx.insert(bidsRelationships).values({
-          bidId: newId,
-          contractId: data.contractId,
-        });
+          await tx.insert(bidsRelationships).values({
+            bidId: newId,
+            contractId: data.contractId,
+          });
+
+          if (!insertedBid[0]) {
+            throw new TRPCError({
+              message: "Error creating bid.",
+              code: "INTERNAL_SERVER_ERROR",
+            });
+          }
+
+          return insertedBid[0];
+        } catch (err) {
+          throw new TRPCError({
+            message: "Error creating bid.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
       });
+
+      return res;
+    }),
+  updateBid: companyOwnerProcedure
+    .input(updateBidInput)
+    .output(createSelectSchema(bids))
+    .mutation(async ({ ctx, input: data }) => {
+      const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
+        (company) => company.id,
+      );
+
+      const res = await ctx.db.transaction(async (tx) => {
+        const [bidExists] = await tx
+          .select({
+            id: bids.id,
+            companyId: bids.companyId,
+            status: bids.status,
+            isActive: bids.isActive,
+            jobId: bidsRelationships.jobId,
+            contractId: bidsRelationships.contractId,
+          })
+          .from(bids)
+          .innerJoin(bidsRelationships, eq(bids.id, bidsRelationships.bidId))
+          .where(eq(bids.id, data.bidId))
+          .limit(1);
+
+        if (!bidExists)
+          throw new TRPCError({
+            message: "Bid does not exist.",
+            code: "NOT_FOUND",
+          });
+
+        if (!ownedCompanyIds.includes(bidExists.companyId))
+          throw new TRPCError({
+            message: "Company does not own this bid.",
+            code: "UNAUTHORIZED",
+          });
+
+        if (
+          // Do not allow update if user is attempting to accept/decline their own outgoing bid
+          data.status === "accepted" ||
+          data.status === "declined" ||
+          // Do not allow update if bid is already accepted or declined
+          bidExists.status === "accepted" ||
+          bidExists.status === "declined"
+        ) {
+          throw new TRPCError({
+            message: "Cannot accept or decline this bid.",
+            code: "UNAUTHORIZED",
+          });
+        }
+
+        // Determine the target ID
+        const targetId = bidExists.jobId || bidExists.contractId;
+        if (!targetId) {
+          throw new TRPCError({
+            message: "Fetched bid has malformed data.",
+            code: "UNPROCESSABLE_CONTENT",
+          });
+        }
+
+        // Define the condition to target the correct job or contract
+        const targetCondition: any = bidExists.jobId
+          ? eq(jobsRelationships.jobId, targetId)
+          : eq(jobsRelationships.contractId, targetId);
+
+        const [targetIsActive] = await tx
+          .select({
+            count: sql`count(*)`,
+          })
+          .from(bidExists.jobId ? jobs : contracts)
+          .innerJoin(jobsRelationships, targetCondition)
+          .where(
+            and(eq(bidExists.jobId ? jobs.isActive : contracts.isActive, true)),
+          )
+          .limit(1);
+
+        if (!targetIsActive)
+          throw new TRPCError({
+            message:
+              "The listing this bid was placed on does not exist or is not active.",
+            code: "BAD_REQUEST",
+          });
+
+        const { price, status, bidId, note } = data;
+
+        const updatedBid = await tx
+          .update(bids)
+          .set({
+            price,
+            status,
+            note,
+            isActive: status && status !== "pending" ? false : true,
+          })
+          .where(eq(bids.id, bidId))
+          .returning({
+            id: bids.id,
+            price: bids.price,
+            createdAt: bids.createdAt,
+            updatedAt: bids.updatedAt,
+            companyId: bids.companyId,
+            note: bids.note,
+            isActive: bids.isActive,
+            status: bids.status,
+          });
+
+        if (!updatedBid?.[0]) {
+          throw new TRPCError({
+            message: "Error updating bid.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+
+        return updatedBid[0];
+      });
+
+      return res;
+    }),
+  deleteBid: companyOwnerProcedure
+    .input(deleteBidInput)
+    .output(createSelectSchema(bids))
+    .mutation(async ({ ctx, input: data }) => {
+      const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
+        (company) => company.id,
+      );
+
+      const deletedBid = await ctx.db.transaction(async (tx) => {
+        const [bidToDelete] = await tx
+          .select()
+          .from(bids)
+          .where(eq(bids.id, data.bidId))
+          .limit(1);
+
+        if (!bidToDelete)
+          throw new TRPCError({
+            message: "Bid does not exist.",
+            code: "NOT_FOUND",
+          });
+
+        if (!ownedCompanyIds.includes(bidToDelete.companyId)) {
+          throw new TRPCError({
+            message: "Company does not own this bid.",
+            code: "UNAUTHORIZED",
+          });
+        }
+
+        const deletedBid = await tx
+          .delete(bids)
+          .where(eq(bids.id, bidToDelete.id))
+          .returning({
+            id: bids.id,
+            price: bids.price,
+            createdAt: bids.createdAt,
+            updatedAt: bids.updatedAt,
+            companyId: bids.companyId,
+            note: bids.note,
+            isActive: bids.isActive,
+            status: bids.status,
+          });
+
+        if (!deletedBid?.[0]) {
+          throw new TRPCError({
+            message: "Error deleting bid.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+
+        return deletedBid[0];
+      });
+
+      return deletedBid;
+    }),
+  getUserBids: authenticatedProcedure
+    .input(getUserBidsInput)
+    .query(async ({ ctx, input }) => {
+      const { orderBy, cursor, limit, ...data } = input;
+
+      // Create query conditions based on filters from the query params
+      const filterConditions = () => {
+        const conditions = [
+          inArray(bids.status, data.status),
+          inArray(bids.isActive, data.isActive),
+        ];
+
+        const addCondition = (
+          conditionFn: Function,
+          field: any,
+          value: any,
+        ) => {
+          if (value) {
+            conditions.push(conditionFn(field, value));
+          }
+        };
+
+        addCondition(gte, bids.price, data.minPrice);
+        addCondition(lte, bids.price, data.maxPrice);
+        addCondition(gte, bids.createdAt, data.minCreatedAt);
+        addCondition(lte, bids.createdAt, data.maxCreatedAt);
+
+        return conditions;
+      };
+
+      try {
+        const res = await ctx.db
+          .select({
+            id: bids.id,
+            price: bids.price,
+            createdAt: bids.createdAt,
+            companyId: bids.companyId,
+            isActive: bids.isActive,
+            status: bids.status,
+            note: bids.note,
+            job: {
+              id: jobs.id,
+              title: jobs.title,
+            },
+          })
+          .from(bidsRelationships)
+          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .where(
+            and(
+              ...filterConditions(),
+              ...cursor.map(({ columnName, value, order }) =>
+                order === "gte"
+                  ? // @ts-expect-error
+                    gte(bids[columnName], value)
+                  : // @ts-expect-error
+                    lte(bids[columnName], value),
+              ),
+            ),
+          )
+          .limit(limit + 1)
+          .orderBy(
+            ...orderBy.map(({ columnName, order }) =>
+              order === "asc"
+                ? // @ts-expect-error
+                  asc(bids[columnName])
+                : // @ts-expect-error
+                  desc(bids[columnName]),
+            ),
+          )
+          .innerJoin(jobs, eq(jobs.id, bidsRelationships.jobId));
+
+        return {
+          // Determine the cursor based on the response and input parameters
+          cursor:
+            // Check if the response exists and has more items than the specified limit
+            res && res.length > limit
+              ? // If there's an existing cursor, map over it to create the new cursor
+                cursor.length
+                ? cursor.map(({ columnName, value, order }) => ({
+                    columnName,
+                    // Depending on the order, select the appropriate value from the response
+                    // to use as the new cursor value
+                    value:
+                      // If the order is 'lte', use the last item's value, otherwise use the first item's value
+                      (
+                        res[order === "lte" ? res.length - 1 : 0] as {
+                          [key: string]: any;
+                        }
+                      )[columnName],
+                  }))
+                : // If there's no existing cursor but there are orderBy conditions,
+                  // map over orderBy to create the new cursor
+                  orderBy.length
+                  ? orderBy.map(({ columnName, order }) => ({
+                      columnName,
+                      // Depending on the order, select the appropriate value from the response
+                      // to use as the new cursor value
+                      value:
+                        // If the order is 'asc', use the last item's value, otherwise use the first item's value
+                        (
+                          res[order === "asc" ? res.length - 1 : 0] as {
+                            [key: string]: any;
+                          }
+                        )[columnName],
+                      // Depending on the order, set the new cursor order to 'gte' or 'lte'
+                      order: order === "asc" ? "gte" : "lte",
+                    }))
+                  : // If there are no cursor or orderBy conditions, default to using the last item's ID
+                    {
+                      columnName: "id",
+                      value: res[res.length - 1]?.id,
+                      order: "lte",
+                    }
+              : // If the response does not exceed the limit, there's no need for a cursor
+                null,
+          // Return the data limited by the specified limit
+          data: res.slice(0, limit),
+        };
+      } catch (err) {
+        throw new TRPCError({
+          message: "Error fetching data.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+    }),
+
+  getCompanyBids: authenticatedProcedure
+    .input(getCompanyBidsInput)
+    .query(async ({ ctx, input }) => {
+      const { orderBy, cursor, limit, ...data } = input;
+
+      // Create query conditions based on filters from the query params
+      const filterConditions = () => {
+        const conditions = [
+          inArray(bids.status, data.status),
+          inArray(bids.isActive, data.isActive),
+        ];
+
+        const addCondition = (
+          conditionFn: Function,
+          field: any,
+          value: any,
+        ) => {
+          if (value) {
+            conditions.push(conditionFn(field, value));
+          }
+        };
+
+        addCondition(gte, bids.price, data.minPrice);
+        addCondition(lte, bids.price, data.maxPrice);
+        addCondition(gte, bids.createdAt, data.minCreatedAt);
+        addCondition(lte, bids.createdAt, data.maxCreatedAt);
+
+        if (data.outgoing) {
+          conditions.push(eq(bids.companyId, data.id));
+        } else {
+          // All jobs and contracts ownded by the company
+          try {
+            const jobsOwnedByCompany = ctx.db
+              .select({ jobId: jobsRelationships.jobId })
+              .from(jobsRelationships)
+              .where(eq(jobsRelationships.companyId, data.id));
+
+            const contractsOwnedByCompany = ctx.db
+              .select({ contractId: contracts.id })
+              .from(contracts)
+              .where(eq(contracts.companyId, data.id));
+            conditions.push(
+              //@ts-ignore
+              or(
+                inArray(bidsRelationships.jobId, jobsOwnedByCompany),
+                inArray(bidsRelationships.contractId, contractsOwnedByCompany),
+              ),
+            );
+          } catch (err) {
+            throw new TRPCError({
+              message: "Error fetching related listing data.",
+              code: "INTERNAL_SERVER_ERROR",
+            });
+          }
+        }
+
+        return conditions;
+      };
+
+      try {
+        let selectObject: { [key: string]: any } = {
+          id: bids.id,
+          price: bids.price,
+          createdAt: bids.createdAt,
+          note: bids.note,
+          companyId: bids.companyId,
+          isActive: bids.isActive,
+          status: bids.status,
+          job: {
+            id: jobs.id,
+            title: jobs.title,
+          },
+          contract: {
+            id: contracts.id,
+            title: contracts.title,
+          },
+        };
+
+        let baseQuery = ctx.db
+          .select(selectObject)
+          .from(bidsRelationships)
+          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .where(
+            and(
+              ...filterConditions(),
+              ...cursor.map(({ columnName, value, order }) =>
+                order === "gte"
+                  ? // @ts-expect-error
+                    gte(bids[columnName], value)
+                  : // @ts-expect-error
+                    lte(bids[columnName], value),
+              ),
+            ),
+          )
+          .limit(limit + 1)
+          .orderBy(
+            ...orderBy.map(({ columnName, order }) =>
+              order === "asc"
+                ? // @ts-expect-error
+                  asc(bids[columnName])
+                : // @ts-expect-error
+                  desc(bids[columnName]),
+            ),
+          )
+          .$dynamic();
+
+        let query;
+
+        // // If bidTarget is not contracts, add job to select object
+        // if (data.targetType !== "contracts") {
+        //   selectObject["job"] = { id: jobs.id, title: jobs.title };
+        // }
+
+        // // If bidTarget is not jobs, add contract to select object
+        // if (params.data.bidTarget !== "jobs") {
+        //   selectObject["contract"] = { id: contracts.id, title: contracts.title };
+        // }
+        if (
+          data.targetType.includes("jobs") &&
+          !data.targetType.includes("contracts")
+        ) {
+          selectObject["job"] = { id: jobs.id, title: jobs.title };
+          // If we're only looking for job bids, inner join jobs
+          query = baseQuery.innerJoin(
+            jobs,
+            eq(jobs.id, bidsRelationships.jobId),
+          );
+        } else if (
+          !data.targetType.includes("jobs") &&
+          data.targetType.includes("contracts")
+        ) {
+          // If we're only looking for contract bids, inner join contracts
+          query = baseQuery.innerJoin(
+            contracts,
+            eq(contracts.id, bidsRelationships.contractId),
+          );
+        } else {
+          selectObject["contract"] = {
+            id: contracts.id,
+            title: contracts.title,
+          };
+          selectObject["job"] = { id: jobs.id, title: jobs.title };
+
+          // If we're looking for both contract and job bids, left join both
+          query = baseQuery
+            .leftJoin(jobs, eq(jobs.id, bidsRelationships.jobId))
+            .leftJoin(
+              contracts,
+              eq(contracts.id, bidsRelationships.contractId),
+            );
+        }
+
+        const res = await query;
+
+        return {
+          // Determine the cursor based on the response and input parameters
+          cursor:
+            // Check if the response exists and has more items than the specified limit
+            res && res.length > limit
+              ? // If there's an existing cursor, map over it to create the new cursor
+                cursor.length
+                ? cursor.map(({ columnName, value, order }) => ({
+                    columnName,
+                    // Depending on the order, select the appropriate value from the response
+                    // to use as the new cursor value
+                    value:
+                      // If the order is 'lte', use the last item's value, otherwise use the first item's value
+                      (
+                        res[order === "lte" ? res.length - 1 : 0] as {
+                          [key: string]: any;
+                        }
+                      )[columnName],
+                  }))
+                : // If there's no existing cursor but there are orderBy conditions,
+                  // map over orderBy to create the new cursor
+                  orderBy.length
+                  ? orderBy.map(({ columnName, order }) => ({
+                      columnName,
+                      // Depending on the order, select the appropriate value from the response
+                      // to use as the new cursor value
+                      value:
+                        // If the order is 'asc', use the last item's value, otherwise use the first item's value
+                        (
+                          res[order === "asc" ? res.length - 1 : 0] as {
+                            [key: string]: any;
+                          }
+                        )[columnName],
+                      // Depending on the order, set the new cursor order to 'gte' or 'lte'
+                      order: order === "asc" ? "gte" : "lte",
+                    }))
+                  : // If there are no cursor or orderBy conditions, default to using the last item's ID
+                    {
+                      columnName: "id",
+                      value: res[res.length - 1]?.id,
+                      order: "lte",
+                    }
+              : // If the response does not exceed the limit, there's no need for a cursor
+                null,
+          // Return the data limited by the specified limit
+          data: res.slice(0, limit),
+        };
+      } catch (err) {
+        throw new TRPCError({
+          message: "Error fetching data.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
     }),
 });
