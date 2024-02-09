@@ -8,7 +8,7 @@ import {
 } from "@/server/db/schema/tables/relations/content";
 import { queryParamSchema } from "@/lib/validations/api/(content)/bids/user/request";
 import { createFilterConditions } from "@/lib/utils";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/server/auth";
 import { getServerSession } from "next-auth/next";
 
 export async function GET(req: Request) {

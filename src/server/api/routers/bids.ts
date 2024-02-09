@@ -20,6 +20,8 @@ import {
   lte,
   asc,
   desc,
+  or,
+  ne,
 } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import {
@@ -35,7 +37,7 @@ import {
 } from "../validations/bids";
 import { v4 as uuidv4 } from "uuid";
 import { createSelectSchema } from "drizzle-zod";
-import { createFilterConditions } from "@/lib/utils";
+
 export const bidRouter = createTRPCRouter({
   getJobBidStats: authenticatedProcedure
     .input(getJobBidStatsInput)
@@ -56,7 +58,7 @@ export const bidRouter = createTRPCRouter({
           if (!job) {
             throw new TRPCError({
               message: "Not authenticated to view this job data.",
-              code: "UNAUTHORIZED",
+              code: "FORBIDDEN",
             });
           }
         } catch (err) {
@@ -460,7 +462,7 @@ export const bidRouter = createTRPCRouter({
 
       return res;
     }),
-  updateBid: companyOwnerProcedure
+  updateBidAsSender: companyOwnerProcedure
     .input(updateBidInput)
     .output(createSelectSchema(bids))
     .mutation(async ({ ctx, input: data }) => {
@@ -492,7 +494,7 @@ export const bidRouter = createTRPCRouter({
         if (!ownedCompanyIds.includes(bidExists.companyId))
           throw new TRPCError({
             message: "Company does not own this bid.",
-            code: "UNAUTHORIZED",
+            code: "FORBIDDEN",
           });
 
         if (
@@ -505,7 +507,7 @@ export const bidRouter = createTRPCRouter({
         ) {
           throw new TRPCError({
             message: "Cannot accept or decline this bid.",
-            code: "UNAUTHORIZED",
+            code: "FORBIDDEN",
           });
         }
 
@@ -575,6 +577,256 @@ export const bidRouter = createTRPCRouter({
 
       return res;
     }),
+  acceptOrDeclineBid: authenticatedProcedure
+    .input(updateBidInput)
+    .mutation(async ({ ctx, input: data }) => {
+      // Retrieve the list of companies owned by the user
+      const usersOwnedCompanies = ctx.session.user.ownedCompanies;
+
+      // Execute database transaction
+      const res = await ctx.db.transaction(async (tx) => {
+        let bidToUpdate;
+        try {
+          // Fetch the bid to update based on the provided bid ID
+          [bidToUpdate] = await tx
+            .select({
+              id: bids.id,
+              status: bids.status,
+              isActive: bids.isActive,
+              jobId: bidsRelationships.jobId,
+              contractId: bidsRelationships.contractId,
+            })
+            .from(bids)
+            .innerJoin(bidsRelationships, eq(bids.id, bidsRelationships.bidId))
+            .where(eq(bids.id, data.bidId))
+            .limit(1);
+        } catch (err) {
+          // Handle error if bid fetching fails
+          throw new TRPCError({
+            message: "Error whilst fetching bid.",
+            code: "NOT_FOUND",
+          });
+        }
+
+        // Validate if the bid exists
+        if (!bidToUpdate)
+          throw new TRPCError({
+            message: "Bid does not exist.",
+            code: "NOT_FOUND",
+          });
+
+        // Validate if the bid status is either not 'accepted' or 'declined' and if it is active
+        if (
+          (data.status !== "accepted" && data.status !== "declined") ||
+          bidToUpdate.isActive !== true
+        ) {
+          throw new TRPCError({
+            message:
+              "Bid is not able to be updated, as it has already been accepted or declined.",
+            code: "BAD_REQUEST",
+          });
+        }
+
+        // Check if the bid is related to a contract
+        if (bidToUpdate.contractId) {
+          // Validate if the user owns any companies
+          if (!usersOwnedCompanies.length) {
+            throw new TRPCError({
+              message: "Unauthorized to accept or decline this bid.",
+              code: "FORBIDDEN",
+            });
+          }
+
+          let contract;
+          try {
+            // Fetch the related contract based on the contract ID
+            [contract] = await tx
+              .select()
+              .from(contracts)
+              .where(
+                and(
+                  eq(contracts.id, bidToUpdate.contractId),
+                  inArray(
+                    contracts.companyId,
+                    usersOwnedCompanies.map((company) => company.id),
+                  ),
+                ),
+              )
+              .limit(1);
+          } catch (err) {
+            // Handle error if contract fetching fails
+            throw new TRPCError({
+              message: "Error whilst fetching bid's related contract data.",
+              code: "NOT_FOUND",
+            });
+          }
+
+          // Validate if the contract exists and if the user is authorized
+          if (!contract) {
+            throw new TRPCError({
+              message: "Unauthorized to accept or decline this bid.",
+              code: "FORBIDDEN",
+            });
+          }
+
+          // Check if the contract is active
+          if (!contract.isActive) {
+            throw new TRPCError({
+              message: "Contract is not active.",
+              code: "BAD_REQUEST",
+            });
+          }
+        } else if (bidToUpdate.jobId) {
+          // Fetch related job data if the bid is related to a job
+          const [jobRel] = await tx
+            .select()
+            .from(jobsRelationships)
+            .where(eq(jobsRelationships.jobId, bidToUpdate.jobId))
+            .limit(1);
+
+          // Handle error if job data fetching fails
+          if (!jobRel) {
+            throw new TRPCError({
+              message: "Error whilst fetching bids related job data.",
+              code: "NOT_FOUND",
+            });
+          }
+
+          const { userId, companyId } = jobRel;
+
+          // Validate if the user is authorized to accept or decline the bid
+          if (
+            (companyId &&
+              !usersOwnedCompanies
+                .map((company) => company.id)
+                .includes(companyId)) ||
+            (userId && userId !== ctx.session.user.id)
+          ) {
+            throw new TRPCError({
+              message: "Unauthorized to accept or decline this bid.",
+              code: "FORBIDDEN",
+            });
+          }
+        } else {
+          // Handle malformed bid data
+          throw new TRPCError({
+            message: "Fetched bid has malformed data.",
+            code: "UNPROCESSABLE_CONTENT",
+          });
+        }
+
+        const { jobId, contractId } = bidToUpdate;
+
+        // Update the bid status and activity based on the input data
+        const [updatedBid] = await tx
+          .update(bids)
+          .set({
+            status: data.status,
+            isActive: false,
+          })
+          .where(eq(bids.id, data.bidId))
+          .returning({
+            id: bids.id,
+            price: bids.price,
+            createdAt: bids.createdAt,
+            updatedAt: bids.updatedAt,
+            companyId: bids.companyId,
+            note: bids.note,
+            isActive: bids.isActive,
+            status: bids.status,
+          });
+
+        // Handle error if bid update fails
+        if (!updatedBid) {
+          throw new TRPCError({
+            message: "Error updating bid.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+
+        // Additional logic to handle accepted bids
+        if (data.status === "accepted") {
+          const targetId = contractId || jobId;
+          const targetTable = contractId ? contracts : jobs;
+          const targetField = contractId ? contracts.id : jobs.id;
+          const targetRelationships = contractId
+            ? bidsRelationships.contractId
+            : bidsRelationships.jobId;
+
+          // Validate target data integrity
+          if (
+            !targetId ||
+            !targetTable ||
+            !targetField ||
+            !targetRelationships
+          ) {
+            throw new TRPCError({
+              message: "Fetched bid has malformed data.",
+              code: "UNPROCESSABLE_CONTENT",
+            });
+          }
+
+          // Decline all other bids related to the target
+          await tx
+            .update(bids)
+            .set({ status: "declined", isActive: false })
+            .where(
+              inArray(
+                bids.id,
+                tx
+                  .select({ id: bids.id })
+                  .from(bids)
+                  .innerJoin(
+                    bidsRelationships,
+                    eq(bids.id, bidsRelationships.bidId),
+                  )
+                  .where(
+                    and(
+                      eq(targetRelationships, targetId),
+                      ne(bids.id, data.bidId),
+                    ),
+                  ),
+              ),
+            );
+
+          // Mark the accepted bid as the winner
+          await tx
+            .update(bidsRelationships)
+            .set({ isWinner: true })
+            .where(and(eq(bidsRelationships.bidId, data.bidId)));
+
+          // Set the target (job or contract) to inactive and update the winning bid ID
+          await tx
+            .update(targetTable)
+            .set({ isActive: false })
+            .where(eq(targetField, targetId));
+
+          // If the target is a contract, update related jobs to inactive
+          if (contractId) {
+            await tx
+              .update(jobs)
+              .set({ isActive: false })
+              .where(
+                inArray(
+                  jobs.id,
+                  tx
+                    .select({ id: jobs.id })
+                    .from(jobs)
+                    .innerJoin(
+                      jobsRelationships,
+                      eq(jobs.id, jobsRelationships.jobId),
+                    )
+                    .where(and(eq(jobsRelationships.contractId, contractId))),
+                ),
+              );
+          }
+        }
+
+        return updatedBid;
+      });
+
+      return res;
+    }),
   deleteBid: companyOwnerProcedure
     .input(deleteBidInput)
     .output(createSelectSchema(bids))
@@ -599,7 +851,7 @@ export const bidRouter = createTRPCRouter({
         if (!ownedCompanyIds.includes(bidToDelete.companyId)) {
           throw new TRPCError({
             message: "Company does not own this bid.",
-            code: "UNAUTHORIZED",
+            code: "FORBIDDEN",
           });
         }
 
@@ -754,7 +1006,6 @@ export const bidRouter = createTRPCRouter({
         });
       }
     }),
-
   getCompanyBids: authenticatedProcedure
     .input(getCompanyBidsInput)
     .query(async ({ ctx, input }) => {

@@ -57,6 +57,7 @@ import useImageDropzone from "@/hooks/use-image-dropzone";
 import { useCreateJob } from "@/hooks/api/jobs/use-create-job";
 import { ToastAction } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
+import { api } from "@/trpc/react";
 
 interface CreateJobFormProps extends ComponentPropsWithoutRef<typeof Card> {
   session: Session;
@@ -67,7 +68,11 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({ session, ...props }) => {
   const { address } = useAddressInput();
   const { files, addFiles } = useImageDropzone();
   const { industries } = useIndustries();
-  const { mutateAsync: createJob } = useCreateJob();
+  const { mutateAsync: createJob } = api.job.createJob.useMutation({
+    onMutate: (e) => {
+      setIsPosting(true);
+    },
+  });
   const ownedCompanies = session.user.ownedCompanies;
   const { toast } = useToast();
   const [isPosting, setIsPosting] = useState(false);
@@ -93,10 +98,6 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({ session, ...props }) => {
     if (isPosting) return;
     setIsPosting(true);
 
-    console.log(values, files);
-
-    console.log(values.startDate?.toUTCString());
-
     const base64Images = await Promise.all(
       files.map((file) => {
         return new Promise<string>((resolve, reject) => {
@@ -108,66 +109,45 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({ session, ...props }) => {
       }),
     );
 
-    try {
-      console.log({
+    const job = await createJob(
+      {
         ...values,
         base64Images,
-      });
+      },
+      {
+        onError: (err) => {
+          toast({
+            title: "Uh oh! Something went wrong.",
+            description: err.message,
+            action: (
+              <ToastAction
+                onClick={() => {
+                  form.handleSubmit(onSubmit)();
+                }}
+                altText="Retry"
+              >
+                Retry
+              </ToastAction>
+            ),
+          });
 
-      const res = await createJob({
-        ...values,
-        base64Images,
-      });
+          setIsPosting(false);
+        },
+        onSuccess: () => {
+          form.reset();
+          toast({
+            title: "Success!",
+            description: "Your job has been created and posted.",
+          });
+          router.push(`/jobs`);
 
-      toast({
-        title: "Success!",
-        description: "Your job has been created and posted.",
-      });
-
-      if (res.error) {
-        toast({
-          title: "Uh oh! Something went wrong.",
-          description: "There was an error creating your job.",
-          action: (
-            <ToastAction
-              onClick={() => {
-                form.handleSubmit(onSubmit)();
-              }}
-              altText="Retry"
-            >
-              Retry
-            </ToastAction>
-          ),
-        });
-      } else {
-        await form.reset();
-
-        toast({
-          title: "Success!",
-          description: "Your job has been created and posted.",
-        });
-
-        router.push(`/jobs`);
-      }
-    } catch (err) {
-      toast({
-        title: "Uh oh! Something went wrong.",
-        description: "There was an error creating your job.",
-        action: (
-          <ToastAction
-            onClick={() => {
-              form.handleSubmit(onSubmit)();
-            }}
-            altText="Retry"
-          >
-            Retry
-          </ToastAction>
-        ),
-      });
-    }
-
-    setIsPosting(false);
+          setIsPosting(false);
+        },
+      },
+    );
+    if (job) console.log(job);
   }
+
 
   return (
     <div className="inline-block w-full max-w-screen-md animate-border rounded-[var(--radius)] bg-gradient-to-r from-primary/70 via-secondary to-primary/70 bg-[length:400%_400%] p-1 drop-shadow-xl">

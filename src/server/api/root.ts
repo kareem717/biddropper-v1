@@ -1,5 +1,6 @@
 import { bidRouter } from "@/server/api/routers/bids";
 import { createTRPCRouter } from "@/server/api/trpc";
+import { jobRouter } from "./routers/jobs";
 
 /**
  * This is the primary router for your server.
@@ -7,8 +8,8 @@ import { createTRPCRouter } from "@/server/api/trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  // post: postRouter,
   bid: bidRouter,
+  job: jobRouter
 });
 
 // export type definition of API
