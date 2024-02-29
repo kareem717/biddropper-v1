@@ -37,6 +37,7 @@ import {
 } from "../validations/bids";
 import { v4 as uuidv4 } from "uuid";
 import { createSelectSchema } from "drizzle-zod";
+import { generateCursor } from "@/lib/utils/api";
 
 export const bidRouter = createTRPCRouter({
   getJobBidStats: authenticatedProcedure
@@ -885,6 +886,7 @@ export const bidRouter = createTRPCRouter({
     .input(getUserBidsInput)
     .query(async ({ ctx, input }) => {
       const { orderBy, cursor, limit, ...data } = input;
+      console.log(orderBy, cursor, limit, data);
 
       // Create query conditions based on filters from the query params
       const filterConditions = () => {
@@ -928,16 +930,32 @@ export const bidRouter = createTRPCRouter({
           })
           .from(bidsRelationships)
           .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .innerJoin(jobs, eq(jobs.id, bidsRelationships.jobId))
+          .innerJoin(jobsRelationships, eq(jobs.id, jobsRelationships.jobId))
           .where(
             and(
               ...filterConditions(),
-              ...cursor.map(({ columnName, value, order }) =>
-                order === "gte"
-                  ? // @ts-expect-error
-                    gte(bids[columnName], value)
-                  : // @ts-expect-error
-                    lte(bids[columnName], value),
-              ),
+              eq(jobsRelationships.userId, data.id),
+              ...(cursor.length > 1
+                ? [
+                    sql.raw(
+                      `(${cursor
+                        .map(
+                          // @ts-expect-error
+                          ({ columnName }) => `bids.${bids[columnName].name}`,
+                        )
+                        .join(", ")}) <= (${cursor
+                        .map(({ value }) => `'${value}'`)
+                        .join(", ")})`,
+                    ),
+                  ]
+                : cursor.map(({ columnName, value, order }) =>
+                    order === "gte"
+                      ? // @ts-expect-error
+                        gte(bids[columnName], value)
+                      : // @ts-expect-error
+                        lte(bids[columnName], value),
+                  )),
             ),
           )
           .limit(limit + 1)
@@ -949,54 +967,11 @@ export const bidRouter = createTRPCRouter({
                 : // @ts-expect-error
                   desc(bids[columnName]),
             ),
-          )
-          .innerJoin(jobs, eq(jobs.id, bidsRelationships.jobId));
+          );
 
+        const lastItem = res.length > limit ? res.pop() : null;
         return {
-          // Determine the cursor based on the response and input parameters
-          cursor:
-            // Check if the response exists and has more items than the specified limit
-            res && res.length > limit
-              ? // If there's an existing cursor, map over it to create the new cursor
-                cursor.length
-                ? cursor.map(({ columnName, value, order }) => ({
-                    columnName,
-                    // Depending on the order, select the appropriate value from the response
-                    // to use as the new cursor value
-                    value:
-                      // If the order is 'lte', use the last item's value, otherwise use the first item's value
-                      (
-                        res[order === "lte" ? res.length - 1 : 0] as {
-                          [key: string]: any;
-                        }
-                      )[columnName],
-                  }))
-                : // If there's no existing cursor but there are orderBy conditions,
-                  // map over orderBy to create the new cursor
-                  orderBy.length
-                  ? orderBy.map(({ columnName, order }) => ({
-                      columnName,
-                      // Depending on the order, select the appropriate value from the response
-                      // to use as the new cursor value
-                      value:
-                        // If the order is 'asc', use the last item's value, otherwise use the first item's value
-                        (
-                          res[order === "asc" ? res.length - 1 : 0] as {
-                            [key: string]: any;
-                          }
-                        )[columnName],
-                      // Depending on the order, set the new cursor order to 'gte' or 'lte'
-                      order: order === "asc" ? "gte" : "lte",
-                    }))
-                  : // If there are no cursor or orderBy conditions, default to using the last item's ID
-                    {
-                      columnName: "id",
-                      value: res[res.length - 1]?.id,
-                      order: "lte",
-                    }
-              : // If the response does not exceed the limit, there's no need for a cursor
-                null,
-          // Return the data limited by the specified limit
+          cursor: lastItem ? generateCursor(lastItem, orderBy, cursor) : null,
           data: res.slice(0, limit),
         };
       } catch (err) {
@@ -1091,13 +1066,26 @@ export const bidRouter = createTRPCRouter({
           .where(
             and(
               ...filterConditions(),
-              ...cursor.map(({ columnName, value, order }) =>
-                order === "gte"
-                  ? // @ts-expect-error
-                    gte(bids[columnName], value)
-                  : // @ts-expect-error
-                    lte(bids[columnName], value),
-              ),
+              ...(cursor.length > 1
+                ? [
+                    sql.raw(
+                      `(${cursor
+                        .map(
+                          // @ts-expect-error
+                          ({ columnName }) => `bids.${bids[columnName].name}`,
+                        )
+                        .join(", ")}) <= (${cursor
+                        .map(({ value }) => `'${value}'`)
+                        .join(", ")})`,
+                    ),
+                  ]
+                : cursor.map(({ columnName, value, order }) =>
+                    order === "gte"
+                      ? // @ts-expect-error
+                        gte(bids[columnName], value)
+                      : // @ts-expect-error
+                        lte(bids[columnName], value),
+                  )),
             ),
           )
           .limit(limit + 1)
@@ -1113,16 +1101,6 @@ export const bidRouter = createTRPCRouter({
           .$dynamic();
 
         let query;
-
-        // // If bidTarget is not contracts, add job to select object
-        // if (data.targetType !== "contracts") {
-        //   selectObject["job"] = { id: jobs.id, title: jobs.title };
-        // }
-
-        // // If bidTarget is not jobs, add contract to select object
-        // if (params.data.bidTarget !== "jobs") {
-        //   selectObject["contract"] = { id: contracts.id, title: contracts.title };
-        // }
         if (
           data.targetType.includes("jobs") &&
           !data.targetType.includes("contracts")
@@ -1160,51 +1138,9 @@ export const bidRouter = createTRPCRouter({
 
         const res = await query;
 
+        const lastItem = res.length > limit ? res.pop() : null;
         return {
-          // Determine the cursor based on the response and input parameters
-          cursor:
-            // Check if the response exists and has more items than the specified limit
-            res && res.length > limit
-              ? // If there's an existing cursor, map over it to create the new cursor
-                cursor.length
-                ? cursor.map(({ columnName, value, order }) => ({
-                    columnName,
-                    // Depending on the order, select the appropriate value from the response
-                    // to use as the new cursor value
-                    value:
-                      // If the order is 'lte', use the last item's value, otherwise use the first item's value
-                      (
-                        res[order === "lte" ? res.length - 1 : 0] as {
-                          [key: string]: any;
-                        }
-                      )[columnName],
-                  }))
-                : // If there's no existing cursor but there are orderBy conditions,
-                  // map over orderBy to create the new cursor
-                  orderBy.length
-                  ? orderBy.map(({ columnName, order }) => ({
-                      columnName,
-                      // Depending on the order, select the appropriate value from the response
-                      // to use as the new cursor value
-                      value:
-                        // If the order is 'asc', use the last item's value, otherwise use the first item's value
-                        (
-                          res[order === "asc" ? res.length - 1 : 0] as {
-                            [key: string]: any;
-                          }
-                        )[columnName],
-                      // Depending on the order, set the new cursor order to 'gte' or 'lte'
-                      order: order === "asc" ? "gte" : "lte",
-                    }))
-                  : // If there are no cursor or orderBy conditions, default to using the last item's ID
-                    {
-                      columnName: "id",
-                      value: res[res.length - 1]?.id,
-                      order: "lte",
-                    }
-              : // If the response does not exceed the limit, there's no need for a cursor
-                null,
-          // Return the data limited by the specified limit
+          cursor: lastItem ? generateCursor(lastItem, orderBy, cursor) : null,
           data: res.slice(0, limit),
         };
       } catch (err) {

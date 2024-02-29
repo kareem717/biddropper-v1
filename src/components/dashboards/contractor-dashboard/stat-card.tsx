@@ -1,6 +1,6 @@
 // "use client";
 import LineChart from "../../charts/line-chart";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../../shadcn/ui/card";
 import SimpleBarChart from "../../charts/simple-bar-chart";
 import DonutChart from "../../charts/donut-chart";
 

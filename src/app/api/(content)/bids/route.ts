@@ -13,7 +13,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { CustomError } from "@/lib/utils";
 import { unionAll } from "drizzle-orm/pg-core";
-import { v4 as uuidv4 } from "uuid";  
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: Request) {
   const { query } = parse(req.url, true);

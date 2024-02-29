@@ -7,7 +7,7 @@
 // import useSWR from "swr";
 // import ContactCard from "./cards/contact-card";
 // import Image from "next/image";
-// import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils/shadcn";
 // import ReviewCard from "./cards/review-card";
 // import {
 //   SelectReview,

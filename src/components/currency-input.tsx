@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/shadcn";
 import { LucideIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/shadcn/ui/input";
 import {
   Select,
   SelectContent,
@@ -11,7 +11,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/shadcn/ui/select";
 
 interface Currency {
   currency: string;

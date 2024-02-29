@@ -5,8 +5,8 @@ import {
   varchar,
   numeric,
   boolean,
-  foreignKey,
   uuid,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { enumBidStatus, enumPropertyType, enumStartDateFlag } from "./enums";
 import { user } from "./auth";
@@ -67,10 +67,7 @@ export const companies = pgTable("companies", {
   emailAddress: varchar("email_address", { length: 320 }).notNull(),
   phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
   websiteUrl: varchar("website_url", { length: 2048 }),
-  products: varchar("products", { length: 300 }),
   isVerified: boolean("is_verified").default(false).notNull(),
-  specialties: varchar("specialties", { length: 400 }),
-  services: varchar("services", { length: 400 }),
   dateEstablished: timestamp("date_established", { mode: "date" }).notNull(),
   imageId: uuid("image_id").references(() => media.id, {
     onDelete: "set null",
@@ -79,6 +76,17 @@ export const companies = pgTable("companies", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
   isActive: boolean("is_active").default(true).notNull(),
+  features: jsonb("features")
+    .$type<{
+      services: [];
+      specialties: [];
+      products: [];
+    }>()
+    .default({
+      services: [],
+      specialties: [],
+      products: [],
+    }),
 });
 
 export const industries = pgTable(
@@ -116,6 +124,7 @@ export const jobs = pgTable("jobs", {
       onUpdate: "cascade",
     })
     .notNull(),
+  tags: jsonb("tags").$type<string[]>().default([]),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   startDate: timestamp("start_date", { mode: "date" }),
@@ -174,6 +183,7 @@ export const contracts = pgTable("contracts", {
       onDelete: "cascade",
       onUpdate: "cascade",
     }),
+  tags: jsonb("tags").$type<string[]>().default([]),
   title: varchar("title", { length: 100 }).notNull(),
   description: varchar("description", { length: 3000 }).notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),

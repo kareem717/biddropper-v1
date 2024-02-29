@@ -7,19 +7,19 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import BidButton from "@/components/bid-buttons";
+} from "@/components/shadcn/ui/card";
+import BidButton from "@/components/ui/bid-buttons";
 import * as z from "zod";
 import { SelectedJob, selectJobSchema } from "@/lib/validations/posts/jobs";
-import { Button } from "../../ui/button";
+import { Button } from "../../shadcn/ui/button";
 import { toast } from "sonner";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { Label } from "../../ui/label";
+import { Label } from "../../shadcn/ui/label";
 import PieChart from "../../pie-chart";
 import { format } from "date-fns";
 import JobCard from "../job-cards/small";
 import BadgeTooltip from "../../badge-tooltip";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/shadcn/ui/badge";
 import { useFetchContracts } from "@/hooks/api/contracts/use-fetch-contracts";
 import { formatDate } from "@/lib/utils";
 import { useSession } from "next-auth/react";

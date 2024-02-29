@@ -6,7 +6,7 @@ import {
   CardTitle,
   CardContent,
   CardFooter,
-} from "../ui/card";
+} from "../shadcn/ui/card";
 import { ComponentPropsWithoutRef } from "react";
 
 interface ReviewCardProps extends ComponentPropsWithoutRef<typeof Card> {

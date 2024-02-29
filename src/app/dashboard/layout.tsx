@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import { redirect, useRouter } from "next/navigation";
-import Navbar from "@/components/nav-bar";
+import Navbar from "@/components/ui/nav-bar";
 import { useSession } from "next-auth/react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -30,11 +30,9 @@ export default async function DashboardLayout({
   console.log(isContractor);
   return (
     <main className="h-full w-full">
-      <div className=" relative h-full w-full ">
+      <div className="relative h-full w-full ">
         <Navbar className="fixed top-0 z-30 w-full bg-card/50 backdrop-blur-md" />
-        <ReactQueryProvider>
-          {isContractor ? contractor : user}
-        </ReactQueryProvider>
+        {isContractor ? contractor : user}
       </div>
     </main>
   );

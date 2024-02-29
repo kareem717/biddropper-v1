@@ -1,7 +1,7 @@
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/shadcn/ui/button";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
-import CreateProjectForm from "@/components/forms/create-project";
+import CreateProjectForm from "@/components/forms/legacy/create-project";
 import { api } from "@/trpc/server";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/server/api/root";
@@ -41,7 +41,6 @@ export default async function Home() {
     //     value: 'fce03c73-45fe-4fca-997f-cada1b63c3a1',
     //   },
     // ],
-
   });
 
   //TODO: cursor not woring

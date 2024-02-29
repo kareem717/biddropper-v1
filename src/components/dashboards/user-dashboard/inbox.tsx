@@ -1,14 +1,14 @@
 "use client";
 import { ComponentPropsWithoutRef, useState } from "react";
 import { Icons } from "../../icons";
-import { Button } from "../../ui/button";
+import { Button } from "../../shadcn/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "../../ui/card";
+} from "../../shadcn/ui/card";
 import {
   Table,
   TableBody,
@@ -17,8 +17,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+} from "@/components/shadcn/ui/table";
+import { cn } from "@/lib/utils/shadcn";
 import { useRouter } from "next/navigation";
 
 interface InboxProps extends ComponentPropsWithoutRef<"div"> {

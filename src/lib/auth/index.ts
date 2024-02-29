@@ -40,7 +40,7 @@ export const authOptions: NextAuthOptions = {
     updateAge: 24 * 60 * 60,
     generateSessionToken: uuidv4,
   },
-  adapter: DrizzleAdapter(db),
+  adapter: DrizzleAdapter(db) as Adapter,
   providers: [
     GoogleProvider({
       clientId: env["GOOGLE_CLIENT_ID"],

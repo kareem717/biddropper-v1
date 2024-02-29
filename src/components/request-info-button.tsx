@@ -1,7 +1,7 @@
 "use client";
 import { ComponentPropsWithoutRef, useState } from "react";
-import { Button, buttonVariants } from "./ui/button";
-import { cn } from "@/lib/utils";
+import { Button, buttonVariants } from "./shadcn/ui/button";
+import { cn } from "@/lib/utils/shadcn";
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@/components/shadcn/ui/dialog";
+import { Input } from "@/components/shadcn/ui/input";
 import { Icons } from "./icons";
 import { toast } from "sonner";
 //TODO - implement and add bid button to job page

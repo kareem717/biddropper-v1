@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { AspectRatio } from "@/components/shadcn/ui/aspect-ratio";
 import LogoDiv from "@/components/logo-div";
-import { ModeToggle } from "@/components/ui/mode-toggle";
+import { ModeToggle } from "@/components/shadcn/ui/mode-toggle";
 
 interface AuthLayoutProps {
   children: React.ReactNode;

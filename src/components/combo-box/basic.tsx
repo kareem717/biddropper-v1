@@ -1,17 +1,17 @@
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils/shadcn";
+import { Button } from "@/components/shadcn/ui/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-} from "@/components/ui/command";
+} from "@/components/shadcn/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/components/shadcn/ui/popover";
 import { Icons } from "../icons";
 import useComboBox from "@/hooks/use-combo-box";
 import { useState } from "react";

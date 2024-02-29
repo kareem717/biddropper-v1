@@ -1,17 +1,17 @@
-import { bodyParamSchema } from "@/lib/validations/api/(references)/addresses/request";
 import { create } from "zustand";
 import * as z from "zod";
+import { createAddressInput } from "@/server/api/validations/address";
+
+export type Address = z.infer<typeof createAddressInput>;
 
 interface useAddressInputProps {
-  address: z.infer<typeof bodyParamSchema.POST> | undefined;
-  setAddress: (
-    address: z.infer<typeof bodyParamSchema.POST> | undefined,
-  ) => void;
+  address: Address | undefined;
+  setAddress: (address: Address | undefined) => void;
 }
 
 const useAddressInput = create<useAddressInputProps>((set, get) => ({
   address: undefined,
-  setAddress: (address: z.infer<typeof bodyParamSchema.POST> | undefined) => {
+  setAddress: (address: Address | undefined) => {
     set((state) => ({
       ...state,
       address,

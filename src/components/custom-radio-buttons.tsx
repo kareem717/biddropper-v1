@@ -1,7 +1,7 @@
 import { ComponentPropsWithoutRef, useState } from "react";
 import { Icons } from "./icons";
-import { cn } from "@/lib/utils";
-import { Label } from "./ui/label";
+import { cn } from "@/lib/utils/shadcn";
+import { Label } from "./shadcn/ui/label";
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 
 interface CustomRadioButtonsProps
@@ -35,14 +35,14 @@ const CustomRadioButtons: React.FC<CustomRadioButtonsProps> = ({
       {buttons.map((button) => (
         <div
           className={cn(
-            "flex aspect-square h-full w-full flex-col items-center gap-2 text-muted-foreground hover:text-foreground my-2",
+            "my-2 flex aspect-square h-full w-full flex-col items-center gap-2 text-muted-foreground hover:text-foreground",
             button.value === selectedValue && "text-primary hover:text-primary",
           )}
           key={button.value}
         >
           <RadioGroupPrimitive.Item
             {...itemProps}
-            className="w-full h-full"
+            className="h-full w-full"
             value={button.value}
           >
             <div
@@ -56,7 +56,7 @@ const CustomRadioButtons: React.FC<CustomRadioButtonsProps> = ({
               <button.icon
                 id={button.value}
                 className={cn(
-                  "w-[60%] h-[60%] stroke-[1px]",
+                  "h-[60%] w-[60%] stroke-[1px]",
                   selectedValue === button.value && "stroke-primary",
                 )}
               />

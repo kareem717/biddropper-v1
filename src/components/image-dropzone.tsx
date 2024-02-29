@@ -1,20 +1,20 @@
 import React, { FC, useEffect } from "react";
 import { useDropzone, DropzoneOptions } from "react-dropzone";
-import { Input } from "./ui/input";
+import { Input } from "./shadcn/ui/input";
 import Image from "next/image";
-import { Card } from "./ui/card";
+import { Card } from "./shadcn/ui/card";
 import { Icons } from "./icons";
 import useImageDropzone from "@/hooks/use-image-dropzone";
-import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils/shadcn";
+import { Button } from "./shadcn/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/shadcn/ui/scroll-area";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel";
+} from "@/components/shadcn/ui/carousel";
 
 interface ImageDropzoneProps extends React.ComponentPropsWithoutRef<"div"> {
   dropzoneOptions?: DropzoneOptions;

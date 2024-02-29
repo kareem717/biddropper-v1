@@ -13,7 +13,7 @@ const ContractorDashboard: FunctionComponent = async () => {
   }
 
   return (
-    <div className="mx-auto mb-20 mt-12 flex max-h-screen max-w-[1920px] flex-col gap-2 p-4 md:gap-6 lg:p-8">
+    <div className="mx-auto mb-20 grid max-w-[1920px] grid-flow-row-dense gap-2 pb-4 px-4 pt-24 md:gap-6 lg:pb-8 lg:px-8">
       <StatCard />
       <Inbox session={userSession} />
     </div>

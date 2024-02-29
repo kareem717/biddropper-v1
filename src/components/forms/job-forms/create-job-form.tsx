@@ -1,17 +1,10 @@
 "use client";
+
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ComponentPropsWithoutRef, useEffect, useRef, useState } from "react";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@radix-ui/react-popover";
 import {
   Form,
   FormControl,
@@ -20,29 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { bodyParamSchema } from "@/lib/validations/api/(content)/jobs/request";
-import { Textarea } from "@/components/ui/textarea";
-import { Session } from "next-auth";
-import { Checkbox } from "@/components/ui/checkbox";
-import CustomRadioButtons from "@/components/custom-radio-buttons";
-import { Icons } from "@/components/icons";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@radix-ui/react-popover";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { format } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import AddressInput from "@/components/address-input";
-import ImageDropzone from "@/components/image-dropzone";
-import useIndustries from "@/hooks/api/use-industries";
-import { useToast } from "@/components/ui/use-toast";
+} from "@/components/shadcn/ui/form";
 import {
   Select,
   SelectContent,
@@ -51,31 +22,67 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import useAddressInput from "@/hooks/use-address-input";
+} from "@/components/shadcn/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn/ui/card";
+import { ComponentPropsWithoutRef, useEffect, useRef, useState } from "react";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/shadcn/ui/button";
+import { Input } from "@/components/shadcn/ui/input";
+import { Textarea } from "@/components/shadcn/ui/textarea";
+import { Session } from "next-auth";
+import { Checkbox } from "@/components/shadcn/ui/checkbox";
+import CustomRadioButtons from "@/components/custom-radio-buttons";
+import { Icons } from "@/components/icons";
+import { Calendar } from "@/components/shadcn/ui/calendar";
+import { cn } from "@/lib/utils/shadcn";
+import { Label } from "@/components/shadcn/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/shadcn/ui/radio-group";
+import { format } from "date-fns";
+import { ScrollArea } from "@/components/shadcn/ui/scroll-area";
+import ImageDropzone from "@/components/image-dropzone";
+import { useToast } from "@/components/shadcn/ui/use-toast";
 import useImageDropzone from "@/hooks/use-image-dropzone";
-import { useCreateJob } from "@/hooks/api/jobs/use-create-job";
-import { ToastAction } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
+import { createJobInput } from "@/server/api/validations/jobs";
+import AutoFillMap from "@/components/maps/autofill-map";
+import { ToastAction } from "@/components/shadcn/ui/toast";
+import useAutoFillMap from "@/hooks/use-auto-fill-map";
 
-interface CreateJobFormProps extends ComponentPropsWithoutRef<typeof Card> {
+interface CreateJobFormProps extends ComponentPropsWithoutRef<"div"> {
   session: Session;
 }
 
-const formSchema = bodyParamSchema.POST;
-const CreateJobForm: React.FC<CreateJobFormProps> = ({ session, ...props }) => {
-  const { address } = useAddressInput();
-  const { files, addFiles } = useImageDropzone();
-  const { industries } = useIndustries();
+const formSchema = createJobInput;
+
+const CreateJobForm: React.FC<CreateJobFormProps> = ({
+  session,
+  className,
+  ...props
+}) => {
+  const { files } = useImageDropzone();
+  const { data: industries } = api.industry.getIndustries.useQuery();
+  const ownedCompanies = session.user.ownedCompanies;
+  const { toast } = useToast();
+  const router = useRouter();
+  const [isPosting, setIsPosting] = useState(false);
+  const { address: mapAddress } = useAutoFillMap();
+
   const { mutateAsync: createJob } = api.job.createJob.useMutation({
     onMutate: (e) => {
       setIsPosting(true);
     },
   });
-  const ownedCompanies = session.user.ownedCompanies;
-  const { toast } = useToast();
-  const [isPosting, setIsPosting] = useState(false);
+
   const { setValue, ...form } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -86,13 +93,11 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({ session, ...props }) => {
     },
   });
 
-  const router = useRouter();
-
   useEffect(() => {
-    if (address) {
-      setValue("address", address);
+    if (mapAddress) {
+      setValue("address", mapAddress);
     }
-  }, [address, setValue]);
+  }, [mapAddress, setValue]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (isPosting) return;
@@ -109,7 +114,7 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({ session, ...props }) => {
       }),
     );
 
-    const job = await createJob(
+    await createJob(
       {
         ...values,
         base64Images,
@@ -145,12 +150,16 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({ session, ...props }) => {
         },
       },
     );
-    if (job) console.log(job);
   }
 
-
   return (
-    <div className="inline-block w-full max-w-screen-md animate-border rounded-[var(--radius)] bg-gradient-to-r from-primary/70 via-secondary to-primary/70 bg-[length:400%_400%] p-1 drop-shadow-xl">
+    <div
+      className={cn(
+        "animate-border inline-block w-full max-w-screen-md rounded-[var(--radius)] bg-gradient-to-r from-primary/70 via-secondary to-primary/70 bg-[length:400%_400%] p-1 drop-shadow-xl",
+        className,
+      )}
+      {...props}
+    >
       <Card>
         <CardHeader>
           <CardTitle>Create a job</CardTitle>
@@ -595,7 +604,7 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({ session, ...props }) => {
                         Please select an address from the suggestions below.
                       </FormDescription>
                       <FormControl className="mt-2">
-                        <AddressInput placeholder="Start typing..." />
+                        <AutoFillMap />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

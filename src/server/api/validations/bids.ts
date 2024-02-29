@@ -5,6 +5,8 @@ import { bids } from "@/server/db/schema/tables/content";
 import { PgColumn } from "drizzle-orm/pg-core";
 import { getTableColumns } from "drizzle-orm";
 
+const bidTableColumns = Object.keys(getTableColumns(bids));
+
 export const getJobBidStatsInput = z
   .object({
     jobId: z
@@ -58,14 +60,20 @@ export const getJobBidStatsInput = z
       .default(15),
     minCreatedAt: z
       .date({
-        required_error: "Minimum creation date is required.",
-        invalid_type_error: "Minimum creation date must be a valid date.",
+        invalid_type_error: "minCreatedAt must be a date",
+        required_error: "minCreatedAt cannot be empty if provided",
+      })
+      .max(new Date(), {
+        message: "minCreatedAt cannot be in the future",
       })
       .optional(),
     maxCreatedAt: z
       .date({
-        required_error: "Maximum creation date is required.",
-        invalid_type_error: "Maximum creation date must be a valid date.",
+        invalid_type_error: "maxCreatedAt must be a date",
+        required_error: "maxCreatedAt cannot be empty if provided",
+      })
+      .max(new Date(), {
+        message: "maxCreatedAt cannot be in the future",
       })
       .optional(),
     isActive: z
@@ -231,7 +239,7 @@ export const getUserBidsInput = getContractBidStatsInput
         z.object({
           columnName: z.enum(
             // @ts-ignore
-            Object.keys(getTableColumns(bids)),
+            bidTableColumns,
             {
               required_error: "Order by field is required.",
               invalid_type_error: "Order by field must be a valid column name.",
@@ -247,7 +255,7 @@ export const getUserBidsInput = getContractBidStatsInput
             .default("asc"),
         }),
       )
-      .max(Object.keys(getTableColumns(bids)).length, {
+      .max(bidTableColumns.length, {
         message: "Order by array cannot have repeated values.",
       })
       .refine(
@@ -263,7 +271,7 @@ export const getUserBidsInput = getContractBidStatsInput
       .default([
         {
           columnName: "id",
-          order: "desc",
+          order: "asc",
         },
       ]),
     cursor: z
@@ -271,7 +279,7 @@ export const getUserBidsInput = getContractBidStatsInput
         z.object({
           columnName: z.enum(
             // @ts-ignore
-            Object.keys(getTableColumns(bids)),
+            bidTableColumns,
             {
               required_error: "Cursor column name field is required.",
               invalid_type_error:
@@ -294,8 +302,12 @@ export const getUserBidsInput = getContractBidStatsInput
             .optional()
             .default("lte"),
         }),
+        {
+          required_error: "Cursor is required.",
+          invalid_type_error: "Cursor must be an array of cursor objects.",
+        },
       )
-      .max(Object.keys(getTableColumns(bids)).length, {
+      .max(bidTableColumns.length, {
         message: "Order by array cannot have repeated values.",
       })
       .refine(
@@ -339,3 +351,5 @@ export const getCompanyBidsInput = getUserBidsInput
   .strict({
     message: "No additional properties are allowed in the object.",
   });
+
+export type GetUserBidsInput = z.infer<typeof getUserBidsInput>;

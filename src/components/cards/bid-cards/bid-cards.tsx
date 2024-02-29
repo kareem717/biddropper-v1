@@ -11,10 +11,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/shadcn/ui/card";
 import { format } from "date-fns";
 import BadgeTooltip from "@/components/badge-tooltip";
-import { Button, buttonVariants } from "../../ui/button";
+import { Button, buttonVariants } from "../../shadcn/ui/button";
 import Link from "next/link";
 import { toast } from "sonner";
 interface BidCardProps {

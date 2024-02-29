@@ -1,6 +1,6 @@
 "use client";
 import AuthSessionProvider from "@/components/providers/auth-session-provider";
-import CreateProjectForm from "@/components/forms/create-project";
+import CreateProjectForm from "@/components/forms/legacy/create-project";
 
 export default function CreateProject() {
   return (

@@ -1,16 +1,21 @@
 "use client";
 import "mapbox-gl/dist/mapbox-gl.css";
 import React, { ComponentPropsWithoutRef, FC } from "react";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/shadcn/ui/separator";
+import { Button } from "@/components/shadcn/ui/button";
+import { ScrollArea } from "@/components/shadcn/ui/scroll-area";
+import { Skeleton } from "@/components/shadcn/ui/skeleton";
 import dynamic from "next/dynamic";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import BidButton from "@/components/bid-buttons";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn/ui/card";
+import BidButton from "@/components/ui/bid-buttons";
 import * as z from "zod";
-import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils/shadcn";
+import { Label } from "@/components/shadcn/ui/label";
 import BadgeTooltip from "@/components/badge-tooltip";
 import { timeHorizons } from "@/config/time-horizons";
 import { propertyTypes } from "@/config/property-types";

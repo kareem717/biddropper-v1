@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import CreateContractForm from "@/components/forms/create-contract";
+import CreateContractForm from "@/components/forms/legacy/create-contract";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { env } from "@/env.mjs";

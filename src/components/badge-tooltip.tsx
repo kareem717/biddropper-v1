@@ -1,11 +1,11 @@
-import { Badge } from "./ui/badge";
+import { Badge } from "./shadcn/ui/badge";
 import { ComponentPropsWithoutRef, FC, ReactNode } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider,
-} from "./ui/tooltip";
+} from "./shadcn/ui/tooltip";
 
 interface BadgeTooltipProps extends ComponentPropsWithoutRef<typeof Badge> {
   label: string;

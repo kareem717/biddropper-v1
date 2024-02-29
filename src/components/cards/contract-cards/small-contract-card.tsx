@@ -1,9 +1,14 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn/ui/card";
 import { FC } from "react";
 import Link from "next/link";
 import { Icons } from "@/components/icons";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/shadcn";
 import { format } from "date-fns";
 import useContractList from "@/hooks/use-contract-list";
 

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/shadcn";
 
 interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;

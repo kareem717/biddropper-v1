@@ -2,13 +2,18 @@
 import { useTheme } from "next-themes";
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer } from "recharts";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn/ui/card";
 import { FC } from "react";
 import BadgeTooltip from "../../badge-tooltip";
 import { timeHorizons } from "@/config/time-horizons";
 import { propertyTypes } from "@/config/property-types";
 import Link from "next/link";
-import useIndustries from "@/hooks/api/use-industries";
+import { api } from "@/trpc/react";
 
 interface JobCardProps {
   id: string;
@@ -32,7 +37,11 @@ const JobCard: FC<JobCardProps> = ({
     (property) => property.value === propertyType,
   );
 
-  const { industries, isLoading, isError } = useIndustries();
+  const {
+    data: industries,
+    isLoading,
+    isError,
+  } = api.industry.getIndustries.useQuery();
 
   if (isLoading) {
     return <div>Loading...</div>;

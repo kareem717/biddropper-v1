@@ -1,5 +1,5 @@
 "use client";
-import CreateReview from "@/components/forms/create-review";
+import CreateReview from "@/components/forms/legacy/create-review";
 import React from "react";
 import { useParams } from "next/navigation";
 import AuthProvider from "@/hooks/use-auth";
