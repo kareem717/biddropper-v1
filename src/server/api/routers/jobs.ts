@@ -120,6 +120,7 @@ export const jobRouter = createTRPCRouter({
             startDateFlag: jobs.startDateFlag,
             propertyType: jobs.propertyType,
             addressId: jobs.addressId,
+            tags: jobs.tags,
           });
 
         if (!newJob) {

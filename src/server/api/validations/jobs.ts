@@ -9,7 +9,7 @@ import { createAddressInput } from "./address";
 import { base64Regex } from "@/lib/utils/api";
 import { getTableColumns } from "drizzle-orm";
 
-const jobTableColumns = Object.keys(getTableColumns(jobs))
+const jobTableColumns = Object.keys(getTableColumns(jobs));
 
 export const createJobInput = createInsertSchema(jobs, {
   title: z
@@ -101,6 +101,16 @@ export const createJobInput = createInsertSchema(jobs, {
         message: "You can only provide up to 8 images",
       })
       .optional(),
+    tags: z
+      .array(
+        z.string({
+          invalid_type_error: "Tag must be a string",
+          required_error: "Tag is required",
+        }),
+      )
+      .max(20, {
+        message: "You can only provide up to 20 tags",
+      }),
   })
   .superRefine((data, ctx) => {
     if (!data.userId && !data.companyId) {
@@ -242,7 +252,7 @@ export const getJobInput = z
             .default("asc"),
         }),
       )
-      .max( jobTableColumns.length, {
+      .max(jobTableColumns.length, {
         message: "Order by array cannot have repeated values.",
       })
       .refine(
