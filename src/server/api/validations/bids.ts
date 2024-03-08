@@ -105,17 +105,25 @@ export const getContractBidStatsInput = getJobBidStatsInput
   });
 
 export const getBidStatsOutput = z.object({
-  stats: z.array(
-    z
-      .object({
-        medianPrice: z.number(),
-        averagePrice: z.string().transform((val) => +Number(val).toFixed(2)),
-        count: z.string().transform((val) => +Number(val).toFixed(2)),
-        max: z.string().transform((val) => +Number(val).toFixed(2)),
-        min: z.string().transform((val) => +Number(val).toFixed(2)),
-      })
-      .optional(),
-  ),
+  stats: z.object({
+    medianPrice: z
+      .number()
+      .transform((val) => +Number(val).toFixed(2))
+      .nullable(),
+    averagePrice: z
+      .string()
+      .transform((val) => +Number(val).toFixed(2))
+      .nullable(),
+    count: z.coerce.number(),
+    maxPrice: z.coerce
+      .number()
+      .transform((val) => +Number(val).toFixed(2))
+      .nullable(),
+    minPrice: z.coerce
+      .number()
+      .transform((val) => +Number(val).toFixed(2))
+      .nullable(),
+  }),
   dailyAverages: z.array(
     z
       .object({
@@ -235,92 +243,61 @@ export const getUserBidsInput = getContractBidStatsInput
         message: "ID must be a valid UUID.",
       }),
     orderBy: z
-      .array(
-        z.object({
-          columnName: z.enum(
-            // @ts-ignore
-            bidTableColumns,
-            {
-              required_error: "Order by field is required.",
-              invalid_type_error: "Order by field must be a valid column name.",
-            },
-          ),
-          order: z
-            .enum(["asc", "desc"], {
-              required_error: "Order by direction is required.",
-              invalid_type_error:
-                "Order by direction must be either 'asc' or 'desc'.",
-            })
-            .optional()
-            .default("asc"),
-        }),
-      )
-      .max(bidTableColumns.length, {
-        message: "Order by array cannot have repeated values.",
+      .object({
+        columnName: z.enum(
+          // @ts-ignore
+          bidTableColumns,
+          {
+            required_error: "Order by field is required.",
+            invalid_type_error: "Order by field must be a valid column name.",
+          },
+        ),
+        order: z
+          .enum(["asc", "desc"], {
+            required_error: "Order by direction is required.",
+            invalid_type_error:
+              "Order by direction must be either 'asc' or 'desc'.",
+          })
+          .optional()
+          .default("asc"),
       })
-      .refine(
-        (data) => {
-          const unique = new Set(data.map((item) => item.columnName));
-          return unique.size === data.length;
-        },
-        {
-          message: "`orderBy` array cannot have duplicate column names.",
-        },
-      )
+      .strict({
+        message: "No additional properties are allowed in the order object.",
+      })
       .optional()
-      .default([
-        {
-          columnName: "id",
-          order: "asc",
-        },
-      ]),
+      .default({
+        columnName: "id",
+        order: "asc",
+      }),
     cursor: z
-      .array(
-        z.object({
-          columnName: z.enum(
-            // @ts-ignore
-            bidTableColumns,
-            {
-              required_error: "Cursor column name field is required.",
-              invalid_type_error:
-                "Cursor column name field must be a valid column name.",
-            },
-          ),
-          value: z.union(
-            [z.string(), z.number(), z.date(), z.boolean(), z.null()],
-            {
-              required_error: "Cursor value field is required.",
-              invalid_type_error: "Cursor value field must be a valid value.",
-            },
-          ),
-          order: z
-            .enum(["gte", "lte"], {
-              required_error: "Cursor order field is required.",
-              invalid_type_error:
-                "Cursor order field must be either 'lte' or 'gte'.",
-            })
-            .optional()
-            .default("lte"),
-        }),
-        {
-          required_error: "Cursor is required.",
-          invalid_type_error: "Cursor must be an array of cursor objects.",
-        },
-      )
-      .max(bidTableColumns.length, {
-        message: "Order by array cannot have repeated values.",
+      .object({
+        columnName: z.enum(
+          // @ts-ignore
+          bidTableColumns,
+          {
+            required_error: "Cursor column name field is required.",
+            invalid_type_error:
+              "Cursor column name field must be a valid column name.",
+          },
+        ),
+        value: z.union(
+          [z.string(), z.number(), z.date(), z.boolean(), z.null()],
+          {
+            required_error: "Cursor value field is required.",
+            invalid_type_error: "Cursor value field must be a valid value.",
+          },
+        ),
+        order: z
+          .enum(["gte", "lte"], {
+            required_error: "Cursor order field is required.",
+            invalid_type_error:
+              "Cursor order field must be either 'lte' or 'gte'.",
+          })
+          .optional()
+          .default("lte"),
       })
-      .refine(
-        (data) => {
-          const unique = new Set(data.map((item) => item.columnName));
-          return unique.size === data.length;
-        },
-        {
-          message: "`orderBy` array cannot have duplicate column names.",
-        },
-      )
-      .optional()
-      .default([]),
+      .strict()
+      .optional(),
   })
   .strict({
     message: "No additional properties are allowed in the object.",
@@ -347,6 +324,38 @@ export const getCompanyBidsInput = getUserBidsInput
       })
       .optional()
       .default(false),
+  })
+  .strict({
+    message: "No additional properties are allowed in the object.",
+  });
+
+export const getJobBidsInput = getUserBidsInput
+  .omit({ id: true })
+  .extend({
+    jobId: z
+      .string({
+        required_error: "Job ID is required.",
+        invalid_type_error: "Job ID must be a string.",
+      })
+      .uuid({
+        message: "Job ID must be a valid UUID.",
+      }),
+  })
+  .strict({
+    message: "No additional properties are allowed in the object.",
+  });
+
+export const getContractBidsInput = getUserBidsInput
+  .omit({ id: true })
+  .extend({
+    contractId: z
+      .string({
+        required_error: "Contract ID is required.",
+        invalid_type_error: "Contract ID must be a string.",
+      })
+      .uuid({
+        message: "Contract ID must be a valid UUID.",
+      }),
   })
   .strict({
     message: "No additional properties are allowed in the object.",

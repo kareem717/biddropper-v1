@@ -34,201 +34,14 @@ import {
   deleteBidInput,
   getUserBidsInput,
   getCompanyBidsInput,
+  getJobBidsInput,
+  getContractBidsInput,
 } from "../validations/bids";
 import { v4 as uuidv4 } from "uuid";
 import { createSelectSchema } from "drizzle-zod";
 import { generateCursor } from "@/lib/utils/api";
 
 export const bidRouter = createTRPCRouter({
-  getJobBidStats: authenticatedProcedure
-    .input(getJobBidStatsInput)
-    .output(getBidStatsOutput)
-    .query(async ({ ctx, input: data }) => {
-      // Make sure user either owns a company or owns the job or contract
-      if (!ctx.session.user.ownedCompanies) {
-        try {
-          const [job] = await ctx.db
-            .select({
-              userId: jobsRelationships.userId,
-            })
-            .from(jobs)
-            .innerJoin(jobsRelationships, eq(jobs.id, jobsRelationships.jobId))
-            .where(eq(jobs.id, data.jobId))
-            .limit(1);
-
-          if (!job) {
-            throw new TRPCError({
-              message: "Not authenticated to view this job data.",
-              code: "FORBIDDEN",
-            });
-          }
-        } catch (err) {
-          throw new TRPCError({
-            message: "An error occured whilst fetching the job data.",
-            code: "INTERNAL_SERVER_ERROR",
-          });
-        }
-      }
-
-      // Create query conditions based on filters from the query params
-      const filterConditions = (params: any, bids: any) => {
-        const conditions = [
-          inArray(bids.status, data.status),
-          inArray(bids.isActive, data.isActive),
-        ];
-
-        const addCondition = (
-          conditionFn: Function,
-          field: any,
-          value: any,
-        ) => {
-          if (value) {
-            conditions.push(conditionFn(field, value));
-          }
-        };
-
-        addCondition(gte, bids.price, data.minPrice);
-        addCondition(lte, bids.price, data.maxPrice);
-        addCondition(gte, bids.createdAt, data.minCreatedAt);
-        addCondition(lte, bids.createdAt, data.maxCreatedAt);
-
-        return conditions;
-      };
-
-      let stats, dailyAverages;
-
-      try {
-        stats = ctx.db
-          .select({
-            medianPrice:
-              sql<number>`percentile_cont(0.5) within group (order by ${bids.price})`.as(
-                "medianPrice",
-              ),
-            averagePrice: sql<number>`${avg(bids.price)}`.as("averagePrice"),
-            count: sql`count(*)`.as("count"),
-            maxPrice: sql<number>`${max(bids.price)}`,
-            minPrice: sql<number>`${min(bids.price)}`,
-          })
-          .from(bidsRelationships)
-          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
-          .where(and(...filterConditions(data, bids)));
-
-        console.log(stats.toSQL());
-
-        stats = await ctx.db.execute(stats);
-      } catch (err) {
-        console.log(err);
-        throw new TRPCError({
-          message:
-            "An error occured whilst fetching the listing's bid statsitcs.",
-          code: "INTERNAL_SERVER_ERROR",
-        });
-      }
-
-      try {
-        dailyAverages = await ctx.db
-          .select({
-            day: sql`DATE(${bids.createdAt})`,
-            averagePrice: sql<number>`avg(${bids.price})`,
-          })
-          .from(bids)
-          .innerJoin(bidsRelationships, eq(bids.id, bidsRelationships.bidId))
-          .where(and(...filterConditions(data, bids)))
-          .orderBy(sql`DATE(${bids.createdAt})`)
-          .groupBy(sql`DATE(${bids.createdAt})`)
-          .limit(30);
-      } catch (err) {
-        console.log(err);
-
-        throw new TRPCError({
-          message: "An error occured whilst fetching the bid time series data.",
-          code: "INTERNAL_SERVER_ERROR",
-        });
-      }
-
-      return {
-        stats,
-        dailyAverages,
-      } as any;
-    }),
-  getContractBidStats: companyOwnerProcedure
-    .input(getContractBidStatsInput)
-    .output(getBidStatsOutput)
-    .query(async ({ ctx, input: data }) => {
-      // Create query conditions based on filters from the query params
-      const filterConditions = (params: any, bids: any) => {
-        const conditions = [
-          inArray(bids.status, data.status),
-          inArray(bids.isActive, data.isActive),
-        ];
-
-        const addCondition = (
-          conditionFn: Function,
-          field: any,
-          value: any,
-        ) => {
-          if (value) {
-            conditions.push(conditionFn(field, value));
-          }
-        };
-
-        addCondition(gte, bids.price, data.minPrice);
-        addCondition(lte, bids.price, data.maxPrice);
-        addCondition(gte, bids.createdAt, data.minCreatedAt);
-        addCondition(lte, bids.createdAt, data.maxCreatedAt);
-
-        return conditions;
-      };
-
-      let stats, dailyAverages;
-
-      try {
-        stats = await ctx.db
-          .select({
-            medianPrice:
-              sql<number>`percentile_cont(0.5) within group (order by ${bids.price})`.as(
-                "medianPrice",
-              ),
-            averagePrice: sql<number>`${avg(bids.price)}`.as("averagePrice"),
-            count: sql`count(*)`.as("count"),
-            maxPrice: sql<number>`${max(bids.price)}`,
-            minPrice: sql<number>`${min(bids.price)}`,
-          })
-          .from(bidsRelationships)
-          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
-          .where(and(...filterConditions(data, bids)));
-      } catch (err) {
-        throw new TRPCError({
-          message:
-            "An error occured whilst fetching the listing's bid statsitcs.",
-          code: "INTERNAL_SERVER_ERROR",
-        });
-      }
-
-      try {
-        dailyAverages = await ctx.db
-          .select({
-            day: sql`DATE(${bids.createdAt})`,
-            averagePrice: sql<number>`avg(${bids.price})`,
-          })
-          .from(bids)
-          .innerJoin(bidsRelationships, eq(bids.id, bidsRelationships.bidId))
-          .where(and(...filterConditions(data, bids)))
-          .orderBy(sql`DATE(${bids.createdAt})`)
-          .groupBy(sql`DATE(${bids.createdAt})`)
-          .limit(30);
-      } catch (err) {
-        throw new TRPCError({
-          message: "An error occured whilst fetching the bid time series data.",
-          code: "INTERNAL_SERVER_ERROR",
-        });
-      }
-
-      return {
-        stats,
-        dailyAverages,
-      } as any;
-    }),
   createJobBid: companyOwnerProcedure
     .input(createJobBidInput)
     .output(createSelectSchema(bids))
@@ -886,7 +699,7 @@ export const bidRouter = createTRPCRouter({
     .input(getUserBidsInput)
     .query(async ({ ctx, input }) => {
       const { orderBy, cursor, limit, ...data } = input;
-      console.log(orderBy, cursor, limit, data);
+      const { columnName: orderByColumn, order: orderByOrder } = orderBy;
 
       // Create query conditions based on filters from the query params
       const filterConditions = () => {
@@ -936,37 +749,22 @@ export const bidRouter = createTRPCRouter({
             and(
               ...filterConditions(),
               eq(jobsRelationships.userId, data.id),
-              ...(cursor.length > 1
-                ? [
-                    sql.raw(
-                      `(${cursor
-                        .map(
-                          // @ts-expect-error
-                          ({ columnName }) => `bids.${bids[columnName].name}`,
-                        )
-                        .join(", ")}) <= (${cursor
-                        .map(({ value }) => `'${value}'`)
-                        .join(", ")})`,
-                    ),
-                  ]
-                : cursor.map(({ columnName, value, order }) =>
-                    order === "gte"
-                      ? // @ts-expect-error
-                        gte(bids[columnName], value)
-                      : // @ts-expect-error
-                        lte(bids[columnName], value),
-                  )),
+              cursor
+                ? cursor.order === "gte"
+                  ? // @ts-expect-error
+                    gte(jobs[cursor.columnName], cursor.value)
+                  : // @ts-expect-error
+                    lte(jobs[cursor.columnName], cursor.value)
+                : undefined,
             ),
           )
           .limit(limit + 1)
           .orderBy(
-            ...orderBy.map(({ columnName, order }) =>
-              order === "asc"
-                ? // @ts-expect-error
-                  asc(bids[columnName])
-                : // @ts-expect-error
-                  desc(bids[columnName]),
-            ),
+            orderByOrder === "asc"
+              ? // @ts-expect-error
+                asc(jobs[orderByColumn])
+              : // @ts-expect-error
+                desc(jobs[orderByColumn]),
           );
 
         const lastItem = res.length > limit ? res.pop() : null;
@@ -985,6 +783,7 @@ export const bidRouter = createTRPCRouter({
     .input(getCompanyBidsInput)
     .query(async ({ ctx, input }) => {
       const { orderBy, cursor, limit, ...data } = input;
+      const { columnName: orderByColumn, order: orderByOrder } = orderBy;
 
       // Create query conditions based on filters from the query params
       const filterConditions = () => {
@@ -1066,37 +865,22 @@ export const bidRouter = createTRPCRouter({
           .where(
             and(
               ...filterConditions(),
-              ...(cursor.length > 1
-                ? [
-                    sql.raw(
-                      `(${cursor
-                        .map(
-                          // @ts-expect-error
-                          ({ columnName }) => `bids.${bids[columnName].name}`,
-                        )
-                        .join(", ")}) <= (${cursor
-                        .map(({ value }) => `'${value}'`)
-                        .join(", ")})`,
-                    ),
-                  ]
-                : cursor.map(({ columnName, value, order }) =>
-                    order === "gte"
-                      ? // @ts-expect-error
-                        gte(bids[columnName], value)
-                      : // @ts-expect-error
-                        lte(bids[columnName], value),
-                  )),
+              cursor
+                ? cursor.order === "gte"
+                  ? // @ts-expect-error
+                    gte(jobs[cursor.columnName], cursor.value)
+                  : // @ts-expect-error
+                    lte(jobs[cursor.columnName], cursor.value)
+                : undefined,
             ),
           )
           .limit(limit + 1)
           .orderBy(
-            ...orderBy.map(({ columnName, order }) =>
-              order === "asc"
-                ? // @ts-expect-error
-                  asc(bids[columnName])
-                : // @ts-expect-error
-                  desc(bids[columnName]),
-            ),
+            orderByOrder === "asc"
+              ? // @ts-expect-error
+                asc(jobs[orderByColumn])
+              : // @ts-expect-error
+                desc(jobs[orderByColumn]),
           )
           .$dynamic();
 
@@ -1149,5 +933,441 @@ export const bidRouter = createTRPCRouter({
           code: "INTERNAL_SERVER_ERROR",
         });
       }
+    }),
+  getJobBids: authenticatedProcedure
+    .input(getJobBidsInput)
+    .query(async ({ ctx, input }) => {
+      const { jobId, orderBy, cursor, limit, ...data } = input;
+      const { columnName: orderByColumn, order: orderByOrder } = orderBy;
+
+      //Verify the user owns the job or the company that owns the job
+      const [jobRelationData] = await ctx.db
+        .select({
+          companyId: jobsRelationships.companyId,
+          userId: jobsRelationships.userId,
+        })
+        .from(jobsRelationships)
+        .where(and(eq(jobsRelationships.jobId, jobId)))
+        .limit(1);
+
+      if (!jobRelationData) {
+        throw new TRPCError({
+          message: "Error fetching data.",
+          code: "NOT_FOUND",
+        });
+      }
+
+      if (!jobRelationData.companyId && !jobRelationData.userId) {
+        throw new TRPCError({
+          message: "The fetched data was malformed.",
+          code: "UNPROCESSABLE_CONTENT",
+        });
+      }
+
+      if (
+        (jobRelationData.companyId &&
+          !ctx.session.user.ownedCompanies
+            .map((company) => company.id)
+            .includes(jobRelationData.companyId)) ||
+        (jobRelationData.userId &&
+          jobRelationData.userId !== ctx.session.user.id)
+      ) {
+        throw new TRPCError({
+          message: "Unauthorized to access this data.",
+          code: "FORBIDDEN",
+        });
+      }
+
+      // Create query conditions based on filters from the query params
+      const filterConditions = () => {
+        const conditions = [
+          inArray(bids.status, data.status),
+          inArray(bids.isActive, data.isActive),
+        ];
+
+        const addCondition = (
+          conditionFn: Function,
+          field: any,
+          value: any,
+        ) => {
+          if (value) {
+            conditions.push(conditionFn(field, value));
+          }
+        };
+
+        addCondition(gte, bids.price, data.minPrice);
+        addCondition(lte, bids.price, data.maxPrice);
+        addCondition(gte, bids.createdAt, data.minCreatedAt);
+        addCondition(lte, bids.createdAt, data.maxCreatedAt);
+
+        return conditions;
+      };
+
+      try {
+        const res = await ctx.db
+          .select({
+            id: bids.id,
+            price: bids.price,
+            createdAt: bids.createdAt,
+            companyId: bids.companyId,
+            isActive: bids.isActive,
+            status: bids.status,
+            note: bids.note,
+            job: {
+              id: jobs.id,
+              title: jobs.title,
+            },
+          })
+          .from(bidsRelationships)
+          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .innerJoin(jobs, eq(jobs.id, bidsRelationships.jobId))
+          .where(
+            and(
+              ...filterConditions(),
+              eq(jobs.id, jobId),
+              cursor
+                ? cursor.order === "gte"
+                  ? // @ts-expect-error
+                    gte(jobs[cursor.columnName], cursor.value)
+                  : // @ts-expect-error
+                    lte(jobs[cursor.columnName], cursor.value)
+                : undefined,
+            ),
+          )
+          .limit(limit + 1)
+          .orderBy(
+            orderByOrder === "asc"
+              ? // @ts-expect-error
+                asc(jobs[orderByColumn])
+              : // @ts-expect-error
+                desc(jobs[orderByColumn]),
+          );
+
+        const lastItem = res.length > limit ? res.pop() : null;
+        return {
+          cursor: lastItem ? generateCursor(lastItem, orderBy, cursor) : null,
+          data: res.slice(0, limit),
+        };
+      } catch (err) {
+        throw new TRPCError({
+          message: "Error fetching data.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+    }),
+  getContractBids: companyOwnerProcedure
+    .input(getContractBidsInput)
+    .query(async ({ ctx, input }) => {
+      const { contractId, orderBy, cursor, limit, ...data } = input;
+      const { columnName: orderByColumn, order: orderByOrder } = orderBy;
+
+      //Verify the user owns the job or the company that owns the job
+      const [contractRelationData] = await ctx.db
+        .select({
+          companyId: contracts.companyId,
+        })
+        .from(contracts)
+        .where(eq(contracts.id, contractId))
+        .limit(1);
+
+      if (!contractRelationData) {
+        throw new TRPCError({
+          message: "Error fetching data.",
+          code: "NOT_FOUND",
+        });
+      }
+
+      if (
+        !ctx.session.user.ownedCompanies
+          .map((company) => company.id)
+          .includes(contractRelationData.companyId)
+      ) {
+        throw new TRPCError({
+          message: "Unauthorized to access this data.",
+          code: "FORBIDDEN",
+        });
+      }
+
+      // Create query conditions based on filters from the query params
+      const filterConditions = () => {
+        const conditions = [
+          inArray(bids.status, data.status),
+          inArray(bids.isActive, data.isActive),
+        ];
+
+        const addCondition = (
+          conditionFn: Function,
+          field: any,
+          value: any,
+        ) => {
+          if (value) {
+            conditions.push(conditionFn(field, value));
+          }
+        };
+
+        addCondition(gte, bids.price, data.minPrice);
+        addCondition(lte, bids.price, data.maxPrice);
+        addCondition(gte, bids.createdAt, data.minCreatedAt);
+        addCondition(lte, bids.createdAt, data.maxCreatedAt);
+
+        return conditions;
+      };
+
+      try {
+        const res = await ctx.db
+          .select({
+            id: bids.id,
+            price: bids.price,
+            createdAt: bids.createdAt,
+            companyId: bids.companyId,
+            isActive: bids.isActive,
+            status: bids.status,
+            note: bids.note,
+            job: {
+              id: jobs.id,
+              title: jobs.title,
+            },
+          })
+          .from(bidsRelationships)
+          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .innerJoin(contracts, eq(contracts.id, bidsRelationships.contractId))
+          .where(
+            and(
+              ...filterConditions(),
+              eq(contracts.id, contractId),
+              cursor
+                ? cursor.order === "gte"
+                  ? // @ts-expect-error
+                    gte(jobs[cursor.columnName], cursor.value)
+                  : // @ts-expect-error
+                    lte(jobs[cursor.columnName], cursor.value)
+                : undefined,
+            ),
+          )
+          .limit(limit + 1)
+          .orderBy(
+            orderByOrder === "asc"
+              ? // @ts-expect-error
+                asc(jobs[orderByColumn])
+              : // @ts-expect-error
+                desc(jobs[orderByColumn]),
+          );
+
+        const lastItem = res.length > limit ? res.pop() : null;
+        return {
+          cursor: lastItem ? generateCursor(lastItem, orderBy, cursor) : null,
+          data: res.slice(0, limit),
+        };
+      } catch (err) {
+        throw new TRPCError({
+          message: "Error fetching data.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+    }),
+  getJobBidStats: authenticatedProcedure
+    .input(getJobBidStatsInput)
+    .output(getBidStatsOutput)
+    .query(async ({ ctx, input: data }) => {
+      // Make sure user either owns a company or owns the job or contract
+      if (!ctx.session.user.ownedCompanies) {
+        try {
+          const [job] = await ctx.db
+            .select({
+              userId: jobsRelationships.userId,
+            })
+            .from(jobs)
+            .innerJoin(jobsRelationships, eq(jobs.id, jobsRelationships.jobId))
+            .where(eq(jobs.id, data.jobId))
+            .limit(1);
+
+          if (!job) {
+            throw new TRPCError({
+              message: "Not authenticated to view this job data.",
+              code: "FORBIDDEN",
+            });
+          }
+        } catch (err) {
+          throw new TRPCError({
+            message: "An error occured whilst fetching the job data.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+      }
+
+      // Create query conditions based on filters from the query params
+      const filterConditions = (params: any, bids: any) => {
+        const conditions = [
+          inArray(bids.status, data.status),
+          inArray(bids.isActive, data.isActive),
+        ];
+
+        const addCondition = (
+          conditionFn: Function,
+          field: any,
+          value: any,
+        ) => {
+          if (value) {
+            conditions.push(conditionFn(field, value));
+          }
+        };
+
+        addCondition(gte, bids.price, data.minPrice);
+        addCondition(lte, bids.price, data.maxPrice);
+        addCondition(gte, bids.createdAt, data.minCreatedAt);
+        addCondition(lte, bids.createdAt, data.maxCreatedAt);
+
+        return conditions;
+      };
+
+      let stats, dailyAverages;
+
+      try {
+        [stats] = await ctx.db
+          .select({
+            medianPrice:
+              sql<number>`percentile_cont(0.5) within group (order by ${bids.price})`.as(
+                "medianPrice",
+              ),
+            averagePrice: sql<number>`${avg(bids.price)}`.as("averagePrice"),
+            count: sql`count(*)`.as("count"),
+            maxPrice: sql<number>`${max(bids.price)}`,
+            minPrice: sql<number>`${min(bids.price)}`,
+          })
+          .from(bidsRelationships)
+          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .where(
+            and(
+              ...filterConditions(data, bids),
+              eq(bidsRelationships.jobId, data.jobId),
+            ),
+          );
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError({
+          message:
+            "An error occured whilst fetching the listing's bid statsitcs.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+
+      try {
+        dailyAverages = await ctx.db
+          .select({
+            day: sql`DATE(${bids.createdAt})`,
+            averagePrice: sql<number>`avg(${bids.price})`,
+          })
+          .from(bids)
+          .innerJoin(bidsRelationships, eq(bids.id, bidsRelationships.bidId))
+          .where(
+            and(
+              ...filterConditions(data, bids),
+              eq(bidsRelationships.jobId, data.jobId),
+            ),
+          )
+          .orderBy(sql`DATE(${bids.createdAt})`)
+          .groupBy(sql`DATE(${bids.createdAt})`)
+          .limit(30);
+      } catch (err) {
+        console.log(err);
+
+        throw new TRPCError({
+          message: "An error occured whilst fetching the bid time series data.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+
+      return {
+        stats,
+        dailyAverages,
+      } as any;
+    }),
+  getContractBidStats: companyOwnerProcedure
+    .input(getContractBidStatsInput)
+    .output(getBidStatsOutput)
+    .query(async ({ ctx, input: data }) => {
+      // Create query conditions based on filters from the query params
+      const filterConditions = (params: any, bids: any) => {
+        const conditions = [
+          inArray(bids.status, data.status),
+          inArray(bids.isActive, data.isActive),
+        ];
+
+        const addCondition = (
+          conditionFn: Function,
+          field: any,
+          value: any,
+        ) => {
+          if (value) {
+            conditions.push(conditionFn(field, value));
+          }
+        };
+
+        addCondition(gte, bids.price, data.minPrice);
+        addCondition(lte, bids.price, data.maxPrice);
+        addCondition(gte, bids.createdAt, data.minCreatedAt);
+        addCondition(lte, bids.createdAt, data.maxCreatedAt);
+
+        return conditions;
+      };
+
+      let stats, dailyAverages;
+
+      try {
+        [stats] = await ctx.db
+          .select({
+            medianPrice:
+              sql<number>`percentile_cont(0.5) within group (order by ${bids.price})`.as(
+                "medianPrice",
+              ),
+            averagePrice: sql<number>`${avg(bids.price)}`.as("averagePrice"),
+            count: sql`count(*)`.as("count"),
+            maxPrice: sql<number>`${max(bids.price)}`,
+            minPrice: sql<number>`${min(bids.price)}`,
+          })
+          .from(bidsRelationships)
+          .innerJoin(bids, eq(bids.id, bidsRelationships.bidId))
+          .where(
+            and(
+              ...filterConditions(data, bids),
+              eq(bidsRelationships.contractId, data.contractId),
+            ),
+          );
+      } catch (err) {
+        throw new TRPCError({
+          message:
+            "An error occured whilst fetching the listing's bid statsitcs.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+
+      try {
+        dailyAverages = await ctx.db
+          .select({
+            day: sql`DATE(${bids.createdAt})`,
+            averagePrice: sql<number>`avg(${bids.price})`,
+          })
+          .from(bids)
+          .innerJoin(bidsRelationships, eq(bids.id, bidsRelationships.bidId))
+          .where(
+            and(
+              ...filterConditions(data, bids),
+              eq(bidsRelationships.contractId, data.contractId),
+            ),
+          )
+          .orderBy(sql`DATE(${bids.createdAt})`)
+          .groupBy(sql`DATE(${bids.createdAt})`)
+          .limit(30);
+      } catch (err) {
+        throw new TRPCError({
+          message: "An error occured whilst fetching the bid time series data.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+
+      return {
+        stats,
+        dailyAverages,
+      } as any;
     }),
 });

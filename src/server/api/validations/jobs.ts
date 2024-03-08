@@ -96,6 +96,10 @@ export const createJobInput = createInsertSchema(jobs, {
           .refine((str) => base64Regex.test(str), {
             message: "Invalid base64 image format",
           }),
+        {
+          invalid_type_error: "Images must be an array",
+          required_error: "Images cannot be null or empty",
+        },
       )
       .max(8, {
         message: "You can only provide up to 8 images",
@@ -105,12 +109,20 @@ export const createJobInput = createInsertSchema(jobs, {
       .array(
         z.string({
           invalid_type_error: "Tag must be a string",
-          required_error: "Tag is required",
+          required_error: "Tag cannot be null or empty",
         }),
+        {
+          invalid_type_error: "Tags must be an array",
+          required_error: "Tags cannot be null or empty",
+        },
       )
       .max(20, {
         message: "You can only provide up to 20 tags",
-      }),
+      })
+      .optional(),
+  })
+  .strict({
+    message: "No additional properties are allowed in the object.",
   })
   .superRefine((data, ctx) => {
     if (!data.userId && !data.companyId) {
@@ -130,7 +142,147 @@ export const createJobInput = createInsertSchema(jobs, {
     return true;
   });
 
-export const getJobInput = z
+export type createJobInputType = z.infer<typeof createJobInput>;
+
+export const updateJobInput = createInsertSchema(jobs, {
+  title: z
+    .string({
+      invalid_type_error: "Title must be a string",
+      required_error: "Title is required",
+    })
+    .max(100, {
+      message: "Title must be less than 100 characters",
+    })
+    .optional(),
+  description: z
+    .string({
+      invalid_type_error: "Description must be a string",
+      required_error: "Description is required",
+    })
+    .max(3000, {
+      message: "Description must be less than 3000 characters",
+    })
+    .optional(),
+  industry: z
+    .string({
+      invalid_type_error: "Industry must be a string",
+    })
+    .max(100, {
+      message: "Industry must be less than 100 characters",
+    })
+    .optional(),
+  isCommercialProperty: z
+    .boolean({
+      invalid_type_error: "isCommercialProperty must be a boolean",
+    })
+    .optional(),
+  startDate: z.coerce
+    .date({
+      invalid_type_error: "startDate must be a date",
+    })
+    .optional(),
+  startDateFlag: z
+    .enum(enumStartDateFlag.enumValues, {
+      invalid_type_error: "startDateFlag must be a valid enum value",
+    })
+    .optional(),
+  propertyType: z
+    .enum(enumPropertyType.enumValues, {
+      required_error: "propertyType is required",
+      invalid_type_error: "propertyType must be a valid enum value",
+    })
+    .optional(),
+})
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    isActive: true,
+    addressId: true,
+  })
+  .extend({
+    id: z
+      .string({
+        required_error: "Job ID is required",
+        invalid_type_error: "Job ID must be a string",
+      })
+      .uuid({
+        message: "Job ID must be a valid UUID",
+      }),
+    address: createAddressInput.optional(),
+    addedBase64Images: z
+      .array(
+        z
+          .string({
+            invalid_type_error:
+              "Image must be a base64 string representation of a image",
+            required_error: "Image is required",
+          })
+          .refine((str) => base64Regex.test(str), {
+            message: "Invalid base64 image format",
+          }),
+      )
+      .max(8, {
+        message: "You can only provide up to 8 images",
+      })
+      .optional(),
+    removedMediaUrls: z
+      .array(
+        z
+          .string({
+            invalid_type_error: "Media URL must be a string",
+            required_error: "Media URL is required",
+          })
+          .url({
+            message: "Media URL must be a valid URL",
+          }),
+      )
+      .max(8, {
+        message: "You can only provide up to 8 media URLs",
+      })
+      .optional(),
+    tags: z
+      .array(
+        z
+          .string({
+            invalid_type_error: "Tag must be a string",
+            required_error: "Tag cannot be null or empty",
+          })
+          .max(30, {
+            message: "Tag must be less than 30 characters",
+          }),
+        {
+          invalid_type_error: "Tags must be an array",
+          required_error: "Tags cannot be null or empty",
+        },
+      )
+      .max(15, {
+        message: "You can only provide up to 20 tags",
+      })
+      .optional(),
+    isActive: z
+      .boolean({
+        required_error: "isActive is required",
+        invalid_type_error: "isActive must be a boolean",
+      })
+      .optional(),
+  })
+  .strict({
+    message: "No additional properties are allowed in the object.",
+  });
+
+export const deleteJobInput = z.object({
+  id: z
+    .string({
+      required_error: "Job ID is required",
+      invalid_type_error: "Job ID must be a string",
+    })
+    .uuid({
+      message: "Job ID must be a valid UUID",
+    }),
+});
+
+export const getJobsByIdsInput = z
   .object({
     ids: z
       .array(
@@ -221,6 +373,12 @@ export const getJobInput = z
         },
       )
       .optional(),
+    shortDescription: z
+      .boolean({
+        invalid_type_error: "Short description must be a boolean",
+      })
+      .optional()
+      .default(false),
     isActive: z
       .array(z.boolean(), {
         required_error: "Valid activity is required.",
@@ -231,94 +389,110 @@ export const getJobInput = z
       })
       .optional()
       .default([true]),
+    limit: z
+      .number({
+        required_error: "Limit is required.",
+        invalid_type_error: "Limit must be a number.",
+      })
+      .max(50, {
+        message: "Limit cannot exceed 50.",
+      })
+      .optional()
+      .default(15),
     orderBy: z
-      .array(
-        z.object({
-          columnName: z.enum(
-            // @ts-ignore
-            jobTableColumns,
-            {
-              required_error: "Order by field is required.",
-              invalid_type_error: "Order by field must be a valid column name.",
-            },
-          ),
-          order: z
-            .enum(["asc", "desc"], {
-              required_error: "Order by direction is required.",
-              invalid_type_error:
-                "Order by direction must be either 'asc' or 'desc'.",
-            })
-            .optional()
-            .default("asc"),
-        }),
-      )
-      .max(jobTableColumns.length, {
-        message: "Order by array cannot have repeated values.",
+      .object({
+        columnName: z.enum(
+          // @ts-ignore
+          jobTableColumns,
+          {
+            required_error: "Order by field is required.",
+            invalid_type_error: "Order by field must be a valid column name.",
+          },
+        ),
+        order: z
+          .enum(["asc", "desc"], {
+            required_error: "Order by direction is required.",
+            invalid_type_error:
+              "Order by direction must be either 'asc' or 'desc'.",
+          })
+          .optional()
+          .default("asc"),
       })
-      .refine(
-        (data) => {
-          const unique = new Set(data.map((item) => item.columnName));
-          return unique.size === data.length;
-        },
-        {
-          message: "`orderBy` array cannot have duplicate column names.",
-        },
-      )
+      .strict({
+        message: "No additional properties are allowed in the order object.",
+      })
       .optional()
-      .default([
-        {
-          columnName: "id",
-          order: "asc",
-        },
-      ]),
+      .default({
+        columnName: "id",
+        order: "asc",
+      }),
     cursor: z
-      .array(
-        z.object({
-          columnName: z.enum(
-            // @ts-ignore
-            jobTableColumns,
-            {
-              required_error: "Cursor column name field is required.",
-              invalid_type_error:
-                "Cursor column name field must be a valid column name.",
-            },
-          ),
-          value: z.union(
-            [z.string(), z.number(), z.date(), z.boolean(), z.null()],
-            {
-              required_error: "Cursor value field is required.",
-              invalid_type_error: "Cursor value field must be a valid value.",
-            },
-          ),
-          order: z
-            .enum(["gte", "lte"], {
-              required_error: "Cursor order field is required.",
-              invalid_type_error:
-                "Cursor order field must be either 'lte' or 'gte'.",
-            })
-            .optional()
-            .default("lte"),
-        }),
-        {
-          required_error: "Cursor is required.",
-          invalid_type_error: "Cursor must be an array of cursor objects.",
-        },
-      )
-      .max(jobTableColumns.length, {
-        message: "Order by array cannot have repeated values.",
+      .object({
+        columnName: z.enum(
+          // @ts-ignore
+          jobTableColumns,
+          {
+            required_error: "Cursor column name field is required.",
+            invalid_type_error:
+              "Cursor column name field must be a valid column name.",
+          },
+        ),
+        value: z.union(
+          [z.string(), z.number(), z.date(), z.boolean(), z.null()],
+          {
+            required_error: "Cursor value field is required.",
+            invalid_type_error: "Cursor value field must be a valid value.",
+          },
+        ),
+        order: z
+          .enum(["gte", "lte"], {
+            required_error: "Cursor order field is required.",
+            invalid_type_error:
+              "Cursor order field must be either 'lte' or 'gte'.",
+          })
+          .optional()
+          .default("lte"),
       })
-      .refine(
-        (data) => {
-          const unique = new Set(data.map((item) => item.columnName));
-          return unique.size === data.length;
-        },
-        {
-          message: "`orderBy` array cannot have duplicate column names.",
-        },
-      )
-      .optional()
-      .default([]),
+      .strict()
+      .optional(),
   })
   .strict({
     message: "No additional properties are allowed in the object.",
   });
+
+export const getJobAndRelatedByIdInput = z
+  .object({
+    id: z
+      .string({
+        required_error: "Job ID is required",
+        invalid_type_error: "Job ID must be a string",
+      })
+      .uuid({
+        message: "Job ID must be a valid UUID",
+      }),
+  })
+  .strict({
+    message: "No additional properties are allowed in the object.",
+  });
+
+export const getCompanyJobsInput = getJobsByIdsInput.extend({
+  companyId: z
+    .string({
+      required_error: "Company ID is required",
+      invalid_type_error: "Company ID must be a string",
+    })
+    .uuid({
+      message: "Company ID must be a valid UUID",
+    }),
+});
+
+export const getUserJobsInput = getJobsByIdsInput.extend({
+  userId: z
+    .string({
+      required_error: "User ID is required",
+      invalid_type_error: "User ID must be a string",
+    })
+    .uuid({
+      message: "User ID must be a valid UUID",
+    }),
+});
