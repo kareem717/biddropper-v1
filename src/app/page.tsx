@@ -1,29 +1,41 @@
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/shadcn/ui/button";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
-import CreateProjectForm from "@/components/forms/create-project";
+import CreateProjectForm from "@/components/forms/legacy/create-project";
+import { api } from "@/trpc/server";
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import { AppRouter } from "@/server/api/root";
+import { bids } from "@/server/db/schema/tables/content";
+import { getTableColumns } from "drizzle-orm";
 
+type RouterOutput = inferRouterOutputs<AppRouter>;
 export default async function Home() {
-	const session = await getServerSession(authOptions);
-	return (
-		<main>
-			<div className="flex flex-row gap-4 pt-[60px]">
-				<a href="/contracts" className={buttonVariants()}>
-					Contracts
-				</a>
+  const session = await getServerSession(authOptions);
+  console.log(session?.user.ownedCompanies);
 
-				<a href="/company" className={buttonVariants()}>
-					Company
-				</a>
+  const columnsMap = getTableColumns(bids);
+  const columnNames = Object.keys(getTableColumns(bids));
+  console.log(columnsMap, columnNames);
 
-				<a href="/create-job" className={buttonVariants()}>
-					Create Job
-				</a>
-				<a href="/job-view" className={buttonVariants()}>
-					job view
-				</a>
-			</div>
-			<pre>{JSON.stringify(session, null, 2)}</pre>
-		</main>
-	);
+  return (
+    <main>
+      <div className="flex flex-row gap-4 pt-[60px]">
+        <a href="/contracts" className={buttonVariants()}>
+          Contracts
+        </a>
+
+        <a href="/company" className={buttonVariants()}>
+          Company
+        </a>
+
+        <a href="/create-job" className={buttonVariants()}>
+          Create Job
+        </a>
+        <a href="/job-view" className={buttonVariants()}>
+          job view
+        </a>
+      </div>
+      <pre>{JSON.stringify(session, null, 2)}</pre>
+    </main>
+  );
 }

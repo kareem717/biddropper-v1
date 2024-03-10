@@ -1,0 +1,48 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1702964511430,
+      "tag": "0000_messy_johnny_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1704065868979,
+      "tag": "0001_tense_bloodaxe",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1704156024232,
+      "tag": "0002_perpetual_silk_fever",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1704177215113,
+      "tag": "0003_robust_captain_stacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1704251877323,
+      "tag": "0004_workable_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1704376164956,
+      "tag": "0005_dizzy_shotgun",
+      "breakpoints": true
+    }
+  ]
+}

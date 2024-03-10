@@ -1,116 +1,93 @@
-import * as React from "react";
-import { db } from "@/db";
-import {
-	contractJobs,
-	contracts,
-	companies,
-	companyJobs,
-	jobs,
-	contractBids,
-} from "@/db/migrations/schema";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+"use client";
+
 import { redirect } from "next/navigation";
-import { eq, sql } from "drizzle-orm";
-import BidButton from "@/components/bid-button";
-import ContractCard from "@/components/contract-cards/small";
-//TODO: can thus be cone with zustand/react-query?
-export default async function ContractPage() {
-	const session = await getServerSession(authOptions);
+import { useSession } from "next-auth/react";
+import { useFetchContracts } from "@/hooks/api/contracts/use-fetch-contracts";
+import SmallContractCard from "@/components/cards/contract-cards/small-contract-card";
+import BigContractCard from "@/components/cards/contract-cards/big-contract-card";
+import { useEffect, useState } from "react";
+import useContractList from "@/hooks/use-contract-list";
 
-	if (!session || !session.user.ownedCompanies) {
-		redirect("/");
-	}
+export const ContractPage = () => {
+  const session = useSession();
+  const { selected, select } = useContractList();
 
-	const companyOptions = session.user.ownedCompanies.map((company) => {
-		return {
-			id: company.id,
-			name: company.name,
-		};
-	});
+  if (!session) {
+    redirect("/");
+  }
 
-	//* Boy oh boy what a W query
-	const data = await db
-		.select({
-			contracts,
-			//! bruh i just realized this isnt nessesary cause im reducing it anyways bruh
-			jobs_per_contract: sql`(
-				SELECT COUNT(*)
-				FROM ${contractJobs}
-				WHERE ${contractJobs.contractId} = ${contracts.id}
-			)`,
-			bids_per_contract: sql`(
-				SELECT COUNT(*)
-				FROM ${contractBids}
-				WHERE ${contractBids.contractId} = ${contracts.id}
-			)`,
-			companies_in_contract: sql`(
-				(SELECT count(DISTINCT ${companies.id}))
-			)`,
-		})
-		.from(companies)
-		.where(eq(companies.ownerId, session.user.id))
-		.innerJoin(companyJobs, eq(companyJobs.companyId, companies.id))
-		.innerJoin(jobs, eq(jobs.id, companyJobs.jobId))
-		.innerJoin(contractJobs, eq(contractJobs.jobId, jobs.id))
-		.innerJoin(contracts, eq(contracts.id, contractJobs.contractId))
-		.groupBy(contracts.id, jobs.id, companies.id);
+  const companyOptions = session.data?.user.ownedCompanies.map((company) => {
+    return {
+      id: company.id,
+      name: company.name,
+    };
+  });
 
-	console.log(data);
+  const contractData = useFetchContracts({
+    limit: 25,
+    fetchType: "simple",
+  });
 
-	const cleanData = data.reduce((output, currRow) => {
-		const currentContract = currRow.contracts;
+  const {
+    data: contracts,
+    isLoading,
+    isError,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
+  } = contractData;
 
-		if (!output[currentContract.id]) {
-			output[currentContract.id] = {
-				...currentContract,
-				totalJobs: Number(currRow.jobs_per_contract),
-				totalBids: Number(currRow.bids_per_contract),
-			};
-		}
+  useEffect(() => {
+    if (contracts?.pages[0]?.data[0]?.id) {
+      select(contracts.pages[0].data[0].id);
+    }
+  }, [contracts, select]);
 
-		return output;
-	}, {} as Record<string, any>);
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-	return (
-		<main>
-			<div className="flex grow">
-				<div className="mx-auto flex max-w-7xl grow flex-col bg-white py-6 text-black">
-					<div className="flex grow flex-col">
-						{/* //TODO: make this a lazy loaded component */}
-						<ul className="flex  w-full flex-col items-center justify-center gap-5 overflow-y-auto p-6 md:grid md:grid-cols-2 lg:grid-cols-3">
-							{Object.values(cleanData).map((contract) => {
-								return (
-									<li
-										key={contract.id}
-										className="w-full flex flex-col items-center justify-center gap-2"
-									>
-										<ContractCard
-											id={contract.id}
-											title={contract.title}
-											isActive={contract.isActive}
-											price={contract.price}
-											companiesInContract={contract.companies_in_contract}
-											endDate={contract.endDate}
-											totalJobs={contract.totalJobs}
-											totalBids={contract.totalBids}
-											createdAt={contract.createdAt}
-										/>
-									</li>
-								);
-							})}
-						</ul>
-						{/* <BidButton
-							jobId={"job_5e2102b5-c3ba-4d97-ad4e-e1ac54e16c7e"}
-							companies={companyOptions}
-						/>
-						<BidButton
-							contractId={"cntr_7289948b-69b4-4def-970f-36999ffd3456"}
-							companies={companyOptions}
-						/> */}
-					</div>
-				</div>
-			</div>
-		</main>
-	);
-}
+  if (isError) {
+    return <div>Error</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-2 grid-rows-1">
+      <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {contracts?.pages.map((page, _index) => {
+            return page.data.map((contract) => {
+              console.log(contract);
+              return (
+                <div key={contract.id}>
+                  <SmallContractCard
+                    id={contract.id}
+                    details={contract.description}
+                    title={contract.title}
+                    isActive={contract.isActive}
+                    price={contract.price}
+                    endDate={contract.endDate}
+                    createdAt={new Date(Date.parse(contract.createdAt))}
+                    totalJobs={contract.jobCount}
+                    totalBids={contract.bidCount}
+                    companiesInContract={contract.companyCount}
+                  />
+                </div>
+              );
+            });
+          })}
+        </div>
+        <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+          {isFetchingNextPage
+            ? "Loading more..."
+            : hasNextPage
+              ? "Load More"
+              : "Nothing to load"}
+        </button>
+      </div>
+      <div>{<BigContractCard id={selected} />}</div>
+    </div>
+  );
+};
+
+export default ContractPage;

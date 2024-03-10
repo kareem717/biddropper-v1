@@ -1,222 +1,129 @@
-import {
-	useImperativeHandle,
-	forwardRef,
-	useState,
-	useRef,
-	useEffect,
-	Ref,
-} from "react";
-import { AddressAutofill } from "@mapbox/search-js-react";
-import type { AddressAutofillRetrieveResponse } from "@mapbox/search-js-core";
+import { ComponentPropsWithoutRef, useMemo, useState, FC } from "react";
 import { env } from "@/env.mjs";
-import { Input } from "../ui/input";
-import mapboxgl from "mapbox-gl";
-import { Slider } from "@/components/ui/slider";
-import * as turf from "@turf/turf";
-import { Units } from "@turf/helpers";
-import { Label } from "../ui/label";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMap,
+  Circle,
+  LayerGroup,
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import AddressInput from "./features/address-input";
+import useAddressInput, { type Address } from "@/hooks/use-address-input";
+import { useTheme } from "next-themes";
+import { LabelSlider } from "../ui/label-slider";
+import { cn } from "@/lib/utils/shadcn";
+import useRadiusMap from "@/hooks/use-radius-map";
 
-export type RadiusAddressRef = {
-	address: AddressAutofillRetrieveResponse | undefined;
-	radius: number;
+interface RadiusAddressMapProps extends ComponentPropsWithoutRef<"div"> {
+  addressProps?: ComponentPropsWithoutRef<typeof AddressInput>;
+  mapContainerProps?: ComponentPropsWithoutRef<typeof MapContainer>;
+  defaultPosition?: { lat: number; lng: number };
+  label?: string;
+}
+
+const RadiusAddressMap: FC<RadiusAddressMapProps> = ({
+  addressProps,
+  mapContainerProps,
+  defaultPosition = { lat: 43.6532, lng: -79.3832 },
+  label,
+  className,
+  ...props
+}) => {
+  const { address } = useAddressInput();
+  const { theme } = useTheme();
+  const [radius, setRadius] = useState<number>(50);
+  const { setAddress: setMapAddress, setRadius: setMapRadius } = useRadiusMap();
+
+  const mapStyle = useMemo(
+    () =>
+      theme === "dark"
+        ? env.NEXT_PUBLIC_MAPBOX_STYLE_DARK
+        : env.NEXT_PUBLIC_MAPBOX_STYLE_LIGHT,
+    [theme],
+  );
+
+  const centerPosition = {
+    lat: Number(address?.latitude) || defaultPosition.lat,
+    lng: Number(address?.longitude) || defaultPosition.lng,
+  };
+
+  const MapPanner = () => {
+    const map = useMap();
+    map.panTo(centerPosition);
+    return null;
+  };
+
+  return (
+    <div
+      className={cn(
+        "relative h-60 w-full overflow-hidden rounded-[var(--radius)] sm:h-96",
+        className,
+      )}
+      {...props}
+    >
+      <AddressInput
+        className="absolute right-1 top-1 z-20 h-10 w-3/4 sm:right-2 sm:top-2 sm:h-12 sm:w-2/5"
+        {...addressProps}
+        onRetrieve={(address) => {
+          setMapAddress(address);
+          addressProps?.onRetrieve?.(address);
+        }}
+      />
+      {address && (
+        <div className="absolute bottom-6 z-20 flex w-full items-center justify-center">
+          <LabelSlider
+            defaultValue={[radius]}
+            onValueChange={(val) => {
+              setRadius(val[0] || 0);
+              setMapRadius(val[0] || 0);
+            }}
+            max={9999}
+            step={1}
+            className="w-4/5 sm:w-1/2"
+            label={label || " Radius"}
+          />
+        </div>
+      )}
+      <MapContainer
+        center={centerPosition}
+        zoom={13}
+        scrollWheelZoom={true}
+        zoomControl={false}
+        className="z-0 h-full w-full"
+        {...mapContainerProps}
+      >
+        <MapPanner />
+        <TileLayer
+          attribution='Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a>'
+          url={`https://api.mapbox.com/styles/v1/${mapStyle}/tiles/256/{z}/{x}/{y}@2x?access_token=${env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}`}
+        />
+        {address && (
+          <LayerGroup>
+            <Circle
+              center={centerPosition}
+              pathOptions={{
+                color: "hsl(var(--primary))",
+                fillColor: "hsl(var(--primary))",
+              }}
+              radius={radius * 1000}
+            />
+            <Marker
+              position={centerPosition}
+              icon={
+                new L.Icon({
+                  iconUrl: "/map-marker.svg",
+                  iconSize: [29.375, 40],
+                })
+              }
+            />
+          </LayerGroup>
+        )}
+      </MapContainer>
+    </div>
+  );
 };
 
-interface RadiusAddressProps extends React.ComponentPropsWithoutRef<"div"> {
-	onRetrieve?: (val: AddressAutofillRetrieveResponse) => void;
-	onRadiusChange?: (val: number) => void;
-	radiusSliderLabel?: string;
-	maxRadius?: number;
-	minRadius?: number;
-	defaultRadius?: number;
-	radiusStep?: number;
-	defaultCoordinates?: number[];
-	units?: Units;
-}
-
-function RadiusAddress(
-	{
-		units = "kilometers",
-		radiusSliderLabel = "Select service area radius (km)",
-		onRadiusChange,
-		onRetrieve,
-		maxRadius = 100,
-		minRadius = 1,
-		defaultRadius = 30,
-		radiusStep = 1,
-		defaultCoordinates = [-73.981872, 40.768037],
-		...props
-	}: RadiusAddressProps,
-	ref: Ref<RadiusAddressRef>
-) {
-	const ACCESS_TOKEN = env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-
-	// Mapbox related refs
-	const mapContainer = useRef<HTMLDivElement | null>(null);
-	const map = useRef<mapboxgl.Map | null>(null);
-
-	const [radius, setRadius] = useState<number>(10);
-	const [coordinates, setCoordinates] = useState<number[]>(defaultCoordinates);
-	const [address, setAddress] = useState<
-		AddressAutofillRetrieveResponse | undefined
-	>();
-
-	const handleRetrieve = (res: AddressAutofillRetrieveResponse) => {
-		setAddress(res);
-
-		const retrievedCoordinates = res?.features?.[0]?.geometry?.coordinates;
-		if (!retrievedCoordinates) return;
-
-		setCoordinates(retrievedCoordinates);
-
-		if (map.current) {
-			map.current.flyTo({ center: retrievedCoordinates as any });
-		}
-
-		if (onRetrieve) {
-			onRetrieve(res);
-		}
-	};
-
-	const handleRadiusChange = (numArr: number[]) => {
-		if (!numArr[0]) return;
-		setRadius(numArr[0]);
-		if (onRadiusChange) {
-			onRadiusChange(numArr[0]);
-		}
-	};
-
-	// Initialize map
-	useEffect(() => {
-		if (mapContainer.current && !map.current) {
-			map.current = new mapboxgl.Map({
-				container: mapContainer.current,
-				style: "mapbox://styles/mapbox/outdoors-v11",
-				center: coordinates as any,
-				zoom: 9,
-				accessToken: ACCESS_TOKEN,
-			});
-		}
-	});
-	// Config and initialize service-area circle layer
-	const circleCenter = turf.point(coordinates);
-	const circleOptions = {
-		steps: 80,
-		units,
-	};
-	const circle = turf.circle(circleCenter, radius, circleOptions);
-
-	// Add/update service-area circle layer
-	useEffect(() => {
-		if (map.current) {
-			if (map.current.getSource("circle")) {
-				const source = map.current.getSource(
-					"circle"
-				) as mapboxgl.GeoJSONSource;
-				source.setData(circle);
-			} else {
-				map.current?.on("load", () => {
-					if (map.current) {
-						map.current.addSource("circle", {
-							type: "geojson",
-							data: circle,
-						});
-
-						map.current.addLayer({
-							id: "circle",
-							type: "fill",
-							source: "circle",
-							paint: {
-								"fill-color": "#0080ff",
-								"fill-opacity": 0.5,
-							},
-						});
-
-						// Add circle2 layer
-						map.current.addLayer({
-							id: "circle2",
-							type: "circle",
-							source: {
-								type: "geojson",
-								data: {
-									type: "Feature",
-									geometry: {
-										type: "Point",
-										coordinates: coordinates, // your coordinates here
-									},
-									properties: {},
-								},
-							},
-							paint: {
-								"circle-radius": 10,
-								"circle-color": "#007cbf",
-							},
-						});
-					}
-				});
-			}
-
-			// Update circle2 layer
-			if (map.current.getLayer("circle2")) {
-				const source = map.current.getSource(
-					"circle2"
-				) as mapboxgl.GeoJSONSource;
-				source.setData({
-					type: "Feature",
-					geometry: {
-						type: "Point",
-						coordinates: coordinates,
-					},
-					properties: {},
-				});
-			}
-		}
-	}, [circle, coordinates]);
-
-	// Export ref values
-	useImperativeHandle(
-		ref,
-		() => ({
-			address,
-			radius,
-		}),
-		[address, radius]
-	);
-
-	return (
-		<div {...props}>
-			<div className="flex flex-col mb-6 gap-4 h-full w-full">
-				<div className="col grid-rows-auto w-full">
-					{/* @ts-ignore */}
-					<AddressAutofill
-						accessToken={ACCESS_TOKEN}
-						onRetrieve={handleRetrieve}
-					>
-						<Input
-							name="address"
-							autoComplete="address-line1"
-							placeholder="Enter an address..."
-						/>
-					</AddressAutofill>
-				</div>
-				<div className="map-containerb h-[70%] w-full" ref={mapContainer} />
-				<div className="flex flex-col gap-4 mt-8">
-					<Label htmlFor="radiusSlider">{radiusSliderLabel}</Label>
-					<div className="flex gap-2 justify-between">
-						<Slider
-							id="radiusSlider"
-							defaultValue={[defaultRadius]}
-							max={maxRadius}
-							min={minRadius}
-							step={radiusStep}
-							value={[radius]}
-							onValueChange={handleRadiusChange}
-						/>
-						<span className="whitespace-nowrap">{radius} km</span>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-export default forwardRef(RadiusAddress);
+export default RadiusAddressMap;
