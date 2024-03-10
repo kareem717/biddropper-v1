@@ -74,9 +74,12 @@ import {
   VolumeX,
   Wallet,
   CalendarX,
+  Globe,
+  HomeIcon,
   Loader2Icon,
   AlertCircle,
   X,
+  Cog,
   type LucideIcon,
   type LucideProps,
 } from "lucide-react";
@@ -85,8 +88,10 @@ export type Icon = LucideIcon;
 
 export const Icons = {
   home: Home,
+  homeIcon: HomeIcon,
   building: Building,
   building2: Building2,
+  cog: Cog,
   sun: SunMedium,
   alert: AlertCircle,
   moon: Moon,
@@ -131,6 +136,7 @@ export const Icons = {
   reset: RefreshCw,
   send: Send,
   copy: Copy,
+  globe: Globe,
   phone: Phone,
   mail: Mail,
   monitor: Monitor,

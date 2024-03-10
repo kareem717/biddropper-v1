@@ -1,13 +1,13 @@
-import { db } from "@/server/db/client";
+import { db } from "@/lib/db/client";
 import { eq, and, gte, sql } from "drizzle-orm";
-import { queryParamSchema } from "@/lib/validations/api/(entities)/companies/search/[id]/request";
+import { queryParamSchema } from "@/lib/deprecated/validations/api/(entities)/companies/search/[id]/request";
 import {
   addresses,
   companies,
   industries,
   media,
-} from "@/server/db/schema/tables/content";
-import { industriesToCompanies } from "@/server/db/schema/tables/relations/content";
+} from "@/lib/db/schema/tables/content";
+import { industriesToCompanies } from "@/lib/db/schema/tables/relations/content";
 import { parse } from "url";
 
 export async function GET(

@@ -1,4 +1,4 @@
-import { env } from "@/env.mjs";
+import { env } from "@/lib/env.mjs";
 import { SupabaseClient, createClient } from "@supabase/supabase-js";
 
 let storageClient: SupabaseClient | null = null;

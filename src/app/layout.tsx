@@ -1,10 +1,10 @@
-import "@/styles/globals.css";
+import "@/app/globals.css";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
-import { Toaster } from "@/components/shadcn/ui/toaster";
-import { ThemeProvider } from "@/components/shadcn/ui/theme-provider";
-import { TRPCReactProvider } from "@/trpc/react";
-import AuthSessionProvider from "@/components/providers/auth-session-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { TRPCReactProvider } from "@/lib/trpc/react";
+import AuthSessionProvider from "@/components/app/providers/auth-session-provider";
 const roboto = Roboto({ weight: "400", subsets: ["latin"] });
 
 export const metadata: Metadata = {

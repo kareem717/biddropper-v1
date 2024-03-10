@@ -1,13 +1,13 @@
-import { db } from "@/server/db/client";
+import { db } from "@/lib/db/client";
 import { authOptions } from "@/lib/auth";
 import {
   bodyParamSchema,
   queryParamSchema,
-} from "@/lib/validations/api/(entities)/users/request";
+} from "@/lib/deprecated/validations/api/(entities)/users/request";
 import { eq, sql } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { parse } from "url";
-import { account, user } from "@/server/db/schema/tables/auth";
+import { account, user } from "@/lib/db/schema/tables/auth";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { CustomError } from "@/lib/utils";
 

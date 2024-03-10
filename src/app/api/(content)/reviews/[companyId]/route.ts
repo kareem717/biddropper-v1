@@ -1,17 +1,17 @@
-import { db } from "@/server/db/client";
-import { companies, media, reviews } from "@/server/db/schema/tables/content";
+import { db } from "@/lib/db/client";
+import { companies, media, reviews } from "@/lib/db/schema/tables/content";
 import { authOptions } from "@/lib/auth";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import {
   bodyParamSchema,
   queryParamsSchema,
-} from "@/lib/validations/api/(content)/reviews/[companyId]/request";
+} from "@/lib/deprecated/validations/api/(content)/reviews/[companyId]/request";
 import { CustomError } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
-import { env } from "@/env.mjs";
-import { mediaRelationships } from "@/server/db/schema/tables/relations/content";
+import { env } from "@/lib/env.mjs";
+import { mediaRelationships } from "@/lib/db/schema/tables/relations/content";
 import { parse } from "url";
 
 export async function POST(

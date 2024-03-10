@@ -1,14 +1,14 @@
-import { db } from "@/server/db/client";
-import { bids, contracts, jobs } from "@/server/db/schema/tables/content";
+import { db } from "@/lib/db/client";
+import { bids, contracts, jobs } from "@/lib/db/schema/tables/content";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { parse } from "url";
 import { avg, max, min, sql } from "drizzle-orm";
 import {
   bidsRelationships,
   jobsRelationships,
-} from "@/server/db/schema/tables/relations/content";
+} from "@/lib/db/schema/tables/relations/content";
 import { createFilterConditions } from "@/lib/utils";
-import { queryParamSchema } from "@/lib/validations/api/(content)/bids/request";
+import { queryParamSchema } from "@/lib/deprecated/validations/api/(content)/bids/request";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { CustomError } from "@/lib/utils";
