@@ -1,13 +1,13 @@
-import { db } from "@/server/db/client";
+import { db } from "@/lib/db/client";
 import { inArray, eq, and, gte, sql } from "drizzle-orm";
-import { bodyParamSchema } from "@/lib/validations/api/(entities)/companies/search/request";
+import { bodyParamSchema } from "@/lib/deprecated/validations/api/(entities)/companies/search/request";
 import {
   addresses,
   companies,
   industries,
   media,
-} from "@/server/db/schema/tables/content";
-import { industriesToCompanies } from "@/server/db/schema/tables/relations/content";
+} from "@/lib/db/schema/tables/content";
+import { industriesToCompanies } from "@/lib/db/schema/tables/relations/content";
 
 export async function POST(req: Request) {
   const isGetOverideReq = req.headers.get("X-HTTP-Method-Override");

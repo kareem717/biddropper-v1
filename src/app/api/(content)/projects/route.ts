@@ -1,10 +1,10 @@
-import { db } from "@/server/db/client";
-import { media, projects } from "@/server/db/schema/tables/content";
-import { mediaRelationships } from "@/server/db/schema/tables/relations/content";
+import { db } from "@/lib/db/client";
+import { media, projects } from "@/lib/db/schema/tables/content";
+import { mediaRelationships } from "@/lib/db/schema/tables/relations/content";
 import {
   queryParamsSchema,
   bodyParamsSchema,
-} from "@/lib/validations/api/(content)/projects/request";
+} from "@/lib/deprecated/validations/api/(content)/projects/request";
 import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { parse } from "url";
 import { getServerSession } from "next-auth";
@@ -12,7 +12,7 @@ import { authOptions } from "@/lib/auth";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { CustomError } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
-import { env } from "@/env.mjs";
+import { env } from "@/lib/env.mjs";
 
 export async function GET(req: Request) {
   const { query } = parse(req.url, true);

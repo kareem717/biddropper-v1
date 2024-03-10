@@ -1,18 +1,18 @@
-import { db } from "@/server/db/client";
+import { db } from "@/lib/db/client";
 import { eq, sql } from "drizzle-orm";
-import { queryParamsSchema } from "@/lib/validations/api/(content)/jobs/search/[id]/request";
+import { queryParamsSchema } from "@/lib/deprecated/validations/api/(content)/jobs/search/[id]/request";
 import {
   addresses,
   companies,
   jobs,
   media,
-} from "@/server/db/schema/tables/content";
+} from "@/lib/db/schema/tables/content";
 import {
   jobsRelationships,
   mediaRelationships,
-} from "@/server/db/schema/tables/relations/content";
+} from "@/lib/db/schema/tables/relations/content";
 import { parse } from "url";
-import { user } from "@/server/db/schema/tables/auth";
+import { user } from "@/lib/db/schema/tables/auth";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 

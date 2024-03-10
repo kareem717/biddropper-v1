@@ -4,9 +4,9 @@ import type { Config } from "drizzle-kit";
 dotenv.config({ path: ".env.local" });
 
 export default {
-  schema: "./src/server/db/schema/**/*.ts",
+  schema: "./src/lib/db/schema/**/*.ts",
   driver: "pg",
-  out: "./src/server/db/migrations/",
+  out: "./src/lib/db/migrations/",
   dbCredentials: {
     connectionString: process.env.SUPABASE_DATABASE_URL!,
   },

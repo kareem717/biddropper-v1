@@ -1,11 +1,11 @@
-import { buttonVariants } from "@/components/shadcn/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
-import CreateProjectForm from "@/components/forms/legacy/create-project";
-import { api } from "@/trpc/server";
+import CreateProjectForm from "@/components/app/deprecated/legacy/create-project";
+import { api } from "@/lib/trpc/server";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-import { AppRouter } from "@/server/api/root";
-import { bids } from "@/server/db/schema/tables/content";
+import { AppRouter } from "@/lib/server/root";
+import { bids } from "@/lib/db/schema/tables/content";
 import { getTableColumns } from "drizzle-orm";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;

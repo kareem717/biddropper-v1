@@ -1,5 +1,5 @@
-import { db } from "@/server/db/client";
-import { industries as dbIndustries } from "@/server/db/schema/tables/content";
+import { db } from "@/lib/db/client";
+import { industries as dbIndustries } from "@/lib/db/schema/tables/content";
 
 export async function GET(_req: Request) {
   console.log("GET /api/industries");

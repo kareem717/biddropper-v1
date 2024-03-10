@@ -6,11 +6,11 @@ import {
 } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
-import { db } from "@/server/db/client";
+import { db } from "@/lib/db/client";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { Adapter } from "next-auth/adapters";
-import { env } from "@/env.mjs";
-import { companies } from "@/server/db/schema/tables/content";
+import { env } from "@/lib/env.mjs";
+import { companies } from "@/lib/db/schema/tables/content";
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 

@@ -5,7 +5,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/shadcn/ui/card";
+} from "@/components/ui/card";
 import { OAuthSignIn } from "@/components/auth/oauth-login";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";

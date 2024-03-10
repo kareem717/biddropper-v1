@@ -1,23 +1,23 @@
-import { db } from "@/server/db/client";
+import { db } from "@/lib/db/client";
 import { authOptions } from "@/lib/auth";
 import {
   addresses,
   industries,
   jobs,
   media,
-} from "@/server/db/schema/tables/content";
+} from "@/lib/db/schema/tables/content";
 import { getServerSession } from "next-auth";
 import {
   bodyParamSchema,
   queryParamSchema,
-} from "@/lib/validations/api/(content)/jobs/request";
+} from "@/lib/deprecated/validations/api/(content)/jobs/request";
 import {
   jobsRelationships,
   mediaRelationships,
-} from "@/server/db/schema/tables/relations/content";
+} from "@/lib/db/schema/tables/relations/content";
 import { CustomError } from "@/lib/utils";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
-import { env } from "@/env.mjs";
+import { env } from "@/lib/env.mjs";
 import { v4 as uuidv4 } from "uuid";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { parse } from "url";

@@ -1,11 +1,11 @@
-import { db } from "@/server/db/client";
+import { db } from "@/lib/db/client";
 import { inArray, eq, and, gte, exists, sql, ne } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 import {
   bodyParamSchema,
   queryParamSchema,
-} from "@/lib/validations/api/(entities)/companies/request";
+} from "@/lib/deprecated/validations/api/(entities)/companies/request";
 import { createClient } from "@supabase/supabase-js";
 import { pipeline } from "stream";
 import { promisify } from "util";
@@ -18,7 +18,7 @@ import {
   industries,
   jobs,
   media,
-} from "@/server/db/schema/tables/content";
+} from "@/lib/db/schema/tables/content";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { CustomError } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
@@ -26,8 +26,8 @@ import {
   bidsRelationships,
   industriesToCompanies,
   jobsRelationships,
-} from "@/server/db/schema/tables/relations/content";
-import { env } from "@/env.mjs";
+} from "@/lib/db/schema/tables/relations/content";
+import { env } from "@/lib/env.mjs";
 import { parse } from "url";
 import { text } from "stream/consumers";
 import { headers } from "next/headers";

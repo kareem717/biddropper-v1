@@ -1,16 +1,16 @@
-import { db } from "@/server/db/client";
-import { media, projects } from "@/server/db/schema/tables/content";
-import { mediaRelationships } from "@/server/db/schema/tables/relations/content";
+import { db } from "@/lib/db/client";
+import { media, projects } from "@/lib/db/schema/tables/content";
+import { mediaRelationships } from "@/lib/db/schema/tables/relations/content";
 import { authOptions } from "@/lib/auth";
 import {
   bodyParamSchema,
   queryParamsSchema,
-} from "@/lib/validations/api/(content)/projects/[companyId]/request";
+} from "@/lib/deprecated/validations/api/(content)/projects/[companyId]/request";
 import { CustomError } from "@/lib/utils";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { getServerSession } from "next-auth";
 import { v4 as uuidv4 } from "uuid";
-import { env } from "@/env.mjs";
+import { env } from "@/lib/env.mjs";
 import { parse } from "url";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 
