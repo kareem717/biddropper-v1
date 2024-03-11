@@ -124,11 +124,9 @@ export const companyOwnerProcedure = t.procedure.use(async ({ ctx, next }) => {
 
   return next({
     ctx: {
-      ctx: {
-        session: ctx.session,
-        user: ctx.user,
-        ownedCompanies,
-      },
+      session: ctx.session,
+      user: ctx.user,
+      ownedCompanies,
     },
   });
 });

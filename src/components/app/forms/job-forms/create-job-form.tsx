@@ -31,14 +31,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ComponentPropsWithoutRef, useEffect, useRef, useState } from "react";
+import { ComponentPropsWithoutRef, useEffect, useState } from "react";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Session } from "next-auth";
 import { Checkbox } from "@/components/ui/checkbox";
 import CustomRadioButtons from "@/components/app/custom-radio-buttons";
 import { Icons } from "@/components/icons";
@@ -79,8 +78,6 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
   const [industries] = api.industry.getIndustries.useSuspenseQuery();
 
   const [ownedCompanies] = api.company.getOwnedCompanies.useSuspenseQuery();
-
-  console.log(ownedCompanies, industries);
 
   const { mutateAsync: createJob } = api.job.createJob.useMutation({
     onMutate: (e) => {

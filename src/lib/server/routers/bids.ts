@@ -3,7 +3,12 @@ import {
   authenticatedProcedure,
   companyOwnerProcedure,
 } from "@/lib/server/trpc";
-import { jobs, bids, contracts } from "@/lib/db/schema/tables/content";
+import {
+  jobs,
+  bids,
+  contracts,
+  companies,
+} from "@/lib/db/schema/tables/content";
 import {
   bidsRelationships,
   jobsRelationships,
@@ -46,9 +51,7 @@ export const bidRouter = createTRPCRouter({
     .input(createJobBidInput)
     .output(createSelectSchema(bids))
     .mutation(async ({ ctx, input: data }) => {
-      const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
-        (company) => company.id,
-      );
+      const ownedCompanyIds = ctx.ownedCompanies.map((company) => company.id);
 
       const newId = uuidv4();
 
@@ -155,9 +158,7 @@ export const bidRouter = createTRPCRouter({
     .input(createContractBidInput)
     .output(createSelectSchema(bids))
     .mutation(async ({ ctx, input: data }) => {
-      const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
-        (company) => company.id,
-      );
+      const ownedCompanyIds = ctx.ownedCompanies.map((company) => company.id);
 
       const newId = uuidv4();
 
@@ -280,9 +281,7 @@ export const bidRouter = createTRPCRouter({
     .input(updateBidInput)
     .output(createSelectSchema(bids))
     .mutation(async ({ ctx, input: data }) => {
-      const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
-        (company) => company.id,
-      );
+      const ownedCompanyIds = ctx.ownedCompanies.map((company) => company.id);
 
       const res = await ctx.db.transaction(async (tx) => {
         const [bidExists] = await tx
@@ -395,7 +394,18 @@ export const bidRouter = createTRPCRouter({
     .input(updateBidInput)
     .mutation(async ({ ctx, input: data }) => {
       // Retrieve the list of companies owned by the user
-      const usersOwnedCompanies = ctx.session.user.ownedCompanies;
+      let usersOwnedCompanyIds: { id: string }[] | [];
+      try {
+        usersOwnedCompanyIds = await ctx.db
+          .select({ id: companies.id })
+          .from(companies)
+          .where(eq(companies.ownerId, ctx.user.id));
+      } catch (err) {
+        throw new TRPCError({
+          message: "Error whilst fetching owned companies.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
 
       // Execute database transaction
       const res = await ctx.db.transaction(async (tx) => {
@@ -444,7 +454,7 @@ export const bidRouter = createTRPCRouter({
         // Check if the bid is related to a contract
         if (bidToUpdate.contractId) {
           // Validate if the user owns any companies
-          if (!usersOwnedCompanies.length) {
+          if (!usersOwnedCompanyIds.length) {
             throw new TRPCError({
               message: "Unauthorized to accept or decline this bid.",
               code: "FORBIDDEN",
@@ -462,7 +472,7 @@ export const bidRouter = createTRPCRouter({
                   eq(contracts.id, bidToUpdate.contractId),
                   inArray(
                     contracts.companyId,
-                    usersOwnedCompanies.map((company) => company.id),
+                    usersOwnedCompanyIds.map((company) => company.id),
                   ),
                 ),
               )
@@ -511,10 +521,10 @@ export const bidRouter = createTRPCRouter({
           // Validate if the user is authorized to accept or decline the bid
           if (
             (companyId &&
-              !usersOwnedCompanies
+              !usersOwnedCompanyIds
                 .map((company) => company.id)
                 .includes(companyId)) ||
-            (userId && userId !== ctx.session.user.id)
+            (userId && userId !== ctx.user.id)
           ) {
             throw new TRPCError({
               message: "Unauthorized to accept or decline this bid.",
@@ -645,9 +655,7 @@ export const bidRouter = createTRPCRouter({
     .input(deleteBidInput)
     .output(createSelectSchema(bids))
     .mutation(async ({ ctx, input: data }) => {
-      const ownedCompanyIds = ctx.session.user.ownedCompanies.map(
-        (company) => company.id,
-      );
+      const ownedCompanyIds = ctx.ownedCompanies.map((company) => company.id);
 
       const deletedBid = await ctx.db.transaction(async (tx) => {
         const [bidToDelete] = await tx
@@ -964,13 +972,30 @@ export const bidRouter = createTRPCRouter({
         });
       }
 
-      if (
-        (jobRelationData.companyId &&
-          !ctx.session.user.ownedCompanies
-            .map((company) => company.id)
-            .includes(jobRelationData.companyId)) ||
-        (jobRelationData.userId &&
-          jobRelationData.userId !== ctx.session.user.id)
+      if (jobRelationData.companyId) {
+        try {
+          const ownedCompanies = await ctx.db
+            .select({
+              id: companies.id,
+            })
+            .from(companies)
+            .where(eq(companies.id, jobRelationData.companyId));
+
+          if (!ownedCompanies.length) {
+            throw new TRPCError({
+              message: "Unauthorized to access this data.",
+              code: "FORBIDDEN",
+            });
+          }
+        } catch (err) {
+          throw new TRPCError({
+            message: "Error fetching job's related company data.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+      } else if (
+        jobRelationData.userId &&
+        jobRelationData.userId !== ctx.user.id
       ) {
         throw new TRPCError({
           message: "Unauthorized to access this data.",
@@ -1078,7 +1103,7 @@ export const bidRouter = createTRPCRouter({
       }
 
       if (
-        !ctx.session.user.ownedCompanies
+        !ctx.ownedCompanies
           .map((company) => company.id)
           .includes(contractRelationData.companyId)
       ) {
@@ -1170,29 +1195,47 @@ export const bidRouter = createTRPCRouter({
     .output(getBidStatsOutput)
     .query(async ({ ctx, input: data }) => {
       // Make sure user either owns a company or owns the job or contract
-      if (!ctx.session.user.ownedCompanies) {
-        try {
-          const [job] = await ctx.db
-            .select({
-              userId: jobsRelationships.userId,
-            })
-            .from(jobs)
-            .innerJoin(jobsRelationships, eq(jobs.id, jobsRelationships.jobId))
-            .where(eq(jobs.id, data.jobId))
-            .limit(1);
 
-          if (!job) {
+      try {
+        const ownedCompanies = await ctx.db
+          .select({
+            id: companies.id,
+          })
+          .from(companies)
+          .where(eq(companies.ownerId, ctx.user.id));
+
+        if (!ownedCompanies) {
+          try {
+            const [job] = await ctx.db
+              .select({
+                userId: jobsRelationships.userId,
+              })
+              .from(jobs)
+              .innerJoin(
+                jobsRelationships,
+                eq(jobs.id, jobsRelationships.jobId),
+              )
+              .where(eq(jobs.id, data.jobId))
+              .limit(1);
+
+            if (!job) {
+              throw new TRPCError({
+                message: "Not authenticated to view this job data.",
+                code: "FORBIDDEN",
+              });
+            }
+          } catch (err) {
             throw new TRPCError({
-              message: "Not authenticated to view this job data.",
-              code: "FORBIDDEN",
+              message: "An error occured whilst fetching the job data.",
+              code: "INTERNAL_SERVER_ERROR",
             });
           }
-        } catch (err) {
-          throw new TRPCError({
-            message: "An error occured whilst fetching the job data.",
-            code: "INTERNAL_SERVER_ERROR",
-          });
         }
+      } catch (err) {
+        throw new TRPCError({
+          message: "An error occured whilst fetching the company data.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
       }
 
       // Create query conditions based on filters from the query params

@@ -135,7 +135,6 @@ export const jobRouter = createTRPCRouter({
                 jobId: newJob.id,
               });
             } catch (err) {
-              console.log(err);
               throw new TRPCError({
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Error linking job to company.",
