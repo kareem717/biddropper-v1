@@ -6,13 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { OAuthSignIn } from "@/components/auth/oauth-login";
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth/next";
+import { OAuthLogin } from "@/components/auth/oauth-login";
 
-export default async function SignInPage() {
-  const session = await getServerSession(authOptions);
-  if (session) redirect("/");
+
+export default async function LoginInPage() {
 
   return (
     <div className="inline-block animate-border rounded-[var(--radius)] bg-gradient-to-r from-primary/70 via-secondary to-primary/70 bg-[length:400%_400%] p-1 drop-shadow-xl">
@@ -24,7 +21,7 @@ export default async function SignInPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <OAuthSignIn />
+          <OAuthLogin />
         </CardContent>
       </Card>
     </div>

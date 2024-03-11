@@ -5,7 +5,7 @@ import { redirect, useRouter } from "next/navigation";
 import Navbar from "@/components/app/nav-bar";
 import { useSession } from "next-auth/react";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import {  validateRequest } from "@/lib/auth";
 import ReactQueryProvider from "@/components/app/providers/react-query-provider";
 
 export const metadata: Metadata = {
@@ -21,11 +21,12 @@ export default async function DashboardLayout({
   contractor: React.ReactNode;
   user: React.ReactNode;
 }) {
-  const userSession = await getServerSession(authOptions);
+  const {session} = await validateRequest();
 
-  if (!userSession) redirect("/login");
+  if (!session) redirect("/login");
 
-  const isContractor = userSession?.user?.ownedCompanies?.length > 0;
+  // TODO: use trpc and query owned companies when db schema is updated
+  const isContractor = false;
 
   console.log(isContractor);
   return (

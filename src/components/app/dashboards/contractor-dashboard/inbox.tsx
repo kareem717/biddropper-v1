@@ -20,16 +20,15 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { Session } from "next-auth/core/types";
 import React from "react";
 import { api } from "@/lib/trpc/react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface InboxProps extends ComponentPropsWithoutRef<"div"> {
-  session: Session;
+  userId: string;
 }
 
-const Inbox: React.FC<InboxProps> = ({ className, session, ...props }) => {
+const Inbox: React.FC<InboxProps> = ({ className, userId, ...props }) => {
   const router = useRouter();
   const [redirecting, setRedirecting] = useState(false);
 
@@ -44,7 +43,7 @@ const Inbox: React.FC<InboxProps> = ({ className, session, ...props }) => {
     isRefetching,
   } = api.bid.getUserBids.useInfiniteQuery(
     {
-      id: session.user?.id,
+      id: userId,
       isActive: [true, false],
       status: ["pending", "retracted"],
       limit: 3,

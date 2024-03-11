@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import * as z from "zod";
-import { createAddressInput } from "@/lib/server/validations/address";
+import { createAddressInput } from "@/lib/validations/server/address";
 
 export type Address = z.infer<typeof createAddressInput>;
 

@@ -53,29 +53,34 @@ import { useToast } from "@/components/ui/use-toast";
 import useImageDropzone from "@/lib/hooks/use-image-dropzone";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/trpc/react";
-import { createJobInput } from "@/lib/server/validations/jobs";
+import { createJobInput } from "@/lib/validations/server/jobs";
 import AutoFillMap from "@/components/app/maps/autofill-map";
 import { ToastAction } from "@/components/ui/toast";
 import useAutoFillMap from "@/lib/hooks/use-auto-fill-map";
+import { User } from "lucia";
 
 interface CreateJobFormProps extends ComponentPropsWithoutRef<"div"> {
-  session: Session;
+  user: User;
 }
 
 const formSchema = createJobInput;
 
 const CreateJobForm: React.FC<CreateJobFormProps> = ({
-  session,
+  user,
   className,
   ...props
 }) => {
   const { files } = useImageDropzone();
-  const { data: industries } = api.industry.getIndustries.useQuery();
-  const ownedCompanies = session.user.ownedCompanies;
   const { toast } = useToast();
   const router = useRouter();
   const [isPosting, setIsPosting] = useState(false);
   const { address: mapAddress } = useAutoFillMap();
+
+  const [industries] = api.industry.getIndustries.useSuspenseQuery();
+
+  const [ownedCompanies] = api.company.getOwnedCompanies.useSuspenseQuery();
+
+  console.log(ownedCompanies, industries);
 
   const { mutateAsync: createJob } = api.job.createJob.useMutation({
     onMutate: (e) => {
@@ -86,7 +91,7 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
   const { setValue, ...form } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      userId: !ownedCompanies.length ? session.user.id : undefined,
+      userId: !ownedCompanies.length ? user.id : undefined,
       startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
       startDateFlag: "none",
       base64Images: [],
@@ -151,6 +156,44 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
       },
     );
   }
+
+  // if (industriesIsFetching || companiesIsFetching) {
+  //   return (
+  //     <div
+  //       className={cn(
+  //         "inline-block w-full max-w-screen-md animate-border rounded-[var(--radius)] bg-gradient-to-r from-primary/70 via-secondary to-primary/70 bg-[length:400%_400%] p-1 drop-shadow-xl",
+  //         className,
+  //       )}
+  //       {...props}
+  //     >
+  //       <Card>
+  //         <CardHeader>
+  //           <CardTitle>Create a job</CardTitle>
+  //           <CardDescription>
+  //             Post a job you want done, when posted contractors will be able to
+  //             see it and bid on it.
+  //           </CardDescription>
+  //         </CardHeader>
+  //         <CardContent aria-disabled>
+  //           <div className="flex items-center justify-center gap-1">
+  //             <Icons.dot
+  //               className="h-6 w-6 animate-pulse text-muted-foreground"
+  //               aria-hidden="true"
+  //             />
+  //             <Icons.dot
+  //               className="h-6 w-6 animate-pulse text-muted-foreground"
+  //               aria-hidden="true"
+  //             />
+  //             <Icons.dot
+  //               className="h-6 w-6 animate-pulse text-muted-foreground"
+  //               aria-hidden="true"
+  //             />
+  //           </div>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div
@@ -288,10 +331,7 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
                                   "companyId",
                                   val ? ownedCompanies[0]?.id : undefined,
                                 );
-                                setValue(
-                                  "userId",
-                                  val ? undefined : session.user.id,
-                                );
+                                setValue("userId", val ? undefined : user.id);
                               }}
                             />
                             <div className="grid gap-1.5 leading-none">
@@ -329,7 +369,7 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
                           <Select
                             onValueChange={(value) => {
                               if (value === "") {
-                                setValue("userId", session.user.id);
+                                setValue("userId", user.id);
                                 setValue("companyId", undefined);
                               } else {
                                 setValue("userId", undefined);
@@ -347,14 +387,15 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
                                   Users
                                 </SelectLabel>
                                 <SelectItem key={"default"} value={""}>
-                                  {session.user.name}
+                                  {user.firstName}
+                                  {user.lastName ? ` ${user.lastName}` : ""}
                                 </SelectItem>
                               </SelectGroup>
                               <SelectGroup>
                                 <SelectLabel className="text-muted-foreground">
                                   Companies
                                 </SelectLabel>
-                                {session.user.ownedCompanies.map((company) => (
+                                {ownedCompanies.map((company) => (
                                   <SelectItem
                                     key={company.name}
                                     value={company.id}
@@ -635,7 +676,10 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
                                 fileRejection.errors.forEach((error) => {
                                   form.setError("base64Images", {
                                     type: "value",
-                                    message: error.message,
+                                    message:
+                                      error.message === "Too many files"
+                                        ? "You can only upload up to 5 images"
+                                        : error.message
                                   });
                                 });
                               });

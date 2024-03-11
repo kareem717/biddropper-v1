@@ -1,71 +1,92 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
   timestamp,
   primaryKey,
-  integer,
   uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
-import { v4 as uuidv4 } from "uuid";
+import { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
-export const account = pgTable(
-  "account",
-  {
-    userId: uuid("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
-    type: text("type").notNull(),
-    provider: text("provider").notNull(),
-    providerAccountId: text("providerAccountId").notNull(),
-    refreshToken: text("refresh_token"),
-    accessToken: text("access_token"),
-    expiresAt: integer("expires_at"),
-    tokenType: text("token_type"),
-    scope: text("scope"),
-    idToken: text("id_token"),
-    sessionState: text("session_state"),
-  },
-  (table) => {
-    return {
-      accountProviderProviderAccountIdPk: primaryKey({
-        columns: [table.provider, table.providerAccountId],
-        name: "account_provider_providerAccountId_pk",
-      }),
-    };
-  },
-);
-
-export const session = pgTable("session", {
-  sessionToken: text("sessionToken").primaryKey().notNull(),
-  userId: uuid("userId")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
-});
-
-export const user = pgTable("user", {
-  id: uuid("id").$defaultFn(uuidv4).primaryKey().unique().notNull(),
-  name: text("name"),
-  email: text("email").notNull(),
-  emailVerified: timestamp("emailVerified", { mode: "date" }),
+export const users = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  firstName: varchar("first_name", { length: 60 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  emailVerified: timestamp("email_verified", {
+    withTimezone: true,
+    mode: "date",
+  }),
   image: text("image"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+    .default(sql`clock_timestamp()`)
+    .notNull(),
+  lastName: varchar("last_name", { length: 60 }).notNull(),
 });
 
-export const verificationToken = pgTable(
-  "verificationToken",
+export const sessions = pgTable("sessions", {
+  id: uuid("id").primaryKey().notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+});
+
+export const verificationTokens = pgTable("verification_tokens", {
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  token: varchar("token", { length: 8 }).notNull(),
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+    .default(sql`clock_timestamp()`)
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+    .default(sql`clock_timestamp()`)
+    .notNull(),
+});
+
+export const accounts = pgTable(
+  "accounts",
   {
-    identifier: text("identifier").notNull(),
-    token: text("token").notNull(),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    provider: varchar("provider", { length: 255 }).notNull(),
+    providerId: varchar("provider_id", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .default(sql`clock_timestamp()`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .default(sql`clock_timestamp()`)
+      .notNull(),
   },
   (table) => {
     return {
-      verificationTokenIdentifierTokenPk: primaryKey({
-        columns: [table.identifier, table.token],
-        name: "verificationToken_identifier_token_pk",
+      accountsProviderProviderIdPk: primaryKey({
+        columns: [table.provider, table.providerId],
+        name: "accounts_provider_provider_id_pk",
       }),
     };
   },
 );
+
+export type User = InferSelectModel<typeof users>;
+export type NewUser = InferInsertModel<typeof users>;
+
+export type Session = InferSelectModel<typeof sessions>;
+export type NewSession = InferInsertModel<typeof sessions>;
+
+export type VerificationToken = InferSelectModel<typeof verificationTokens>;
+export type NewVerificationToken = InferInsertModel<typeof verificationTokens>;
+
+export type Account = InferSelectModel<typeof accounts>;
+export type NewAccount = InferInsertModel<typeof accounts>;

@@ -6,21 +6,16 @@ import { useSession } from "next-auth/react";
 import FormShellSkeleton from "@/components/app/shells/form/skeleton";
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
+import { useAuthSession } from "@/components/app/providers/use-auth-session";
+import { api } from "@/lib/trpc/react";
 
 const CreateJobPage = () => {
   const router = useRouter();
-  const session = useSession();
+  const { user, session } = useAuthSession();
 
-  if (session.status === "loading") return <FormShellSkeleton />;
+  if (session === null || user === null) router.push("/login");
 
-  if (session.status === "unauthenticated" || !session.data)
-    router.push("/login");
-
-  return (
-    <FormShell>
-      <CreateJobForm session={session.data as Session} />
-    </FormShell>
-  );
+  return <FormShell>{user && <CreateJobForm user={user} />}</FormShell>;
 };
 
 export default CreateJobPage;

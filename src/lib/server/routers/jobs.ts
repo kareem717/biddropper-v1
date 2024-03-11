@@ -13,28 +13,12 @@ import {
   companies,
 } from "@/lib/db/schema/tables/content";
 import {
-  bidsRelationships,
   jobsRelationships,
   mediaRelationships,
 } from "@/lib/db/schema/tables/relations/content";
-import {
-  eq,
-  sql,
-  avg,
-  and,
-  max,
-  min,
-  gte,
-  inArray,
-  lte,
-  asc,
-  desc,
-  or,
-  ne,
-} from "drizzle-orm";
+import { eq, sql, and, gte, inArray, lte, asc, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { v4 as uuidv4 } from "uuid";
-import { createSelectSchema } from "drizzle-zod";
 import {
   updateJobInput,
   createJobInput,
@@ -43,11 +27,11 @@ import {
   getJobAndRelatedByIdInput,
   getCompanyJobsInput,
   getUserJobsInput,
-} from "../validations/jobs";
+} from "../../validations/server/jobs";
 import getSupabaseClient from "@/lib/supabase/getSupabaseClient";
 import { env } from "@/lib/env.mjs";
 import { generateCursor } from "@/lib/utils";
-import { user } from "@/lib/db/schema/tables/auth";
+import { users } from "@/lib/db/schema/tables/auth";
 
 export const jobRouter = createTRPCRouter({
   createJob: authenticatedProcedure
@@ -130,26 +114,56 @@ export const jobRouter = createTRPCRouter({
           });
         }
 
-        // Link jobs to company or user
-        if (companyId) {
-          if (
-            !ctx.session.user.ownedCompanies.some((c) => c.id === companyId)
-          ) {
+        try {
+          const ownedCompanies = await tx
+            .select({ id: companies.id })
+            .from(companies)
+            .where(eq(companies.ownerId, ctx.user.id));
+
+          // Link jobs to company or user
+          if (companyId) {
+            if (!ownedCompanies.some((c) => c.id === companyId)) {
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message: "You do not own this company.",
+              });
+            }
+
+            try {
+              await tx.insert(jobsRelationships).values({
+                companyId,
+                jobId: newJob.id,
+              });
+            } catch (err) {
+              console.log(err);
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Error linking job to company.",
+              });
+            }
+          } else if (userId) {
+            try {
+              await tx.insert(jobsRelationships).values({
+                userId,
+                jobId: newJob.id,
+              });
+            } catch (err) {
+              console.log(err);
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Error linking job to user.",
+              });
+            }
+          }
+        } catch (err) {
+          if (err instanceof TRPCError) {
+            throw err;
+          } else {
             throw new TRPCError({
-              code: "FORBIDDEN",
-              message: "You do not own this company.",
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Error linking job to company or user.",
             });
           }
-
-          await tx.insert(jobsRelationships).values({
-            companyId,
-            jobId: newJob.id,
-          });
-        } else if (userId) {
-          await tx.insert(jobsRelationships).values({
-            userId,
-            jobId: newJob.id,
-          });
         }
 
         // Insert images
@@ -249,11 +263,14 @@ export const jobRouter = createTRPCRouter({
           });
         }
 
+        const ownedCompanies = await ctx.db
+          .select({ id: companies.id })
+          .from(companies)
+          .where(eq(companies.ownerId, ctx.user.id));
+
         if (
-          !ctx.session.user.ownedCompanies.some(
-            (company) => company.id === job.companyId,
-          ) &&
-          job.userId !== ctx.session.user.id
+          !ownedCompanies.some((company) => company.id === job.companyId) &&
+          job.userId !== ctx.user.id
         ) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -495,10 +512,15 @@ export const jobRouter = createTRPCRouter({
           });
         }
 
-        const companyOwnsJob = ctx.session.user.ownedCompanies.some(
+        const ownedCompanies = await ctx.db
+          .select({ id: companies.id })
+          .from(companies)
+          .where(eq(companies.ownerId, ctx.user.id));
+
+        const companyOwnsJob = ownedCompanies.some(
           (company) => company.id === job.companyId,
         );
-        const userOwnsJob = job.userId === ctx.session.user.id;
+        const userOwnsJob = job.userId === ctx.user.id;
 
         if (!companyOwnsJob && !userOwnsJob) {
           throw new TRPCError({
@@ -689,42 +711,59 @@ export const jobRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { id } = input;
 
-      //Verify user owns the job if they are not a company owner
-      if (!ctx.session.user.ownedCompanies.length) {
-        try {
-          const [job] = await ctx.db
-            .select({
-              id: jobs.id,
-              companyId: jobsRelationships.companyId,
-              userId: jobsRelationships.userId,
-            })
-            .from(jobs)
-            .innerJoin(jobsRelationships, eq(jobs.id, jobsRelationships.jobId))
-            .where(and(eq(jobs.id, id)))
-            .limit(1);
+      try {
+        const ownedCompanies = await ctx.db
+          .select({ id: companies.id })
+          .from(companies)
+          .where(eq(companies.ownerId, ctx.user.id)); //Verify user owns the job if they are not a company owner
+        if (!ownedCompanies.length) {
+          try {
+            const [job] = await ctx.db
+              .select({
+                id: jobs.id,
+                companyId: jobsRelationships.companyId,
+                userId: jobsRelationships.userId,
+              })
+              .from(jobs)
+              .innerJoin(
+                jobsRelationships,
+                eq(jobs.id, jobsRelationships.jobId),
+              )
+              .where(and(eq(jobs.id, id)))
+              .limit(1);
 
-          if (!job) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: "Job not found.",
-            });
-          }
+            if (!job) {
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "Job not found.",
+              });
+            }
 
-          if (job.userId !== ctx.session.user.id) {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message: "The user does not own this job.",
-            });
+            if (job.userId !== ctx.user.id) {
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message: "The user does not own this job.",
+              });
+            }
+          } catch (err) {
+            if (err instanceof TRPCError) {
+              throw err;
+            } else {
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Error finding the job.",
+              });
+            }
           }
-        } catch (err) {
-          if (err instanceof TRPCError) {
-            throw err;
-          } else {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Error finding the job.",
-            });
-          }
+        }
+      } catch (err) {
+        if (err instanceof TRPCError) {
+          throw err;
+        } else {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error finding the job.",
+          });
         }
       }
 
@@ -755,8 +794,9 @@ export const jobRouter = createTRPCRouter({
               name: companies.name,
             },
             user: {
-              id: user.id,
-              name: user.name,
+              id: users.id,
+              firstName: users.firstName,
+              lastName: users.lastName,
             },
             media: {
               id: media.id,
@@ -767,7 +807,7 @@ export const jobRouter = createTRPCRouter({
           .innerJoin(addresses, eq(jobs.addressId, addresses.id))
           .innerJoin(jobsRelationships, eq(jobs.id, jobsRelationships.jobId))
           .leftJoin(companies, eq(jobsRelationships.companyId, companies.id))
-          .leftJoin(user, eq(jobsRelationships.userId, user.id))
+          .leftJoin(users, eq(jobsRelationships.userId, users.id))
           .leftJoin(mediaRelationships, eq(jobs.id, mediaRelationships.jobId))
           .leftJoin(media, eq(media.id, mediaRelationships.mediaId))
           .where(eq(jobs.id, id));
@@ -909,16 +949,31 @@ export const jobRouter = createTRPCRouter({
         ...data
       } = input;
 
-      // Validate the user is either a company owner or is the user being queried
-      if (ctx.session.user.id !== userId) {
-        if (!ctx.session.user.ownedCompanies.length) {
+      try {
+        // Validate the user is either a company owner or is the user being queried
+        if (ctx.user.id !== userId) {
+          const ownedCompanies = await ctx.db
+            .select({ id: companies.id })
+            .from(companies)
+            .where(eq(companies.ownerId, ctx.user.id));
+
+          if (!ownedCompanies.length) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You do not have permission to view this user's jobs.",
+            });
+          }
+        }
+      } catch (err) {
+        if (err instanceof TRPCError) {
+          throw err;
+        } else {
           throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You do not have permission to view this user's jobs.",
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error finding the user.",
           });
         }
       }
-
       const { columnName: orderByColumn, order: orderByOrder } = orderBy;
       const filterConditions = () => {
         const conditions = [inArray(jobs.isActive, data.isActive)];

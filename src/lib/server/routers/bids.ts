@@ -36,7 +36,7 @@ import {
   getCompanyBidsInput,
   getJobBidsInput,
   getContractBidsInput,
-} from "../validations/bids";
+} from "../../validations/server/bids";
 import { v4 as uuidv4 } from "uuid";
 import { createSelectSchema } from "drizzle-zod";
 import { generateCursor } from "@/lib/utils";
