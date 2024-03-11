@@ -154,44 +154,6 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
     );
   }
 
-  // if (industriesIsFetching || companiesIsFetching) {
-  //   return (
-  //     <div
-  //       className={cn(
-  //         "inline-block w-full max-w-screen-md animate-border rounded-[var(--radius)] bg-gradient-to-r from-primary/70 via-secondary to-primary/70 bg-[length:400%_400%] p-1 drop-shadow-xl",
-  //         className,
-  //       )}
-  //       {...props}
-  //     >
-  //       <Card>
-  //         <CardHeader>
-  //           <CardTitle>Create a job</CardTitle>
-  //           <CardDescription>
-  //             Post a job you want done, when posted contractors will be able to
-  //             see it and bid on it.
-  //           </CardDescription>
-  //         </CardHeader>
-  //         <CardContent aria-disabled>
-  //           <div className="flex items-center justify-center gap-1">
-  //             <Icons.dot
-  //               className="h-6 w-6 animate-pulse text-muted-foreground"
-  //               aria-hidden="true"
-  //             />
-  //             <Icons.dot
-  //               className="h-6 w-6 animate-pulse text-muted-foreground"
-  //               aria-hidden="true"
-  //             />
-  //             <Icons.dot
-  //               className="h-6 w-6 animate-pulse text-muted-foreground"
-  //               aria-hidden="true"
-  //             />
-  //           </div>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   );
-  // }
-
   return (
     <div
       className={cn(
@@ -544,7 +506,7 @@ const CreateJobForm: React.FC<CreateJobFormProps> = ({
                                                 </FormControl>
                                               </PopoverTrigger>
                                               <PopoverContent
-                                                className="w-auto p-0"
+                                                className="w-auto p-0 z-30"
                                                 align="start"
                                               >
                                                 <Calendar
