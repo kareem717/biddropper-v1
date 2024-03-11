@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { companies, industries } from "@/lib/db/schema/tables/content";
 import validator from "validator";
 import { bodyParamSchema as addressPostSchema } from "../../(references)/addresses/request";
-import { db } from "@/lib/db/client";
+import { db } from "@/lib/db";
 import { inArray, sql } from "drizzle-orm";
 import { user } from "@/lib/db/schema/tables/auth";
 

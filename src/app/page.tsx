@@ -1,7 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
-import { authOptions } from "@/lib/auth";
+import {  validateRequest } from "@/lib/auth";
 import { getServerSession } from "next-auth";
-import CreateProjectForm from "@/components/app/deprecated/legacy/create-project";
 import { api } from "@/lib/trpc/server";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/lib/server/root";
@@ -10,12 +9,9 @@ import { getTableColumns } from "drizzle-orm";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 export default async function Home() {
-  const session = await getServerSession(authOptions);
-  console.log(session?.user.ownedCompanies);
+  const session = await validateRequest();
 
-  const columnsMap = getTableColumns(bids);
-  const columnNames = Object.keys(getTableColumns(bids));
-  console.log(columnsMap, columnNames);
+  const user = await api.auth.getFullUser.query();
 
   return (
     <main>
@@ -35,7 +31,7 @@ export default async function Home() {
           job view
         </a>
       </div>
-      <pre>{JSON.stringify(session, null, 2)}</pre>
+      <pre>{JSON.stringify(user, null, 2)}</pre>
     </main>
   );
 }

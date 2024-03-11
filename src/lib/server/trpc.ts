@@ -11,8 +11,11 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { getServerAuthSession } from "@/lib/auth";
-import { db } from "@/lib/db/client";
+import { validateRequest } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
+import { companies } from "../db/schema/tables/content";
 
 /**
  * 1. CONTEXT
@@ -27,10 +30,11 @@ import { db } from "@/lib/db/client";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const session = await getServerAuthSession();
+  const { user, session } = await validateRequest();
 
   return {
     db,
+    user,
     session,
     ...opts,
   };
@@ -89,31 +93,42 @@ export const publicProcedure = t.procedure;
  * @see https://trpc.io/docs/procedures
  */
 export const authenticatedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.session || !ctx.session.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+  if (!ctx.session || !ctx.user) {
+    redirect("/login");
   }
 
   return next({
     ctx: {
-      // infers the `session` as non-nullable
-      session: { ...ctx.session, user: ctx.session.user },
+      session: ctx.session,
+      user: ctx.user,
     },
   });
 });
 
-export const companyOwnerProcedure = t.procedure.use(({ ctx, next }) => {
-  if (
-    !ctx.session ||
-    !ctx.session.user ||
-    !ctx.session.user.ownedCompanies.length
-  ) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+export const companyOwnerProcedure = t.procedure.use(async ({ ctx, next }) => {
+  if (!ctx.session || !ctx.user) {
+    redirect("/login");
+  }
+
+  const ownedCompanies = await db
+    .select()
+    .from(companies)
+    .where(eq(companies.ownerId, ctx.user.id));
+
+  if (!ownedCompanies.length) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Must own a company to access this resource",
+    });
   }
 
   return next({
     ctx: {
-      // infers the `session` as non-nullable
-      session: { ...ctx.session, user: ctx.session.user },
+      ctx: {
+        session: ctx.session,
+        user: ctx.user,
+        ownedCompanies,
+      },
     },
   });
 });
