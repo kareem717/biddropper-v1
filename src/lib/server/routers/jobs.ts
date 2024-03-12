@@ -4,9 +4,7 @@ import {
   companyOwnerProcedure,
 } from "@/lib/server/trpc";
 import {
-  bids,
   jobs,
-  contracts,
   industries,
   addresses,
   media,
@@ -45,29 +43,30 @@ export const jobRouter = createTRPCRouter({
         ...jobData
       } = data;
 
-      try {
-        // Get valid industry values
-        const industryValues = await ctx.db
-          .select({ value: industries.value })
-          .from(industries);
+      if (jobData.industry !== undefined && jobData.industry !== null) {
+        try {
+          // Get valid industry values
+          const industryValues = await ctx.db
+            .select({ value: industries.value })
+            .from(industries)
+            .where(eq(industries.value, jobData.industry));
 
-        // Validate industry value
-        if (
-          !industryValues.findIndex((value) => value.value === jobData.industry)
-        ) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Invalid industry value.",
-          });
-        }
-      } catch (err) {
-        if (err instanceof TRPCError) {
-          throw err;
-        } else {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to validate industry value.",
-          });
+          // Validate industry value
+          if (!industryValues.length) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Invalid industry value.",
+            });
+          }
+        } catch (err) {
+          if (err instanceof TRPCError) {
+            throw err;
+          } else {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to validate industry value.",
+            });
+          }
         }
       }
 
@@ -291,6 +290,24 @@ export const jobRouter = createTRPCRouter({
         await ctx.db.transaction(async (tx) => {
           // Update job
           let jobAddressId: string;
+
+          //Validate industry value
+          if (
+            updateValues.industry !== undefined &&
+            updateValues.industry !== null
+          ) {
+            const industryValues = await tx
+              .select({ value: industries.value })
+              .from(industries)
+              .where(eq(industries.value, updateValues.industry));
+
+            if (!industryValues.length) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: "Invalid industry value.",
+              });
+            }
+          }
 
           if (Object.values(updateValues).length) {
             try {
